@@ -45,6 +45,12 @@ export default async function AppLayout({
                 Compliance
               </Link>
               <Link
+                href="/traction"
+                className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
+              >
+                Traction
+              </Link>
+              <Link
                 href="/audit"
                 className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
               >

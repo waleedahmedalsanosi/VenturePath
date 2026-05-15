@@ -211,6 +211,53 @@ export type Database = {
           },
         ];
       };
+      traction_metrics: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          month: string;
+          mrr_sar: number | string | null;
+          customer_count: number | null;
+          gross_margin_pct: number | string | null;
+          cash_runway_months: number | null;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          month: string;
+          mrr_sar?: number | string | null;
+          customer_count?: number | null;
+          gross_margin_pct?: number | string | null;
+          cash_runway_months?: number | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          month?: string;
+          mrr_sar?: number | string | null;
+          customer_count?: number | null;
+          gross_margin_pct?: number | string | null;
+          cash_runway_months?: number | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "traction_metrics_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       workspaces: {
         Row: {
           city: string;
@@ -227,6 +274,12 @@ export type Database = {
           sector: string;
           updated_at: string;
           website_url: string | null;
+          show_mrr_publicly: boolean;
+          show_customer_count_publicly: boolean;
+          show_gross_margin_publicly: boolean;
+          show_cash_runway_publicly: boolean;
+          public_profile_published: boolean;
+          slug: string | null;
         };
         Insert: {
           city: string;
@@ -243,6 +296,12 @@ export type Database = {
           sector: string;
           updated_at?: string;
           website_url?: string | null;
+          show_mrr_publicly?: boolean;
+          show_customer_count_publicly?: boolean;
+          show_gross_margin_publicly?: boolean;
+          show_cash_runway_publicly?: boolean;
+          public_profile_published?: boolean;
+          slug?: string | null;
         };
         Update: {
           city?: string;
@@ -259,6 +318,12 @@ export type Database = {
           sector?: string;
           updated_at?: string;
           website_url?: string | null;
+          show_mrr_publicly?: boolean;
+          show_customer_count_publicly?: boolean;
+          show_gross_margin_publicly?: boolean;
+          show_cash_runway_publicly?: boolean;
+          public_profile_published?: boolean;
+          slug?: string | null;
         };
         Relationships: [];
       };
