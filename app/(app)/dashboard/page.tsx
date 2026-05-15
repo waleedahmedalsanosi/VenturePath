@@ -22,7 +22,9 @@ function fmtDate(iso: string): string {
 const NAV_SECTIONS = [
   { href: "/company", label: "Company", desc: "Legal entity & profile" },
   { href: "/cap-table", label: "Cap Table", desc: "Shareholders & instruments" },
-  { href: "/rounds", label: "Fundraising", desc: "Rounds, investors & data room" },
+  { href: "/rounds", label: "Rounds", desc: "Active fundraising rounds" },
+  { href: "/term-sheets", label: "Term Sheets", desc: "Draft & track term sheets" },
+  { href: "/investor-updates", label: "Investor Updates", desc: "Periodic updates with analytics" },
   { href: "/esop", label: "ESOP", desc: "Options pool & grants" },
   { href: "/governance", label: "Governance", desc: "Board meetings & resolutions" },
   { href: "/compliance", label: "Compliance", desc: "Deadlines & obligations" },
@@ -111,6 +113,57 @@ export default async function DashboardPage() {
       .maybeSingle(),
   ]);
 
+  // Investment Hub data — fetched after activeRound is known.
+  const activeRoundId = activeRound?.id ?? null;
+
+  const [
+    { data: pipelineContacts },
+    { data: closingItemsPending },
+    { data: latestUpdate },
+  ] = await Promise.all([
+    activeRoundId
+      ? supabase
+          .from("investor_pipeline")
+          .select("id, is_hot, ticket_size_sar")
+          .eq("round_id", activeRoundId)
+          .is("deleted_at", null)
+      : Promise.resolve({ data: [] }),
+    activeRoundId
+      ? supabase
+          .from("closing_items")
+          .select("id")
+          .eq("round_id", activeRoundId)
+          .in("status", ["pending", "in_progress"])
+          .is("deleted_at", null)
+      : Promise.resolve({ data: [] }),
+    supabase
+      .from("investor_updates")
+      .select("id, subject, status")
+      .eq("workspace_id", workspace.id)
+      .eq("status", "published")
+      .is("deleted_at", null)
+      .order("sent_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  // Aggregate pipeline metrics.
+  const hotLeads = (pipelineContacts ?? []).filter((c) => c.is_hot).length;
+  let pipelineCommitted = new Dec(0);
+  for (const c of pipelineContacts ?? []) {
+    if (c.ticket_size_sar) pipelineCommitted = pipelineCommitted.plus(new Dec(String(c.ticket_size_sar)));
+  }
+
+  // View count for latest published update.
+  let latestUpdateViews = 0;
+  if (latestUpdate) {
+    const { count } = await supabase
+      .from("investor_update_views")
+      .select("id", { count: "exact", head: true })
+      .eq("update_id", latestUpdate.id);
+    latestUpdateViews = count ?? 0;
+  }
+
   // Pool utilization.
   let poolPct: string = "—";
   if (pool) {
@@ -190,6 +243,45 @@ export default async function DashboardPage() {
           />
         )}
       </section>
+
+      {/* Investment Hub tiles */}
+      {activeRound && (
+        <section>
+          <h2 className="text-label-md uppercase text-(--color-on-surface-variant) mb-3">
+            Investment Hub — {activeRound.name}
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Tile
+              label="Pipeline"
+              value={String((pipelineContacts ?? []).length)}
+              href={`/rounds/${activeRound.id}`}
+              sub={hotLeads > 0 ? `${hotLeads} hot lead${hotLeads !== 1 ? "s" : ""}` : `${(pipelineContacts ?? []).length} tracked`}
+              alert={hotLeads > 0}
+            />
+            <Tile
+              label="Committed"
+              value={pipelineCommitted.gt(0) ? fmtSAR(Number(pipelineCommitted.toFixed(0))) : "—"}
+              href={`/rounds/${activeRound.id}`}
+              sub={activeRound.target_raise_sar
+                ? `of ${fmtSAR(Number(activeRound.target_raise_sar))} target`
+                : "total committed"}
+            />
+            <Tile
+              label="Closing items"
+              value={String((closingItemsPending ?? []).length)}
+              href={`/rounds/${activeRound.id}`}
+              sub="pending or in progress"
+              alert={(closingItemsPending ?? []).length > 0}
+            />
+            <Tile
+              label="Last update opens"
+              value={latestUpdate ? String(latestUpdateViews) : "—"}
+              href={latestUpdate ? `/investor-updates/${latestUpdate.id}` : "/investor-updates"}
+              sub={latestUpdate ? latestUpdate.subject : "no update sent"}
+            />
+          </div>
+        </section>
+      )}
 
       {/* Quick nav */}
       <section>

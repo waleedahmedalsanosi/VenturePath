@@ -309,6 +309,95 @@ export async function setTermSheetStatus(
   return { ok: true };
 }
 
+export async function promoteTermSheetToShareholder(
+  termSheetId: string,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const { data: ts } = await supabase
+    .from("term_sheets")
+    .select("*")
+    .eq("id", termSheetId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!ts) return { ok: false, error: "Term sheet not found." };
+  if (ts.status !== "signed") return { ok: false, error: "Only signed term sheets can be promoted." };
+
+  const workspace = await getActiveWorkspace();
+  if (!workspace || workspace.id !== ts.workspace_id) return { ok: false, error: "Workspace mismatch." };
+
+  const terms = (ts.terms ?? {}) as Record<string, unknown>;
+
+  // Build instrument_data matching the shareholders JSONB shape.
+  let instrumentData: Record<string, unknown>;
+  if (ts.instrument_type === "isafe") {
+    instrumentData = {
+      investment_sar: String(terms.investment_sar ?? "0"),
+      valuation_cap_sar: String(terms.valuation_cap_sar ?? "0"),
+      profit_share_ratio: String(terms.profit_share_ratio ?? "0"),
+      conversion_status: "unconverted",
+    };
+  } else if (ts.instrument_type === "safe") {
+    instrumentData = {
+      safe_type: terms.safe_type ?? "post_money",
+      investment_sar: String(terms.investment_sar ?? "0"),
+      valuation_cap_sar: String(terms.valuation_cap_sar ?? "0"),
+      ...(terms.discount_rate ? { discount_rate: String(terms.discount_rate) } : {}),
+    };
+  } else if (ts.instrument_type === "convertible_note") {
+    instrumentData = {
+      principal_sar: String(terms.principal_sar ?? "0"),
+      interest_rate: String(terms.interest_rate ?? "0"),
+      maturity_date: String(terms.maturity_date ?? ""),
+      ...(terms.conversion_discount ? { conversion_discount: String(terms.conversion_discount) } : {}),
+      ...(terms.valuation_cap_sar ? { valuation_cap_sar: String(terms.valuation_cap_sar) } : {}),
+    };
+  } else {
+    instrumentData = {
+      shares: String(terms.shares ?? "0"),
+      price_per_share_sar: String(terms.price_per_share_sar ?? "0"),
+    };
+  }
+
+  const { data: inserted, error } = await supabase
+    .from("shareholders")
+    .insert({
+      workspace_id: workspace.id,
+      name: ts.firm ? `${ts.investor_name} (${ts.firm})` : ts.investor_name,
+      email: ts.investor_email ?? null,
+      entity_or_individual: ts.firm ? "entity" : "individual",
+      entry_date: new Date().toISOString().slice(0, 10),
+      instrument_type: ts.instrument_type as "ordinary" | "isafe" | "safe" | "convertible_note",
+      instrument_data: instrumentData as Json,
+    })
+    .select("id")
+    .single();
+
+  if (error || !inserted) return { ok: false, error: error?.message ?? "Insert failed." };
+
+  if (ts.pipeline_contact_id) {
+    await supabase
+      .from("investor_pipeline")
+      .update({ status: "invested" })
+      .eq("id", ts.pipeline_contact_id);
+  }
+
+  await logAudit({
+    workspaceId: workspace.id,
+    entityType: "workspace",
+    entityId: inserted.id,
+    action: "shareholder_create",
+    description: `Promoted signed term sheet for "${ts.investor_name}" to cap table`,
+  });
+
+  revalidatePath(`/term-sheets/${termSheetId}`);
+  revalidatePath("/cap-table");
+  revalidatePath(`/rounds/${ts.round_id}`);
+  redirect("/cap-table");
+}
+
 export async function deleteTermSheet(termSheetId: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

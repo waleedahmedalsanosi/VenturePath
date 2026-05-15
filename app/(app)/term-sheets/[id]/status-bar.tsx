@@ -2,7 +2,11 @@
 
 import { useTransition } from "react";
 
-import { setTermSheetStatus, deleteTermSheet } from "../../rounds/[id]/term-sheet-actions";
+import {
+  setTermSheetStatus,
+  deleteTermSheet,
+  promoteTermSheetToShareholder,
+} from "../../rounds/[id]/term-sheet-actions";
 
 type Status = "draft" | "sent" | "signed" | "declined" | "withdrawn";
 
@@ -37,6 +41,13 @@ export function TermSheetStatusBar({
     if (!confirm("Delete this term sheet? This cannot be undone via the UI.")) return;
     startTransition(async () => {
       await deleteTermSheet(termSheetId);
+    });
+  }
+
+  function onPromote() {
+    if (!confirm("Promote this signed term sheet to the cap table? This will create a new shareholder entry.")) return;
+    startTransition(async () => {
+      await promoteTermSheetToShareholder(termSheetId);
     });
   }
 
@@ -90,6 +101,16 @@ export function TermSheetStatusBar({
               Declined
             </button>
           </>
+        )}
+        {status === "signed" && (
+          <button
+            type="button"
+            onClick={onPromote}
+            disabled={isPending}
+            className="rounded-lg bg-(--color-primary) px-4 py-1.5 text-label-sm text-white hover:opacity-90 disabled:opacity-50 font-medium"
+          >
+            Promote to cap table →
+          </button>
         )}
         {status !== "draft" && (
           <button

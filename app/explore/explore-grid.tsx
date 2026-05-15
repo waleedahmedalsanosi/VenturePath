@@ -13,6 +13,7 @@ export interface WorkspaceCard {
   funding_stage: string;
   city: string | null;
   created_at: string;
+  is_raising?: boolean;
 }
 
 function fmtDate(iso: string): string {
@@ -160,10 +161,15 @@ export function ExploreGrid({ workspaces }: { workspaces: WorkspaceCard[] }) {
               <p className="mt-2 text-body-sm text-(--color-on-surface-variant) line-clamp-3">
                 {w.one_liner}
               </p>
-              <div className="mt-4 flex items-center gap-2">
+              <div className="mt-4 flex items-center gap-2 flex-wrap">
                 <span className="inline-flex items-center rounded-full bg-(--color-surface-bright) px-2.5 py-0.5 text-label-sm uppercase tracking-wider">
                   {w.funding_stage}
                 </span>
+                {w.is_raising && (
+                  <span className="inline-flex items-center rounded-full bg-(--color-primary)/15 px-2.5 py-0.5 text-label-sm font-medium text-(--color-primary) uppercase tracking-wider">
+                    Raising
+                  </span>
+                )}
                 <span className="ml-auto text-label-sm text-(--color-on-surface-variant) tabular-nums">
                   {fmtDate(w.created_at)}
                 </span>

@@ -70,24 +70,33 @@ async function fetchProfile(slug: string) {
     .maybeSingle();
   if (!workspace) return null;
 
-  const { data: metrics } = await supabase
-    .from("traction_metrics")
-    .select("*")
-    .eq("workspace_id", workspace.id)
-    .is("deleted_at", null)
-    .order("month", { ascending: true });
+  const [{ data: metrics }, { data: rounds }, { data: dataRoomLinks }] = await Promise.all([
+    supabase
+      .from("traction_metrics")
+      .select("*")
+      .eq("workspace_id", workspace.id)
+      .is("deleted_at", null)
+      .order("month", { ascending: true }),
+    supabase
+      .from("financing_rounds")
+      .select("id, name, status, instrument_type, lead_investor, close_date, actual_raise_sar, target_raise_sar")
+      .eq("workspace_id", workspace.id)
+      .eq("is_public", true)
+      .neq("status", "draft")
+      .is("deleted_at", null)
+      .order("close_date", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("data_room_links")
+      .select("token")
+      .eq("workspace_id", workspace.id)
+      .eq("is_active", true)
+      .limit(1),
+  ]);
 
-  const { data: rounds } = await supabase
-    .from("financing_rounds")
-    .select("id, name, status, instrument_type, lead_investor, close_date, actual_raise_sar")
-    .eq("workspace_id", workspace.id)
-    .eq("is_public", true)
-    .neq("status", "draft")
-    .is("deleted_at", null)
-    .order("close_date", { ascending: false, nullsFirst: false })
-    .order("created_at", { ascending: false });
+  const dataRoomToken = dataRoomLinks?.[0]?.token ?? null;
 
-  return { workspace, metrics: metrics ?? [], rounds: rounds ?? [] };
+  return { workspace, metrics: metrics ?? [], rounds: rounds ?? [], dataRoomToken };
 }
 
 export async function generateMetadata(
@@ -115,7 +124,8 @@ export default async function PublicProfilePage({ params }: PageProps) {
   const data = await fetchProfile(slug);
   if (!data) notFound();
 
-  const { workspace, metrics, rounds } = data;
+  const { workspace, metrics, rounds, dataRoomToken } = data;
+  const openRound = rounds.find((r) => r.status === "open") ?? null;
 
   // Get the latest non-null value for each metric for the "current" tiles.
   const latest = metrics.length ? metrics[metrics.length - 1]! : null;
@@ -159,6 +169,33 @@ export default async function PublicProfilePage({ params }: PageProps) {
             {workspace.website_url} ↗
           </a>
         </p>
+      )}
+
+      {/* Investor CTAs */}
+      {(openRound || dataRoomToken) && (
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          {openRound && (
+            <div className="rounded-lg bg-(--color-primary)/10 px-4 py-2.5">
+              <p className="text-label-sm font-medium text-(--color-primary) uppercase tracking-wider">
+                Currently raising
+              </p>
+              <p className="text-body-sm text-(--color-on-surface-variant)">
+                {openRound.name}
+                {openRound.target_raise_sar
+                  ? ` · ${fmtSAR(openRound.target_raise_sar)} target`
+                  : ""}
+              </p>
+            </div>
+          )}
+          {dataRoomToken && (
+            <a
+              href={`/data-room/${dataRoomToken}`}
+              className="rounded-lg bg-(--color-primary) px-5 py-2.5 text-label-sm font-medium text-white hover:opacity-90"
+            >
+              View data room →
+            </a>
+          )}
+        </div>
       )}
 
       {anyMetricVisible && latest && (

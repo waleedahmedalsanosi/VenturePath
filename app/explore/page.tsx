@@ -14,15 +14,26 @@ export const metadata: Metadata = {
 
 export default async function ExploreIndex() {
   const supabase = await createClient();
-  const { data: profiles } = await supabase
-    .from("workspaces")
-    .select("id, slug, name, one_liner, sector, country, city, funding_stage, created_at")
-    .eq("public_profile_published", true)
-    .not("slug", "is", null)
-    .order("created_at", { ascending: false })
-    .limit(100);
+  const [{ data: profiles }, { data: openRounds }] = await Promise.all([
+    supabase
+      .from("workspaces")
+      .select("id, slug, name, one_liner, sector, country, city, funding_stage, created_at")
+      .eq("public_profile_published", true)
+      .not("slug", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(100),
+    supabase
+      .from("financing_rounds")
+      .select("workspace_id")
+      .eq("status", "open")
+      .eq("is_public", true)
+      .is("deleted_at", null),
+  ]);
 
-  const rows = profiles ?? [];
+  const raisingIds = new Set((openRounds ?? []).map((r) => r.workspace_id));
+  const rows = (profiles ?? [])
+    .filter((w): w is typeof w & { slug: string } => w.slug !== null)
+    .map((w) => ({ ...w, is_raising: raisingIds.has(w.id) }));
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-12">
