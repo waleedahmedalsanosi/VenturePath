@@ -39,6 +39,12 @@ export default async function AppLayout({
                 ESOP
               </Link>
               <Link
+                href="/dilution"
+                className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
+              >
+                Dilution
+              </Link>
+              <Link
                 href="/vault"
                 className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
               >
