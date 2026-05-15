@@ -29,8 +29,9 @@ export default async function AppLayout({
       <div className="flex-1 flex flex-col min-w-0">
         <header className="px-6 py-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-6 pl-12 md:pl-0">
-              <Link href="/" className="text-headline-sm font-semibold tracking-tight">
+            <div className="flex items-center gap-4 pl-12 md:pl-0">
+              {/* Logo only on mobile — desktop shows it in the sidebar */}
+              <Link href="/dashboard" className="md:hidden text-label-lg font-semibold tracking-tight">
                 VenturePath
               </Link>
               {active && all.length > 0 && (
