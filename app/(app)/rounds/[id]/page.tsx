@@ -12,6 +12,7 @@ import { DataRoom } from "./data-room";
 import { Blockers } from "./blockers";
 import { TermSheetsSection } from "./term-sheets-section";
 import { ClosingLegal } from "./closing-legal";
+import { InvestorUpdatesSection } from "./investor-updates-section";
 
 const STATUS_STYLES: Record<string, string> = {
   draft: "bg-(--color-surface-bright) text-(--color-on-surface-variant)",
@@ -79,6 +80,7 @@ export default async function RoundDetailPage({
     { data: blockers },
     { data: termSheets },
     { data: closingItems },
+    { data: investorUpdatesRaw },
   ] = await Promise.all([
     supabase
       .from("shareholders")
@@ -122,7 +124,30 @@ export default async function RoundDetailPage({
       .eq("round_id", id)
       .is("deleted_at", null)
       .order("created_at", { ascending: true }),
+    supabase
+      .from("investor_updates")
+      .select("id, subject, status, sent_at, created_at")
+      .eq("round_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false }),
   ]);
+
+  // Attach view counts to investor updates
+  const updateIds = (investorUpdatesRaw ?? []).filter((u) => u.status === "published").map((u) => u.id);
+  const viewCountByUpdate: Record<string, number> = {};
+  if (updateIds.length > 0) {
+    const { data: updateViews } = await supabase
+      .from("investor_update_views")
+      .select("update_id")
+      .in("update_id", updateIds);
+    for (const v of updateViews ?? []) {
+      viewCountByUpdate[v.update_id] = (viewCountByUpdate[v.update_id] ?? 0) + 1;
+    }
+  }
+  const investorUpdates = (investorUpdatesRaw ?? []).map((u) => ({
+    ...u,
+    view_count: viewCountByUpdate[u.id] ?? 0,
+  }));
 
   // Fetch recent views per active link (last 20 each) for the data-room analytics panel.
   const activeLinkIds = (dataRoomLinks ?? []).filter((l) => l.is_active).map((l) => l.id);
@@ -317,6 +342,13 @@ export default async function RoundDetailPage({
         items={(closingItems ?? []) as Parameters<typeof ClosingLegal>[0]["items"]}
         pipelineContacts={(pipelineContacts ?? []).map((c) => ({ id: c.id, name: c.name, firm: c.firm ?? null }))}
         canEdit={round.status !== "closed"}
+      />
+
+      {/* Investor Updates */}
+      <InvestorUpdatesSection
+        roundId={round.id}
+        updates={investorUpdates}
+        canEdit={true}
       />
 
       {/* Blockers to close */}
