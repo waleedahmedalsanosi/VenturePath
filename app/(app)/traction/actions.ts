@@ -103,6 +103,23 @@ export async function deleteMetric(metricId: string): Promise<ActionResult> {
   return { ok: true };
 }
 
+export async function setPublished(published: boolean): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const { error } = await supabase
+    .from("workspaces")
+    .update({ public_profile_published: published })
+    .eq("owner_user_id", user.id);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/traction");
+  return { ok: true };
+}
+
 export async function updateVisibility(
   flags: {
     show_mrr_publicly: boolean;

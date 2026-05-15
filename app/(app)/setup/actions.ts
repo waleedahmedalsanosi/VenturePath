@@ -80,6 +80,14 @@ export async function createWorkspace(formData: FormData): Promise<ActionResult>
     return { ok: false, error: error?.message ?? "Insert failed." };
   }
 
+  // Generate slug from name + the row id's first 6 chars. Idempotent.
+  const base = parsed.data.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  const slug = `${base || "company"}-${inserted.id.slice(0, 6)}`;
+  await supabase.from("workspaces").update({ slug }).eq("id", inserted.id);
+
   await logAudit({
     workspaceId: inserted.id,
     entityType: "workspace",

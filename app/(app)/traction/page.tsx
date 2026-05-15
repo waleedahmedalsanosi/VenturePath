@@ -2,10 +2,13 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 
+import { headers } from "next/headers";
+
 import { TractionChart } from "./chart";
 import { UpsertForm } from "./upsert-form";
 import { VisibilityToggles } from "./visibility-toggles";
 import { MetricRow } from "./metric-row";
+import { PublishToggle } from "./publish-toggle";
 
 function fmtSAR(v: number | string | null): string {
   if (v === null || v === undefined) return "—";
@@ -24,6 +27,13 @@ function fmtPct(v: number | string | null): string {
 function fmtInt(v: number | null): string {
   if (v === null || v === undefined) return "—";
   return v.toLocaleString();
+}
+
+async function buildPublicUrl(slug: string): Promise<string> {
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "venture-path.vercel.app";
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  return `${proto}://${host}/explore/${slug}`;
 }
 
 function fmtMonth(iso: string): string {
@@ -103,6 +113,13 @@ export default async function TractionPage() {
           show_cash_runway_publicly: workspace.show_cash_runway_publicly,
         }}
       />
+
+      {workspace.slug && (
+        <PublishToggle
+          initialPublished={workspace.public_profile_published}
+          publicUrl={await buildPublicUrl(workspace.slug)}
+        />
+      )}
 
       <section>
         <h2 className="text-label-md uppercase text-(--color-on-surface-variant) mb-4">
