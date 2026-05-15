@@ -43,19 +43,18 @@ const BaseSchema = z.object({
   entry_date: z.string().min(1),
 });
 
-export interface AddResult {
+export interface ActionResult {
   ok: boolean;
   error?: string;
 }
 
-export async function addShareholder(formData: FormData): Promise<AddResult> {
+export async function addShareholder(formData: FormData): Promise<ActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Not signed in." };
 
-  // Resolve workspace (one per user in prototype).
   const { data: workspace } = await supabase
     .from("workspaces")
     .select("id")
@@ -82,7 +81,106 @@ export async function addShareholder(formData: FormData): Promise<AddResult> {
     };
   }
 
-  let instrumentData: Record<string, string>;
+  const instrumentData = parseInstrumentData(formData, instrumentType);
+  if (!("data" in instrumentData)) return instrumentData;
+
+  const { error } = await supabase.from("shareholders").insert({
+    workspace_id: workspace.id,
+    name: baseParsed.data.name,
+    email: baseParsed.data.email || null,
+    entity_or_individual: baseParsed.data.entity_or_individual,
+    entry_date: baseParsed.data.entry_date,
+    instrument_type: instrumentType,
+    instrument_data: instrumentData.data,
+  });
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/cap-table");
+  redirect("/cap-table");
+}
+
+export async function editShareholder(
+  shareholderId: string,
+  formData: FormData,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  // Fetch existing row — RLS handles ownership; we also need instrument_type
+  // to know which schema to validate against (PRD US-04-08: instrument type
+  // is immutable after creation).
+  const { data: existing } = await supabase
+    .from("shareholders")
+    .select("instrument_type, workspace_id")
+    .eq("id", shareholderId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!existing) return { ok: false, error: "Shareholder not found." };
+
+  const baseParsed = BaseSchema.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email") ?? "",
+    entity_or_individual: formData.get("entity_or_individual"),
+    entry_date: formData.get("entry_date"),
+  });
+  if (!baseParsed.success) {
+    return {
+      ok: false,
+      error: baseParsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "),
+    };
+  }
+
+  const instrumentData = parseInstrumentData(formData, existing.instrument_type);
+  if (!("data" in instrumentData)) return instrumentData;
+
+  const { error } = await supabase
+    .from("shareholders")
+    .update({
+      name: baseParsed.data.name,
+      email: baseParsed.data.email || null,
+      entity_or_individual: baseParsed.data.entity_or_individual,
+      entry_date: baseParsed.data.entry_date,
+      instrument_data: instrumentData.data,
+    })
+    .eq("id", shareholderId);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/cap-table");
+  redirect("/cap-table");
+}
+
+export async function deleteShareholder(
+  shareholderId: string,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  // Soft delete (deleted_at = NOW()). Hard delete deferred for V1 audit story.
+  const { error } = await supabase
+    .from("shareholders")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", shareholderId)
+    .is("deleted_at", null);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/cap-table");
+  return { ok: true };
+}
+
+// Shared instrument-data parser used by both add and edit.
+function parseInstrumentData(
+  formData: FormData,
+  instrumentType: string,
+): { data: Record<string, string> } | ActionResult {
   if (instrumentType === "ordinary") {
     const parsed = OrdinaryDataSchema.safeParse({
       shares: formData.get("shares"),
@@ -94,8 +192,10 @@ export async function addShareholder(formData: FormData): Promise<AddResult> {
         error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "),
       };
     }
-    instrumentData = parsed.data;
-  } else {
+    return { data: parsed.data };
+  }
+
+  if (instrumentType === "isafe") {
     const parsed = ISafeDataSchema.safeParse({
       investment_sar: formData.get("investment_sar"),
       valuation_cap_sar: formData.get("valuation_cap_sar"),
@@ -108,23 +208,8 @@ export async function addShareholder(formData: FormData): Promise<AddResult> {
         error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "),
       };
     }
-    instrumentData = parsed.data;
+    return { data: parsed.data };
   }
 
-  const { error } = await supabase.from("shareholders").insert({
-    workspace_id: workspace.id,
-    name: baseParsed.data.name,
-    email: baseParsed.data.email || null,
-    entity_or_individual: baseParsed.data.entity_or_individual,
-    entry_date: baseParsed.data.entry_date,
-    instrument_type: instrumentType,
-    instrument_data: instrumentData,
-  });
-
-  if (error) {
-    return { ok: false, error: error.message };
-  }
-
-  revalidatePath("/cap-table");
-  redirect("/cap-table");
+  return { ok: false, error: `Unsupported instrument_type: ${instrumentType}` };
 }

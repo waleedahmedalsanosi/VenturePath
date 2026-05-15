@@ -7,6 +7,7 @@ import type { Database } from "@/lib/supabase/types";
 
 import { OwnershipDonut } from "./donut-chart";
 import { InstrumentChip } from "./instrument-chip";
+import { RowActions } from "./row-actions";
 
 type Workspace = Database["public"]["Tables"]["workspaces"]["Row"];
 type Shareholder = Database["public"]["Tables"]["shareholders"]["Row"];
@@ -112,6 +113,7 @@ export function CapTablePopulated({
                 <th className="px-4 py-3 text-start font-normal">Instrument</th>
                 <th className="px-4 py-3 text-end font-normal">Shares</th>
                 <th className="px-4 py-3 text-end font-normal">Ownership</th>
+                <th className="px-4 py-3 text-end font-normal" aria-label="Actions" />
               </tr>
             </thead>
             <tbody>
@@ -133,6 +135,9 @@ export function CapTablePopulated({
                     </td>
                     <td className="px-4 py-3 text-end tabular-nums">
                       {fmtPct(ownership_pct)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <RowActions id={row.id} name={row.name} />
                     </td>
                   </tr>
                 );
