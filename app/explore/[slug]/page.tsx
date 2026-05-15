@@ -40,6 +40,26 @@ function fmtInt(v: number | null): string {
   return v.toLocaleString();
 }
 
+function fmtDate(s: string | null | undefined): string {
+  if (!s) return "—";
+  return new Date(s).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+  });
+}
+
+const ROUND_INSTRUMENT_LABEL: Record<string, string> = {
+  isafe: "iSAFE",
+  safe: "SAFE",
+  convertible_note: "Convertible Note",
+  ordinary: "Priced Round",
+};
+
+const ROUND_STATUS_STYLES: Record<string, string> = {
+  open: "bg-(--color-info)/15 text-(--color-info)",
+  closed: "bg-(--color-success)/20 text-(--color-success)",
+};
+
 async function fetchProfile(slug: string) {
   const supabase = await createClient();
   const { data: workspace } = await supabase
@@ -57,7 +77,17 @@ async function fetchProfile(slug: string) {
     .is("deleted_at", null)
     .order("month", { ascending: true });
 
-  return { workspace, metrics: metrics ?? [] };
+  const { data: rounds } = await supabase
+    .from("financing_rounds")
+    .select("id, name, status, instrument_type, lead_investor, close_date, actual_raise_sar")
+    .eq("workspace_id", workspace.id)
+    .eq("is_public", true)
+    .neq("status", "draft")
+    .is("deleted_at", null)
+    .order("close_date", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false });
+
+  return { workspace, metrics: metrics ?? [], rounds: rounds ?? [] };
 }
 
 export async function generateMetadata(
@@ -85,7 +115,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
   const data = await fetchProfile(slug);
   if (!data) notFound();
 
-  const { workspace, metrics } = data;
+  const { workspace, metrics, rounds } = data;
 
   // Get the latest non-null value for each metric for the "current" tiles.
   const latest = metrics.length ? metrics[metrics.length - 1]! : null;
@@ -173,6 +203,57 @@ export default async function PublicProfilePage({ params }: PageProps) {
               />
             </div>
           )}
+        </section>
+      )}
+
+      {rounds.length > 0 && (
+        <section className="mt-12">
+          <h2 className="text-label-md uppercase text-(--color-on-surface-variant) mb-4">
+            Fundraising
+          </h2>
+          <div className="rounded-xl bg-(--color-surface-container-low) overflow-hidden">
+            <table className="w-full text-body-sm">
+              <thead>
+                <tr className="text-label-md uppercase text-(--color-on-surface-variant)">
+                  <th className="px-4 py-3 text-start font-normal">Round</th>
+                  <th className="px-4 py-3 text-start font-normal">Instrument</th>
+                  <th className="px-4 py-3 text-start font-normal">Raised</th>
+                  <th className="px-4 py-3 text-start font-normal">Lead</th>
+                  <th className="px-4 py-3 text-start font-normal">Date</th>
+                  <th className="px-4 py-3 text-start font-normal">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rounds.map((r) => (
+                  <tr
+                    key={r.id}
+                    className="border-t border-(--color-outline-variant)/15 align-middle"
+                  >
+                    <td className="px-4 py-3 font-medium">{r.name}</td>
+                    <td className="px-4 py-3 text-(--color-on-surface-variant)">
+                      {ROUND_INSTRUMENT_LABEL[r.instrument_type] ?? r.instrument_type}
+                    </td>
+                    <td className="px-4 py-3 tabular-nums text-(--color-on-surface-variant)">
+                      {r.status === "closed" ? fmtSAR(r.actual_raise_sar) : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-(--color-on-surface-variant)">
+                      {r.lead_investor ?? "—"}
+                    </td>
+                    <td className="px-4 py-3 tabular-nums text-(--color-on-surface-variant) whitespace-nowrap">
+                      {fmtDate(r.close_date)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-label-sm font-medium uppercase tracking-wider ${ROUND_STATUS_STYLES[r.status] ?? ""}`}
+                      >
+                        {r.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
 

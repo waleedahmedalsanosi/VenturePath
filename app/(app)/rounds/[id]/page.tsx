@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveWorkspace } from "@/lib/workspace/active";
 
 import { RoundActions } from "./round-actions";
+import { VisibilityToggle } from "./visibility-toggle";
 
 const STATUS_STYLES: Record<string, string> = {
   draft: "bg-(--color-surface-bright) text-(--color-on-surface-variant)",
@@ -231,6 +232,14 @@ export default async function RoundDetailPage({
           </p>
         </section>
       )}
+
+      {/* Public visibility */}
+      <VisibilityToggle
+        roundId={round.id}
+        isPublic={round.is_public}
+        status={round.status}
+        publicProfilePublished={workspace.public_profile_published}
+      />
 
       {/* Actions */}
       {round.status !== "closed" && (

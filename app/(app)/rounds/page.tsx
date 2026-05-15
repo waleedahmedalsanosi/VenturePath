@@ -109,12 +109,23 @@ export default async function RoundsPage() {
                   className="border-t border-(--color-outline-variant)/15 align-middle"
                 >
                   <td className="px-4 py-3 font-medium">
-                    <Link
-                      href={`/rounds/${r.id}`}
-                      className="hover:text-(--color-primary)"
-                    >
-                      {r.name}
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/rounds/${r.id}`}
+                        className="hover:text-(--color-primary)"
+                      >
+                        {r.name}
+                      </Link>
+                      {r.is_public && r.status !== "draft" && (
+                        <span
+                          title="Visible on public profile"
+                          className="text-label-sm text-(--color-primary)"
+                          aria-label="Public"
+                        >
+                          ●
+                        </span>
+                      )}
+                    </div>
                     {r.lead_investor && (
                       <div className="text-body-sm text-(--color-on-surface-variant) mt-0.5">
                         {r.lead_investor}

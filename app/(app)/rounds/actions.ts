@@ -407,6 +407,46 @@ export async function closeRound(
   return { ok: true };
 }
 
+// ── Public visibility toggle ─────────────────────────────────────────────────
+
+export async function setRoundVisibility(
+  roundId: string,
+  isPublic: boolean,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const { data: round } = await supabase
+    .from("financing_rounds")
+    .select("name, status, workspace_id")
+    .eq("id", roundId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!round) return { ok: false, error: "Round not found." };
+
+  const { error } = await supabase
+    .from("financing_rounds")
+    .update({ is_public: isPublic })
+    .eq("id", roundId);
+  if (error) return { ok: false, error: error.message };
+
+  await logAudit({
+    workspaceId: round.workspace_id,
+    entityType: "workspace",
+    entityId: roundId,
+    action: isPublic ? "round_publish" : "round_unpublish",
+    description: `${isPublic ? "Published" : "Unpublished"} round "${round.name}" on public profile`,
+  });
+
+  revalidatePath(`/rounds/${roundId}`);
+  revalidatePath("/rounds");
+  revalidatePath("/explore", "layout");
+  return { ok: true };
+}
+
 // ── Delete round ──────────────────────────────────────────────────────────────
 
 export async function deleteRound(roundId: string): Promise<ActionResult> {

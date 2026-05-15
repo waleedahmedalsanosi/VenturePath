@@ -30,6 +30,7 @@ export type Database = {
           lead_investor: string | null;
           close_date: string | null;
           board_resolution_id: string | null;
+          is_public: boolean;
           created_at: string;
           updated_at: string;
           deleted_at: string | null;
@@ -47,6 +48,7 @@ export type Database = {
           lead_investor?: string | null;
           close_date?: string | null;
           board_resolution_id?: string | null;
+          is_public?: boolean;
           created_at?: string;
           updated_at?: string;
           deleted_at?: string | null;
@@ -64,6 +66,7 @@ export type Database = {
           lead_investor?: string | null;
           close_date?: string | null;
           board_resolution_id?: string | null;
+          is_public?: boolean;
           created_at?: string;
           updated_at?: string;
           deleted_at?: string | null;
