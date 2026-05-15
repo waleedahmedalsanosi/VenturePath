@@ -954,6 +954,54 @@ export type Database = {
         };
         Relationships: [];
       };
+      closing_items: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          round_id: string;
+          pipeline_contact_id: string | null;
+          category: "kyc_aml" | "subscription_agreement" | "wire_confirmation" | "share_certificate" | "board_approval" | "other";
+          title: string;
+          status: "pending" | "in_progress" | "complete" | "waived";
+          notes: string | null;
+          completed_at: string | null;
+          due_date: string | null;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          round_id: string;
+          pipeline_contact_id?: string | null;
+          category: "kyc_aml" | "subscription_agreement" | "wire_confirmation" | "share_certificate" | "board_approval" | "other";
+          title: string;
+          status?: "pending" | "in_progress" | "complete" | "waived";
+          notes?: string | null;
+          completed_at?: string | null;
+          due_date?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          round_id?: string;
+          pipeline_contact_id?: string | null;
+          category?: "kyc_aml" | "subscription_agreement" | "wire_confirmation" | "share_certificate" | "board_approval" | "other";
+          title?: string;
+          status?: "pending" | "in_progress" | "complete" | "waived";
+          notes?: string | null;
+          completed_at?: string | null;
+          due_date?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Relationships: [];
+      };
       term_sheets: {
         Row: {
           id: string;
@@ -1061,6 +1109,8 @@ export type Database = {
       document_visibility: "internal" | "data_room" | "public";
       data_room_tier: "intro" | "standard" | "diligence";
       term_sheet_status: "draft" | "sent" | "signed" | "declined" | "withdrawn";
+      closing_item_category: "kyc_aml" | "subscription_agreement" | "wire_confirmation" | "share_certificate" | "board_approval" | "other";
+      closing_item_status: "pending" | "in_progress" | "complete" | "waived";
       meeting_format: "virtual" | "in_person";
       meeting_status: "upcoming" | "completed" | "cancelled";
       resolution_status: "draft" | "pending" | "passed" | "rejected";

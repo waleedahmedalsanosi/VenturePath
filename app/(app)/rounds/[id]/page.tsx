@@ -11,6 +11,7 @@ import { InvestorCrm } from "./crm";
 import { DataRoom } from "./data-room";
 import { Blockers } from "./blockers";
 import { TermSheetsSection } from "./term-sheets-section";
+import { ClosingLegal } from "./closing-legal";
 
 const STATUS_STYLES: Record<string, string> = {
   draft: "bg-(--color-surface-bright) text-(--color-on-surface-variant)",
@@ -77,6 +78,7 @@ export default async function RoundDetailPage({
     { data: dataRoomLinks },
     { data: blockers },
     { data: termSheets },
+    { data: closingItems },
   ] = await Promise.all([
     supabase
       .from("shareholders")
@@ -114,6 +116,12 @@ export default async function RoundDetailPage({
       .eq("round_id", id)
       .is("deleted_at", null)
       .order("created_at", { ascending: false }),
+    supabase
+      .from("closing_items")
+      .select("id, category, title, status, notes, completed_at, due_date, pipeline_contact_id")
+      .eq("round_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: true }),
   ]);
 
   // Fetch recent views per active link (last 20 each) for the data-room analytics panel.
@@ -300,6 +308,14 @@ export default async function RoundDetailPage({
       <TermSheetsSection
         roundId={round.id}
         termSheets={(termSheets ?? []) as Parameters<typeof TermSheetsSection>[0]["termSheets"]}
+        canEdit={round.status !== "closed"}
+      />
+
+      {/* Closing & Legal */}
+      <ClosingLegal
+        roundId={round.id}
+        items={(closingItems ?? []) as Parameters<typeof ClosingLegal>[0]["items"]}
+        pipelineContacts={(pipelineContacts ?? []).map((c) => ({ id: c.id, name: c.name, firm: c.firm ?? null }))}
         canEdit={round.status !== "closed"}
       />
 
