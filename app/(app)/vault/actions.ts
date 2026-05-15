@@ -3,6 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 
+import { logAudit } from "@/lib/audit/log";
 import { createClient } from "@/lib/supabase/server";
 
 export interface ActionResult {
@@ -84,6 +85,15 @@ export async function uploadDocument(formData: FormData): Promise<ActionResult> 
     return { ok: false, error: `Metadata insert failed: ${insertError.message}` };
   }
 
+  await logAudit({
+    workspaceId: workspace.id,
+    entityType: "document",
+    entityId: documentId,
+    action: "upload",
+    description: `Uploaded "${displayName}" (${(file.size / 1024).toFixed(1)} KB)`,
+    payload: { mime_type: file.type, size_bytes: file.size },
+  });
+
   revalidatePath("/vault");
   return { ok: true };
 }
@@ -97,7 +107,7 @@ export async function deleteDocument(documentId: string): Promise<ActionResult> 
 
   const { data: doc } = await supabase
     .from("documents")
-    .select("storage_path")
+    .select("storage_path, name, workspace_id")
     .eq("id", documentId)
     .is("deleted_at", null)
     .maybeSingle();
@@ -117,6 +127,14 @@ export async function deleteDocument(documentId: string): Promise<ActionResult> 
     // Metadata is already marked deleted; surface the storage error but don't roll back.
     return { ok: false, error: `Storage remove failed: ${storageError.message}` };
   }
+
+  await logAudit({
+    workspaceId: doc.workspace_id,
+    entityType: "document",
+    entityId: documentId,
+    action: "delete",
+    description: `Deleted document "${doc.name}"`,
+  });
 
   revalidatePath("/vault");
   return { ok: true };

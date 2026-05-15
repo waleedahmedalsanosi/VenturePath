@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { logAudit } from "@/lib/audit/log";
 import { nextDueDate } from "@/lib/compliance/status";
 import { createClient } from "@/lib/supabase/server";
 
@@ -71,20 +72,32 @@ export async function addObligation(formData: FormData): Promise<ActionResult> {
     };
   }
 
-  const { error } = await supabase.from("compliance_obligations").insert({
-    workspace_id: workspace.id,
-    name: parsed.data.name,
-    regulatory_body: parsed.data.regulatory_body,
-    category: parsed.data.category,
-    start_date: parsed.data.start_date || null,
-    due_date: parsed.data.due_date,
-    recurrence: parsed.data.recurrence,
-    official_url: parsed.data.official_url || null,
-    reminder_days_before: parsed.data.reminder_days_before,
-    notes: parsed.data.notes || null,
-  });
+  const { data: inserted, error } = await supabase
+    .from("compliance_obligations")
+    .insert({
+      workspace_id: workspace.id,
+      name: parsed.data.name,
+      regulatory_body: parsed.data.regulatory_body,
+      category: parsed.data.category,
+      start_date: parsed.data.start_date || null,
+      due_date: parsed.data.due_date,
+      recurrence: parsed.data.recurrence,
+      official_url: parsed.data.official_url || null,
+      reminder_days_before: parsed.data.reminder_days_before,
+      notes: parsed.data.notes || null,
+    })
+    .select("id")
+    .single();
 
-  if (error) return { ok: false, error: error.message };
+  if (error || !inserted) return { ok: false, error: error?.message ?? "Insert failed." };
+
+  await logAudit({
+    workspaceId: workspace.id,
+    entityType: "compliance_obligation",
+    entityId: inserted.id,
+    action: "create",
+    description: `Added compliance obligation "${parsed.data.name}" (${parsed.data.regulatory_body}, due ${parsed.data.due_date})`,
+  });
 
   revalidatePath("/compliance");
   redirect("/compliance");
@@ -112,6 +125,14 @@ export async function markComplete(obligationId: string): Promise<ActionResult> 
     .update({ completed_at: new Date().toISOString() })
     .eq("id", obligationId);
   if (updateError) return { ok: false, error: updateError.message };
+
+  await logAudit({
+    workspaceId: row.workspace_id,
+    entityType: "compliance_obligation",
+    entityId: obligationId,
+    action: "mark_complete",
+    description: `Marked "${row.name}" complete (was due ${row.due_date})`,
+  });
 
   // Auto-create next occurrence for recurring obligations (PRD US-11-03).
   const nextDate = nextDueDate(row.due_date, row.recurrence);
@@ -151,11 +172,27 @@ export async function reopenObligation(obligationId: string): Promise<ActionResu
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Not signed in." };
 
+  const { data: existing, error: fetchError } = await supabase
+    .from("compliance_obligations")
+    .select("workspace_id, name")
+    .eq("id", obligationId)
+    .maybeSingle();
+  if (fetchError) return { ok: false, error: fetchError.message };
+  if (!existing) return { ok: false, error: "Obligation not found." };
+
   const { error } = await supabase
     .from("compliance_obligations")
     .update({ completed_at: null })
     .eq("id", obligationId);
   if (error) return { ok: false, error: error.message };
+
+  await logAudit({
+    workspaceId: existing.workspace_id,
+    entityType: "compliance_obligation",
+    entityId: obligationId,
+    action: "reopen",
+    description: `Reopened "${existing.name}"`,
+  });
 
   revalidatePath("/compliance");
   return { ok: true };
@@ -168,12 +205,29 @@ export async function deleteObligation(obligationId: string): Promise<ActionResu
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Not signed in." };
 
+  const { data: existing, error: fetchError } = await supabase
+    .from("compliance_obligations")
+    .select("workspace_id, name")
+    .eq("id", obligationId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (fetchError) return { ok: false, error: fetchError.message };
+  if (!existing) return { ok: false, error: "Obligation not found." };
+
   const { error } = await supabase
     .from("compliance_obligations")
     .update({ deleted_at: new Date().toISOString() })
     .eq("id", obligationId)
     .is("deleted_at", null);
   if (error) return { ok: false, error: error.message };
+
+  await logAudit({
+    workspaceId: existing.workspace_id,
+    entityType: "compliance_obligation",
+    entityId: obligationId,
+    action: "delete",
+    description: `Deleted obligation "${existing.name}"`,
+  });
 
   revalidatePath("/compliance");
   return { ok: true };

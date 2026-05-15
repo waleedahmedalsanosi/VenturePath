@@ -44,6 +44,12 @@ export default async function AppLayout({
               >
                 Compliance
               </Link>
+              <Link
+                href="/audit"
+                className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
+              >
+                Audit
+              </Link>
             </nav>
           </div>
           <div className="flex items-center gap-3 text-body-sm text-(--color-on-surface-variant)">

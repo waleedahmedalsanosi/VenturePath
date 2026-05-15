@@ -16,6 +16,42 @@ export type Database = {
   };
   public: {
     Tables: {
+      audit_events: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          actor_user_id: string;
+          actor_email: string;
+          entity_type: "workspace" | "shareholder" | "document" | "compliance_obligation";
+          entity_id: string | null;
+          action: string;
+          description: string;
+          payload: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          actor_user_id: string;
+          actor_email: string;
+          entity_type: "workspace" | "shareholder" | "document" | "compliance_obligation";
+          entity_id?: string | null;
+          action: string;
+          description: string;
+          payload?: Json | null;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: "audit_events_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       compliance_obligations: {
         Row: {
           id: string;

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { logAudit } from "@/lib/audit/log";
 import { createClient } from "@/lib/supabase/server";
 
 const WorkspaceSchema = z
@@ -66,14 +67,26 @@ export async function createWorkspace(formData: FormData): Promise<ActionResult>
     };
   }
 
-  const { error } = await supabase.from("workspaces").insert({
-    ...parsed.data,
-    owner_user_id: user.id,
-  });
+  const { data: inserted, error } = await supabase
+    .from("workspaces")
+    .insert({
+      ...parsed.data,
+      owner_user_id: user.id,
+    })
+    .select("id")
+    .single();
 
-  if (error) {
-    return { ok: false, error: error.message };
+  if (error || !inserted) {
+    return { ok: false, error: error?.message ?? "Insert failed." };
   }
+
+  await logAudit({
+    workspaceId: inserted.id,
+    entityType: "workspace",
+    entityId: inserted.id,
+    action: "create",
+    description: `Created workspace "${parsed.data.name}"`,
+  });
 
   redirect("/cap-table");
 }

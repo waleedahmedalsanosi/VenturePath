@@ -4,9 +4,17 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { logAudit } from "@/lib/audit/log";
 import { Dec } from "@/lib/cap-table/decimal";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/types";
+
+const INSTRUMENT_LABELS: Record<string, string> = {
+  ordinary: "Ordinary Share",
+  isafe: "iSAFE",
+  safe: "SAFE",
+  convertible_note: "Convertible Note",
+};
 
 const DecimalString = z
   .string()
@@ -124,17 +132,30 @@ export async function addShareholder(formData: FormData): Promise<ActionResult> 
   const instrumentData = parseInstrumentData(formData, instrumentType);
   if (!("data" in instrumentData)) return instrumentData;
 
-  const { error } = await supabase.from("shareholders").insert({
-    workspace_id: workspace.id,
-    name: baseParsed.data.name,
-    email: baseParsed.data.email || null,
-    entity_or_individual: baseParsed.data.entity_or_individual,
-    entry_date: baseParsed.data.entry_date,
-    instrument_type: instrumentType,
-    instrument_data: instrumentData.data as Json,
-  });
+  const { data: inserted, error } = await supabase
+    .from("shareholders")
+    .insert({
+      workspace_id: workspace.id,
+      name: baseParsed.data.name,
+      email: baseParsed.data.email || null,
+      entity_or_individual: baseParsed.data.entity_or_individual,
+      entry_date: baseParsed.data.entry_date,
+      instrument_type: instrumentType,
+      instrument_data: instrumentData.data as Json,
+    })
+    .select("id")
+    .single();
 
-  if (error) return { ok: false, error: error.message };
+  if (error || !inserted) return { ok: false, error: error?.message ?? "Insert failed." };
+
+  await logAudit({
+    workspaceId: workspace.id,
+    entityType: "shareholder",
+    entityId: inserted.id,
+    action: "create",
+    description: `Added ${INSTRUMENT_LABELS[instrumentType]} holder "${baseParsed.data.name}"`,
+    payload: { instrument_type: instrumentType, instrument_data: instrumentData.data as Json },
+  });
 
   revalidatePath("/cap-table");
   redirect("/cap-table");
@@ -190,6 +211,15 @@ export async function editShareholder(
 
   if (error) return { ok: false, error: error.message };
 
+  await logAudit({
+    workspaceId: existing.workspace_id,
+    entityType: "shareholder",
+    entityId: shareholderId,
+    action: "update",
+    description: `Edited ${INSTRUMENT_LABELS[existing.instrument_type]} holder "${baseParsed.data.name}"`,
+    payload: { instrument_data: instrumentData.data as Json },
+  });
+
   revalidatePath("/cap-table");
   redirect("/cap-table");
 }
@@ -203,7 +233,16 @@ export async function deleteShareholder(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Not signed in." };
 
-  // Soft delete (deleted_at = NOW()). Hard delete deferred for V1 audit story.
+  // Soft delete to preserve audit trail.
+  const { data: existing, error: fetchError } = await supabase
+    .from("shareholders")
+    .select("workspace_id, name, instrument_type")
+    .eq("id", shareholderId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (fetchError) return { ok: false, error: fetchError.message };
+  if (!existing) return { ok: false, error: "Shareholder not found." };
+
   const { error } = await supabase
     .from("shareholders")
     .update({ deleted_at: new Date().toISOString() })
@@ -211,6 +250,14 @@ export async function deleteShareholder(
     .is("deleted_at", null);
 
   if (error) return { ok: false, error: error.message };
+
+  await logAudit({
+    workspaceId: existing.workspace_id,
+    entityType: "shareholder",
+    entityId: shareholderId,
+    action: "delete",
+    description: `Removed ${INSTRUMENT_LABELS[existing.instrument_type]} holder "${existing.name}"`,
+  });
 
   revalidatePath("/cap-table");
   return { ok: true };
