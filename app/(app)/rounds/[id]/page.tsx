@@ -10,6 +10,7 @@ import { VisibilityToggle } from "./visibility-toggle";
 import { InvestorCrm } from "./crm";
 import { DataRoom } from "./data-room";
 import { Blockers } from "./blockers";
+import { TermSheetsSection } from "./term-sheets-section";
 
 const STATUS_STYLES: Record<string, string> = {
   draft: "bg-(--color-surface-bright) text-(--color-on-surface-variant)",
@@ -75,6 +76,7 @@ export default async function RoundDetailPage({
     { data: pipelineContacts },
     { data: dataRoomLinks },
     { data: blockers },
+    { data: termSheets },
   ] = await Promise.all([
     supabase
       .from("shareholders")
@@ -106,6 +108,12 @@ export default async function RoundDetailPage({
       .eq("round_id", id)
       .is("deleted_at", null)
       .order("created_at", { ascending: true }),
+    supabase
+      .from("term_sheets")
+      .select("id, investor_name, firm, instrument_type, status, version, sent_at, signed_at, created_at, terms")
+      .eq("round_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false }),
   ]);
 
   // Fetch recent views per active link (last 20 each) for the data-room analytics panel.
@@ -286,6 +294,13 @@ export default async function RoundDetailPage({
         roundId={round.id}
         contacts={(pipelineContacts ?? []) as Parameters<typeof InvestorCrm>[0]["contacts"]}
         targetRaiseSar={round.target_raise_sar ? Number(round.target_raise_sar) : null}
+      />
+
+      {/* Term sheets */}
+      <TermSheetsSection
+        roundId={round.id}
+        termSheets={(termSheets ?? []) as Parameters<typeof TermSheetsSection>[0]["termSheets"]}
+        canEdit={round.status !== "closed"}
       />
 
       {/* Blockers to close */}

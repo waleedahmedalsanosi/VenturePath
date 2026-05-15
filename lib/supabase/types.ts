@@ -954,6 +954,66 @@ export type Database = {
         };
         Relationships: [];
       };
+      term_sheets: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          round_id: string;
+          pipeline_contact_id: string | null;
+          investor_name: string;
+          investor_email: string | null;
+          firm: string | null;
+          instrument_type: "isafe" | "safe" | "convertible_note" | "ordinary";
+          terms: Json;
+          status: Database["public"]["Enums"]["term_sheet_status"];
+          version: number;
+          notes: string | null;
+          sent_at: string | null;
+          signed_at: string | null;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          round_id: string;
+          pipeline_contact_id?: string | null;
+          investor_name: string;
+          investor_email?: string | null;
+          firm?: string | null;
+          instrument_type: "isafe" | "safe" | "convertible_note" | "ordinary";
+          terms?: Json;
+          status?: Database["public"]["Enums"]["term_sheet_status"];
+          version?: number;
+          notes?: string | null;
+          sent_at?: string | null;
+          signed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          round_id?: string;
+          pipeline_contact_id?: string | null;
+          investor_name?: string;
+          investor_email?: string | null;
+          firm?: string | null;
+          instrument_type?: "isafe" | "safe" | "convertible_note" | "ordinary";
+          terms?: Json;
+          status?: Database["public"]["Enums"]["term_sheet_status"];
+          version?: number;
+          notes?: string | null;
+          sent_at?: string | null;
+          signed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -1000,6 +1060,7 @@ export type Database = {
       isafe_conversion_status: "unconverted" | "converted";
       document_visibility: "internal" | "data_room" | "public";
       data_room_tier: "intro" | "standard" | "diligence";
+      term_sheet_status: "draft" | "sent" | "signed" | "declined" | "withdrawn";
       meeting_format: "virtual" | "in_person";
       meeting_status: "upcoming" | "completed" | "cancelled";
       resolution_status: "draft" | "pending" | "passed" | "rejected";
