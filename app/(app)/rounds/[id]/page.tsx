@@ -1,11 +1,14 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
+import { headers } from "next/headers";
 
 import { createClient } from "@/lib/supabase/server";
 import { getActiveWorkspace } from "@/lib/workspace/active";
 
 import { RoundActions } from "./round-actions";
 import { VisibilityToggle } from "./visibility-toggle";
+import { InvestorCrm } from "./crm";
+import { DataRoom } from "./data-room";
 
 const STATUS_STYLES: Record<string, string> = {
   draft: "bg-(--color-surface-bright) text-(--color-on-surface-variant)",
@@ -65,21 +68,37 @@ export default async function RoundDetailPage({
   if (!round) notFound();
 
   // Investors: shareholders linked to this round OR all shareholders for context.
-  const { data: linkedInvestors } = await supabase
-    .from("shareholders")
-    .select("id, name, email, instrument_type, entry_date, instrument_data")
-    .eq("workspace_id", workspace.id)
-    .eq("funding_round_id", id)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: true });
-
-  // Unconverted instruments across the workspace (will convert on close).
-  const { data: pendingConvertibles } = await supabase
-    .from("shareholders")
-    .select("id, name, instrument_type, instrument_data")
-    .eq("workspace_id", workspace.id)
-    .in("instrument_type", ["isafe", "safe"])
-    .is("deleted_at", null);
+  const [
+    { data: linkedInvestors },
+    { data: pendingConvertibles },
+    { data: pipelineContacts },
+    { data: dataRoomLinks },
+  ] = await Promise.all([
+    supabase
+      .from("shareholders")
+      .select("id, name, email, instrument_type, entry_date, instrument_data")
+      .eq("workspace_id", workspace.id)
+      .eq("funding_round_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("shareholders")
+      .select("id, name, instrument_type, instrument_data")
+      .eq("workspace_id", workspace.id)
+      .in("instrument_type", ["isafe", "safe"])
+      .is("deleted_at", null),
+    supabase
+      .from("investor_pipeline")
+      .select("id, name, email, firm, status, notes, last_contacted_at")
+      .eq("round_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("data_room_links")
+      .select("id, label, token, is_active, view_count, expires_at, created_at")
+      .eq("round_id", id)
+      .order("created_at", { ascending: false }),
+  ]);
 
   const unconverted = (pendingConvertibles ?? []).filter((s) => {
     const d = s.instrument_data as Record<string, unknown>;
@@ -87,6 +106,11 @@ export default async function RoundDetailPage({
   });
 
   const investors = linkedInvestors ?? [];
+
+  const hdrs = await headers();
+  const host = hdrs.get("host") ?? "localhost:3000";
+  const proto = host.startsWith("localhost") ? "http" : "https";
+  const appUrl = `${proto}://${host}`;
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10 space-y-8">
@@ -232,6 +256,19 @@ export default async function RoundDetailPage({
           </p>
         </section>
       )}
+
+      {/* Investor pipeline (CRM) */}
+      <InvestorCrm
+        roundId={round.id}
+        contacts={(pipelineContacts ?? []) as Parameters<typeof InvestorCrm>[0]["contacts"]}
+      />
+
+      {/* Data room */}
+      <DataRoom
+        roundId={round.id}
+        links={(dataRoomLinks ?? []) as Parameters<typeof DataRoom>[0]["links"]}
+        appUrl={appUrl}
+      />
 
       {/* Public visibility */}
       <VisibilityToggle

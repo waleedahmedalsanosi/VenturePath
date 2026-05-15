@@ -22,6 +22,7 @@ function fmtDate(iso: string): string {
 const NAV_SECTIONS = [
   { href: "/company", label: "Company", desc: "Legal entity & profile" },
   { href: "/cap-table", label: "Cap Table", desc: "Shareholders & instruments" },
+  { href: "/rounds", label: "Fundraising", desc: "Rounds, investors & data room" },
   { href: "/esop", label: "ESOP", desc: "Options pool & grants" },
   { href: "/governance", label: "Governance", desc: "Board meetings & resolutions" },
   { href: "/compliance", label: "Compliance", desc: "Deadlines & obligations" },
@@ -55,6 +56,7 @@ export default async function DashboardPage() {
     { data: complianceDue },
     { data: pendingResolutions },
     { data: recentAudit },
+    { data: activeRound },
   ] = await Promise.all([
     supabase
       .from("shareholders")
@@ -98,6 +100,15 @@ export default async function DashboardPage() {
       .eq("workspace_id", workspace.id)
       .order("created_at", { ascending: false })
       .limit(6),
+    supabase
+      .from("financing_rounds")
+      .select("id, name, status, target_raise_sar")
+      .eq("workspace_id", workspace.id)
+      .eq("status", "open")
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   // Pool utilization.
@@ -164,6 +175,20 @@ export default async function DashboardPage() {
           value={Number(totalVested.toFixed(0)).toLocaleString()}
           href="/esop"
         />
+        {activeRound ? (
+          <Tile
+            label="Active round"
+            value={activeRound.name}
+            href={`/rounds/${activeRound.id}`}
+            sub={activeRound.target_raise_sar ? `Target ${fmtSAR(Number(activeRound.target_raise_sar))}` : "Open"}
+          />
+        ) : (
+          <Tile
+            label="Fundraising"
+            value="No open round"
+            href="/rounds"
+          />
+        )}
       </section>
 
       {/* Quick nav */}

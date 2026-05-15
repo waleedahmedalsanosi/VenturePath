@@ -500,6 +500,117 @@ export type Database = {
           },
         ];
       };
+      investor_pipeline: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          round_id: string;
+          name: string;
+          email: string | null;
+          firm: string | null;
+          status: "prospect" | "contacted" | "in_discussion" | "term_sheet" | "passed" | "invested";
+          notes: string | null;
+          last_contacted_at: string | null;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          round_id: string;
+          name: string;
+          email?: string | null;
+          firm?: string | null;
+          status?: "prospect" | "contacted" | "in_discussion" | "term_sheet" | "passed" | "invested";
+          notes?: string | null;
+          last_contacted_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          round_id?: string;
+          name?: string;
+          email?: string | null;
+          firm?: string | null;
+          status?: "prospect" | "contacted" | "in_discussion" | "term_sheet" | "passed" | "invested";
+          notes?: string | null;
+          last_contacted_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "investor_pipeline_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "investor_pipeline_round_id_fkey";
+            columns: ["round_id"];
+            isOneToOne: false;
+            referencedRelation: "financing_rounds";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      data_room_links: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          round_id: string | null;
+          token: string;
+          label: string;
+          is_active: boolean;
+          view_count: number;
+          expires_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          round_id?: string | null;
+          token?: string;
+          label?: string;
+          is_active?: boolean;
+          view_count?: number;
+          expires_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          round_id?: string | null;
+          token?: string;
+          label?: string;
+          is_active?: boolean;
+          view_count?: number;
+          expires_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "data_room_links_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "data_room_links_round_id_fkey";
+            columns: ["round_id"];
+            isOneToOne: false;
+            referencedRelation: "financing_rounds";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       workspace_members: {
         Row: {
           workspace_id: string;
@@ -779,7 +890,23 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      get_data_room: {
+        Args: { p_token: string };
+        Returns: {
+          workspace_name: string;
+          round_name: string | null;
+          round_status: string | null;
+          doc_id: string | null;
+          doc_name: string | null;
+          doc_mime_type: string | null;
+          doc_size_bytes: number | null;
+          doc_created_at: string | null;
+        }[];
+      };
+      record_data_room_view: {
+        Args: { p_token: string };
+        Returns: void;
+      };
     };
     Enums: {
       compliance_category: "tax" | "commercial" | "regulatory" | "administrative";
