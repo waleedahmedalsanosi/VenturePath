@@ -2,6 +2,9 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 
+import { AuditFilters } from "./filters";
+import { DownloadCsvButton } from "./download-button";
+
 const ENTITY_LABELS: Record<string, string> = {
   workspace: "Workspace",
   shareholder: "Shareholder",
@@ -26,7 +29,17 @@ function fmtDateTime(iso: string): string {
   });
 }
 
-export default async function AuditPage() {
+interface PageProps {
+  searchParams: Promise<{
+    entity?: string;
+    actor?: string;
+    since?: string;
+    until?: string;
+  }>;
+}
+
+export default async function AuditPage({ searchParams }: PageProps) {
+  const params = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -41,36 +54,58 @@ export default async function AuditPage() {
     .maybeSingle();
   if (!workspace) redirect("/setup");
 
-  const { data: events } = await supabase
+  // Build a filtered query.
+  let q = supabase
     .from("audit_events")
     .select("*")
-    .eq("workspace_id", workspace.id)
+    .eq("workspace_id", workspace.id);
+
+  if (params.entity && params.entity !== "all") {
+    q = q.eq(
+      "entity_type",
+      params.entity as "workspace" | "shareholder" | "document" | "compliance_obligation",
+    );
+  }
+  if (params.actor) {
+    q = q.ilike("actor_email", `%${params.actor}%`);
+  }
+  if (params.since) {
+    q = q.gte("created_at", `${params.since}T00:00:00Z`);
+  }
+  if (params.until) {
+    q = q.lte("created_at", `${params.until}T23:59:59Z`);
+  }
+
+  const { data: events } = await q
     .order("created_at", { ascending: false })
-    .limit(200);
+    .limit(500);
 
   const rows = events ?? [];
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10 space-y-10">
-      <header>
-        <p className="text-label-md uppercase text-(--color-on-surface-variant)">
-          Audit trail
-        </p>
-        <h1 className="mt-1 text-display-sm font-semibold tracking-tight">
-          {workspace.name}
-        </h1>
-        <p className="mt-2 text-body-md text-(--color-on-surface-variant)">
-          Append-only event log. Every state-changing action is recorded —
-          shareholders, documents, compliance obligations, workspace edits.
-          Rows here cannot be modified or deleted, even by you.
-        </p>
+    <main className="mx-auto max-w-5xl px-6 py-10 space-y-8">
+      <header className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <p className="text-label-md uppercase text-(--color-on-surface-variant)">
+            Audit trail
+          </p>
+          <h1 className="mt-1 text-display-sm font-semibold tracking-tight">
+            {workspace.name}
+          </h1>
+          <p className="mt-2 text-body-md text-(--color-on-surface-variant)">
+            Append-only event log. Every state-changing action is recorded.
+            Rows here cannot be modified or deleted.
+          </p>
+        </div>
+        <DownloadCsvButton workspaceId={workspace.id} />
       </header>
+
+      <AuditFilters />
 
       {rows.length === 0 ? (
         <div className="rounded-xl bg-(--color-surface-container-low) p-12 text-center">
           <p className="text-body-md text-(--color-on-surface-variant)">
-            No audit events yet. Add a shareholder, upload a document, or
-            schedule a compliance obligation to start populating the trail.
+            No events match your filter. Clear filters or take an action.
           </p>
         </div>
       ) : (
@@ -112,10 +147,9 @@ export default async function AuditPage() {
               ))}
             </tbody>
           </table>
-          {rows.length === 200 && (
+          {rows.length === 500 && (
             <p className="px-4 py-3 text-body-sm text-(--color-on-surface-variant)">
-              Showing most recent 200 events. Older events still exist —
-              pagination is a future addition.
+              Showing 500 of N events — narrow your filter or export CSV for the full set.
             </p>
           )}
         </div>

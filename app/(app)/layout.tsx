@@ -27,6 +27,12 @@ export default async function AppLayout({
             </Link>
             <nav className="flex items-center gap-4 text-body-sm">
               <Link
+                href="/company"
+                className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
+              >
+                Company
+              </Link>
+              <Link
                 href="/cap-table"
                 className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
               >
