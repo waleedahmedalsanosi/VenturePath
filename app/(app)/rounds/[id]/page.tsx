@@ -9,6 +9,7 @@ import { RoundActions } from "./round-actions";
 import { VisibilityToggle } from "./visibility-toggle";
 import { InvestorCrm } from "./crm";
 import { DataRoom } from "./data-room";
+import { Blockers } from "./blockers";
 
 const STATUS_STYLES: Record<string, string> = {
   draft: "bg-(--color-surface-bright) text-(--color-on-surface-variant)",
@@ -73,6 +74,7 @@ export default async function RoundDetailPage({
     { data: pendingConvertibles },
     { data: pipelineContacts },
     { data: dataRoomLinks },
+    { data: blockers },
   ] = await Promise.all([
     supabase
       .from("shareholders")
@@ -98,7 +100,29 @@ export default async function RoundDetailPage({
       .select("id, label, token, is_active, view_count, expires_at, created_at")
       .eq("round_id", id)
       .order("created_at", { ascending: false }),
+    supabase
+      .from("round_blockers")
+      .select("id, title, resolved, resolved_at, created_at")
+      .eq("round_id", id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: true }),
   ]);
+
+  // Fetch recent views per active link (last 20 each) for the data-room analytics panel.
+  const activeLinkIds = (dataRoomLinks ?? []).filter((l) => l.is_active).map((l) => l.id);
+  const viewsByLink: Record<string, { viewed_at: string; user_agent: string | null }[]> = {};
+  if (activeLinkIds.length > 0) {
+    const { data: views } = await supabase
+      .from("data_room_views")
+      .select("link_id, viewed_at, user_agent")
+      .in("link_id", activeLinkIds)
+      .order("viewed_at", { ascending: false })
+      .limit(activeLinkIds.length * 20);
+    for (const v of views ?? []) {
+      const arr = viewsByLink[v.link_id] ?? (viewsByLink[v.link_id] = []);
+      if (arr.length < 20) arr.push({ viewed_at: v.viewed_at, user_agent: v.user_agent });
+    }
+  }
 
   const unconverted = (pendingConvertibles ?? []).filter((s) => {
     const d = s.instrument_data as Record<string, unknown>;
@@ -264,10 +288,18 @@ export default async function RoundDetailPage({
         targetRaiseSar={round.target_raise_sar ? Number(round.target_raise_sar) : null}
       />
 
+      {/* Blockers to close */}
+      <Blockers
+        roundId={round.id}
+        blockers={(blockers ?? []) as Parameters<typeof Blockers>[0]["blockers"]}
+        canEdit={round.status !== "closed"}
+      />
+
       {/* Data room */}
       <DataRoom
         roundId={round.id}
         links={(dataRoomLinks ?? []) as Parameters<typeof DataRoom>[0]["links"]}
+        viewsByLink={viewsByLink}
         appUrl={appUrl}
       />
 

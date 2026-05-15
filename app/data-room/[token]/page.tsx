@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import type { Metadata } from "next";
 
 import { createClient } from "@/lib/supabase/server";
@@ -48,8 +49,12 @@ export default async function DataRoomPage({ params }: PageProps) {
 
   if (error || !rows || rows.length === 0) notFound();
 
-  // Increment view count (fire and forget).
-  supabase.rpc("record_data_room_view", { p_token: token }).then(() => {});
+  // Increment view count + log analytics view (fire and forget).
+  const hdrs = await headers();
+  const userAgent = hdrs.get("user-agent")?.slice(0, 500) ?? null;
+  supabase
+    .rpc("record_data_room_view", { p_token: token, p_user_agent: userAgent })
+    .then(() => {});
 
   const first = rows[0]!;
   const docs = rows.filter((r) => r.doc_id !== null);

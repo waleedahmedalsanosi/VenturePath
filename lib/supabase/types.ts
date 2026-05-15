@@ -891,6 +891,63 @@ export type Database = {
         };
         Relationships: [];
       };
+      round_blockers: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          round_id: string;
+          title: string;
+          resolved: boolean;
+          resolved_at: string | null;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          round_id: string;
+          title: string;
+          resolved?: boolean;
+          resolved_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          round_id?: string;
+          title?: string;
+          resolved?: boolean;
+          resolved_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Relationships: [];
+      };
+      data_room_views: {
+        Row: {
+          id: string;
+          link_id: string;
+          viewed_at: string;
+          user_agent: string | null;
+        };
+        Insert: {
+          id?: string;
+          link_id: string;
+          viewed_at?: string;
+          user_agent?: string | null;
+        };
+        Update: {
+          id?: string;
+          link_id?: string;
+          viewed_at?: string;
+          user_agent?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -910,7 +967,7 @@ export type Database = {
         }[];
       };
       record_data_room_view: {
-        Args: { p_token: string };
+        Args: { p_token: string; p_user_agent?: string | null };
         Returns: void;
       };
     };

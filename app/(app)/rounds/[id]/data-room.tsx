@@ -14,16 +14,45 @@ interface DataRoomLink {
   created_at: string;
 }
 
+interface ViewEvent {
+  viewed_at: string;
+  user_agent: string | null;
+}
+
 interface DataRoomProps {
   roundId: string;
   links: DataRoomLink[];
+  viewsByLink: Record<string, ViewEvent[]>;
   appUrl: string;
 }
 
-export function DataRoom({ roundId, links, appUrl }: DataRoomProps) {
+function deviceFromUA(ua: string | null): string {
+  if (!ua) return "Unknown";
+  if (/iPhone|Android.+Mobile/.test(ua)) return "Mobile";
+  if (/iPad|Tablet/.test(ua)) return "Tablet";
+  if (/Macintosh|Windows|Linux/.test(ua)) return "Desktop";
+  return "Other";
+}
+
+function fmtRelativeDate(iso: string): string {
+  const date = new Date(iso);
+  const now = Date.now();
+  const diffMs = now - date.getTime();
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+export function DataRoom({ roundId, links, viewsByLink, appUrl }: DataRoomProps) {
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleCreate(e: React.FormEvent<HTMLFormElement>) {
@@ -56,6 +85,15 @@ export function DataRoom({ roundId, links, appUrl }: DataRoomProps) {
   const activeLinks = links.filter((l) => l.is_active);
   const revokedLinks = links.filter((l) => !l.is_active);
 
+  // Aggregate engagement summary across all active links.
+  const totalViews = activeLinks.reduce((s, l) => s + l.view_count, 0);
+  const uniqueViewers = new Set<string>();
+  for (const l of activeLinks) {
+    for (const v of viewsByLink[l.id] ?? []) {
+      if (v.user_agent) uniqueViewers.add(v.user_agent);
+    }
+  }
+
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
@@ -76,6 +114,24 @@ export function DataRoom({ roundId, links, appUrl }: DataRoomProps) {
         as <strong>data room</strong> visibility in your Vault. Files can be
         downloaded by authenticated users — the link itself is open-access.
       </p>
+
+      {/* Engagement summary */}
+      {activeLinks.length > 0 && totalViews > 0 && (
+        <div className="rounded-xl bg-(--color-surface-container-low) px-5 py-4 flex flex-wrap gap-x-8 gap-y-2 text-body-sm">
+          <span>
+            <span className="text-(--color-on-surface-variant)">Total views </span>
+            <span className="font-medium tabular-nums">{totalViews}</span>
+          </span>
+          <span>
+            <span className="text-(--color-on-surface-variant)">Distinct devices </span>
+            <span className="font-medium tabular-nums">{uniqueViewers.size}</span>
+          </span>
+          <span>
+            <span className="text-(--color-on-surface-variant)">Active links </span>
+            <span className="font-medium tabular-nums">{activeLinks.length}</span>
+          </span>
+        </div>
+      )}
 
       {/* Create form */}
       {showForm && (
@@ -121,48 +177,93 @@ export function DataRoom({ roundId, links, appUrl }: DataRoomProps) {
               <tr className="text-label-md uppercase text-(--color-on-surface-variant)">
                 <th className="px-4 py-3 text-start font-normal">Label</th>
                 <th className="px-4 py-3 text-start font-normal">Views</th>
+                <th className="px-4 py-3 text-start font-normal hidden md:table-cell">Last viewed</th>
                 <th className="px-4 py-3 text-start font-normal hidden sm:table-cell">Expires</th>
                 <th className="px-4 py-3 text-end font-normal" aria-label="Actions" />
               </tr>
             </thead>
             <tbody>
-              {activeLinks.map((l) => (
-                <tr key={l.id} className="border-t border-(--color-outline-variant)/15 align-middle group">
-                  <td className="px-4 py-3">
-                    <div className="font-medium">{l.label}</div>
-                    <div className="text-body-sm text-(--color-on-surface-variant) font-mono truncate max-w-[200px]">
-                      /data-room/{l.token}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 tabular-nums">
-                    <span className="text-display-sm font-semibold">{l.view_count}</span>
-                  </td>
-                  <td className="px-4 py-3 text-(--color-on-surface-variant) hidden sm:table-cell whitespace-nowrap">
-                    {l.expires_at
-                      ? new Date(l.expires_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
-                      : "Never"}
-                  </td>
-                  <td className="px-4 py-3 text-end">
-                    <div className="flex items-center justify-end gap-3">
-                      <button
-                        type="button"
-                        onClick={() => handleCopy(l.token)}
-                        className="text-body-sm text-(--color-primary) hover:underline"
-                      >
-                        {copied === l.token ? "Copied!" : "Copy link"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRevoke(l.id)}
-                        disabled={isPending}
-                        className="text-body-sm text-(--color-on-surface-variant) hover:text-(--color-error) opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        Revoke
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {activeLinks.map((l) => {
+                const views = viewsByLink[l.id] ?? [];
+                const lastView = views[0];
+                const isExpanded = expandedId === l.id;
+                return (
+                  <>
+                    <tr key={l.id} className="border-t border-(--color-outline-variant)/15 align-middle group">
+                      <td className="px-4 py-3">
+                        <div className="font-medium">{l.label}</div>
+                        <div className="text-body-sm text-(--color-on-surface-variant) font-mono truncate max-w-[200px]">
+                          /data-room/{l.token}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 tabular-nums">
+                        {l.view_count > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => setExpandedId(isExpanded ? null : l.id)}
+                            className="text-display-sm font-semibold hover:text-(--color-primary) transition-colors"
+                            title="View activity"
+                          >
+                            {l.view_count}
+                          </button>
+                        ) : (
+                          <span className="text-display-sm font-semibold text-(--color-on-surface-disabled)">0</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-(--color-on-surface-variant) hidden md:table-cell whitespace-nowrap">
+                        {lastView ? fmtRelativeDate(lastView.viewed_at) : "—"}
+                      </td>
+                      <td className="px-4 py-3 text-(--color-on-surface-variant) hidden sm:table-cell whitespace-nowrap">
+                        {l.expires_at
+                          ? new Date(l.expires_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+                          : "Never"}
+                      </td>
+                      <td className="px-4 py-3 text-end">
+                        <div className="flex items-center justify-end gap-3">
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(l.token)}
+                            className="text-body-sm text-(--color-primary) hover:underline"
+                          >
+                            {copied === l.token ? "Copied!" : "Copy link"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRevoke(l.id)}
+                            disabled={isPending}
+                            className="text-body-sm text-(--color-on-surface-variant) hover:text-(--color-error) opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            Revoke
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {isExpanded && views.length > 0 && (
+                      <tr key={`${l.id}-activity`} className="border-t border-(--color-outline-variant)/15">
+                        <td colSpan={5} className="px-4 py-4 bg-(--color-surface-container-high)/40">
+                          <p className="text-label-md uppercase text-(--color-on-surface-variant) mb-2">
+                            Recent activity ({views.length}{views.length === 20 ? "+" : ""})
+                          </p>
+                          <ul className="space-y-1.5">
+                            {views.slice(0, 20).map((v, i) => (
+                              <li key={i} className="flex items-center justify-between text-body-sm">
+                                <span className="text-(--color-on-surface-variant)">
+                                  {new Date(v.viewed_at).toLocaleString(undefined, {
+                                    month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+                                  })}
+                                </span>
+                                <span className="text-(--color-on-surface-variant) tabular-nums">
+                                  {deviceFromUA(v.user_agent)}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                );
+              })}
             </tbody>
           </table>
         </div>
