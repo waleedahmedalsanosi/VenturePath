@@ -16,6 +16,112 @@ export type Database = {
   };
   public: {
     Tables: {
+      board_meetings: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          title: string;
+          meeting_at: string;
+          format: Database["public"]["Enums"]["meeting_format"];
+          location: string | null;
+          agenda: string | null;
+          status: Database["public"]["Enums"]["meeting_status"];
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          title: string;
+          meeting_at: string;
+          format?: Database["public"]["Enums"]["meeting_format"];
+          location?: string | null;
+          agenda?: string | null;
+          status?: Database["public"]["Enums"]["meeting_status"];
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          title?: string;
+          meeting_at?: string;
+          format?: Database["public"]["Enums"]["meeting_format"];
+          location?: string | null;
+          agenda?: string | null;
+          status?: Database["public"]["Enums"]["meeting_status"];
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "board_meetings_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      resolutions: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          title: string;
+          template: Database["public"]["Enums"]["resolution_template"];
+          body: string;
+          status: Database["public"]["Enums"]["resolution_status"];
+          meeting_id: string | null;
+          decided_at: string | null;
+          decided_by: string | null;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          title: string;
+          template?: Database["public"]["Enums"]["resolution_template"];
+          body: string;
+          status?: Database["public"]["Enums"]["resolution_status"];
+          meeting_id?: string | null;
+          decided_at?: string | null;
+          decided_by?: string | null;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          title?: string;
+          template?: Database["public"]["Enums"]["resolution_template"];
+          body?: string;
+          status?: Database["public"]["Enums"]["resolution_status"];
+          meeting_id?: string | null;
+          decided_at?: string | null;
+          decided_by?: string | null;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "resolutions_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       audit_events: {
         Row: {
           id: string;
@@ -627,6 +733,18 @@ export type Database = {
       instrument_type: "ordinary" | "isafe" | "safe" | "convertible_note";
       isafe_conversion_status: "unconverted" | "converted";
       document_visibility: "internal" | "data_room" | "public";
+      meeting_format: "virtual" | "in_person";
+      meeting_status: "upcoming" | "completed" | "cancelled";
+      resolution_status: "draft" | "pending" | "passed" | "rejected";
+      resolution_template:
+        | "new_share_issuance"
+        | "round_approval"
+        | "director_appointment"
+        | "esop_grant"
+        | "esop_pool_expansion"
+        | "rofr_waiver"
+        | "transfer_restriction"
+        | "custom";
       valuation_methodology: "revenue_multiple" | "scorecard" | "berkus" | "dcf";
       workspace_role: "owner" | "admin" | "viewer";
     };

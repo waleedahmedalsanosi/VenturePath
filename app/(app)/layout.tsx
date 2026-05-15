@@ -86,6 +86,12 @@ export default async function AppLayout({
                 Compliance
               </Link>
               <Link
+                href="/governance"
+                className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
+              >
+                Governance
+              </Link>
+              <Link
                 href="/traction"
                 className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
               >
