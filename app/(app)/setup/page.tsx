@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { createClient } from "@/lib/supabase/server";
+import { listAccessibleWorkspaces } from "@/lib/workspace/active";
 
 import { SetupForm } from "./setup-form";
 
@@ -19,14 +20,12 @@ export default async function SetupPage({ searchParams }: PageProps) {
   } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
-  // First-time setup: redirect to dashboard only if user already has any
-  // workspace AND didn't explicitly request a new one.
-  const { data: existing } = await supabase
-    .from("workspaces")
-    .select("id")
-    .limit(1)
-    .maybeSingle();
-  if (existing && !wantsNew) redirect("/dashboard");
+  // Redirect to dashboard only if the user already owns/is-a-member-of a
+  // workspace and didn't explicitly ask to add a new one. We use
+  // listAccessibleWorkspaces (owner-or-member filter) instead of a raw query
+  // so that public demo profiles don't count as "existing" workspaces.
+  const owned = await listAccessibleWorkspaces();
+  if (owned.length > 0 && !wantsNew) redirect("/dashboard");
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">
