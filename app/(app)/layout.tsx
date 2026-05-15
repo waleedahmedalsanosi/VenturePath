@@ -38,6 +38,12 @@ export default async function AppLayout({
               >
                 Vault
               </Link>
+              <Link
+                href="/compliance"
+                className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
+              >
+                Compliance
+              </Link>
             </nav>
           </div>
           <div className="flex items-center gap-3 text-body-sm text-(--color-on-surface-variant)">

@@ -16,6 +16,71 @@ export type Database = {
   };
   public: {
     Tables: {
+      compliance_obligations: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          name: string;
+          regulatory_body: string;
+          category: Database["public"]["Enums"]["compliance_category"];
+          start_date: string | null;
+          due_date: string;
+          recurrence: Database["public"]["Enums"]["compliance_recurrence"];
+          official_url: string | null;
+          reminder_days_before: number;
+          notes: string | null;
+          completed_at: string | null;
+          previous_id: string | null;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          name: string;
+          regulatory_body: string;
+          category: Database["public"]["Enums"]["compliance_category"];
+          start_date?: string | null;
+          due_date: string;
+          recurrence?: Database["public"]["Enums"]["compliance_recurrence"];
+          official_url?: string | null;
+          reminder_days_before?: number;
+          notes?: string | null;
+          completed_at?: string | null;
+          previous_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          name?: string;
+          regulatory_body?: string;
+          category?: Database["public"]["Enums"]["compliance_category"];
+          start_date?: string | null;
+          due_date?: string;
+          recurrence?: Database["public"]["Enums"]["compliance_recurrence"];
+          official_url?: string | null;
+          reminder_days_before?: number;
+          notes?: string | null;
+          completed_at?: string | null;
+          previous_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "compliance_obligations_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       documents: {
         Row: {
           created_at: string;
@@ -169,6 +234,8 @@ export type Database = {
       [_ in never]: never;
     };
     Enums: {
+      compliance_category: "tax" | "commercial" | "regulatory" | "administrative";
+      compliance_recurrence: "one_time" | "monthly" | "quarterly" | "annual";
       entity_or_individual: "entity" | "individual";
       entity_status: "incorporated" | "product_only";
       instrument_type: "ordinary" | "isafe";
