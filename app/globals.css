@@ -1,26 +1,217 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * VenturePath — Kinetic Sovereign design system
+ * Tokens derived from /DESIGN.md.
+ *
+ * Light mode is the default. Dark mode activates via [data-theme="dark"]
+ * on the <html> element. A ThemeProvider script sets data-theme before
+ * paint to avoid flash-of-wrong-theme.
+ */
+
+/* ============================================================================
+ * LIGHT PALETTE (default)
+ * ========================================================================= */
+:root,
+:root[data-theme="light"] {
+  /* Surfaces — papyrus cream stack, never pure white */
+  --color-surface: #f8f5ee;
+  --color-surface-container-low: #efeae0;
+  --color-surface-container-high: #fbfaf5;
+  --color-surface-bright: #fffefa;
+
+  /* Text */
+  --color-on-surface: #0d1322;
+  --color-on-surface-variant: #4a5168;
+  --color-on-surface-disabled: #8b92a8;
+
+  /* Brand & accent */
+  --color-primary: #0a7e8c;
+  --color-primary-container: #c7e9ec;
+  --color-tertiary: #006b75;
+  --color-outline-variant: #c5cdd6;
+
+  /* Gradient stops for primary CTA */
+  --color-gradient-start: #0a7e8c;
+  --color-gradient-end: #3cd7ff;
+
+  /* Light-mode inset lift (replaces dark mode glow) */
+  --shadow-lift: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ============================================================================
+ * DARK PALETTE
+ * ========================================================================= */
+:root[data-theme="dark"] {
+  --color-surface: #0d1322;
+  --color-surface-container-low: #151b2b;
+  --color-surface-container-high: #242a3a;
+  --color-surface-bright: #33394a;
+
+  --color-on-surface: #dde2f8;
+  --color-on-surface-variant: #8b92a8;
+  --color-on-surface-disabled: #4a5168;
+
+  --color-primary: #7ad4e3;
+  --color-primary-container: #0a7e8c;
+  --color-tertiary: #3cd7ff;
+  --color-outline-variant: #3e494b;
+
+  --color-gradient-start: #0a7e8c;
+  --color-gradient-end: #3cd7ff;
+
+  /* Dark-mode ambient glow (use sparingly, max 1-2 per screen) */
+  --shadow-lift: 0 0 40px rgba(122, 212, 227, 0.1);
 }
 
+/* OS preference fallback when no explicit data-theme yet */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme]) {
+    --color-surface: #0d1322;
+    --color-surface-container-low: #151b2b;
+    --color-surface-container-high: #242a3a;
+    --color-surface-bright: #33394a;
+    --color-on-surface: #dde2f8;
+    --color-on-surface-variant: #8b92a8;
+    --color-on-surface-disabled: #4a5168;
+    --color-primary: #7ad4e3;
+    --color-primary-container: #0a7e8c;
+    --color-tertiary: #3cd7ff;
+    --color-outline-variant: #3e494b;
+    --color-gradient-start: #0a7e8c;
+    --color-gradient-end: #3cd7ff;
+    --shadow-lift: 0 0 40px rgba(122, 212, 227, 0.1);
   }
 }
 
+/* ============================================================================
+ * SEMANTIC + CHART COLORS (same in both modes)
+ * ========================================================================= */
+:root {
+  /* Semantic */
+  --color-success: #00875a;
+  --color-warning: #ff8b00;
+  --color-error: #de350b;
+  --color-info: #0065ff;
+
+  /* Chart palette — 8 colors verified distinguishable in both modes */
+  --color-chart-1: #3cd7ff;
+  --color-chart-2: #00875a; /* iSAFE permanent identity */
+  --color-chart-3: #ffb627;
+  --color-chart-4: #c73e9d;
+  --color-chart-5: #8a6fe8;
+  --color-chart-6: #ff6b6b;
+  --color-chart-7: #6cb97c;
+  --color-chart-8: #5c6b7a;
+
+  /* iSAFE wedge color, exposed as a named token */
+  --color-isafe: var(--color-chart-2);
+}
+
+/* ============================================================================
+ * @theme — expose tokens as Tailwind utilities
+ * ========================================================================= */
+@theme {
+  /* Fonts (loaded via next/font in layout.tsx) */
+  --font-sans: var(--font-inter);
+  --font-arabic: var(--font-cairo);
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* Type scale — Kinetic Sovereign §4 */
+  --text-display-lg: 3.5rem;
+  --text-display-lg--letter-spacing: -0.02em;
+  --text-display-lg--line-height: 1.05;
+
+  --text-display-md: 2.5rem;
+  --text-display-md--letter-spacing: -0.015em;
+  --text-display-md--line-height: 1.1;
+
+  --text-display-sm: 2rem;
+  --text-display-sm--letter-spacing: -0.01em;
+
+  --text-headline-lg: 1.75rem;
+  --text-headline-lg--letter-spacing: -0.005em;
+
+  --text-headline-md: 1.375rem;
+  --text-headline-sm: 1.125rem;
+
+  --text-body-lg: 1.0625rem;
+  --text-body-md: 0.9375rem;
+  --text-body-sm: 0.8125rem;
+
+  --text-label-lg: 0.875rem;
+  --text-label-lg--letter-spacing: 0.02em;
+
+  --text-label-md: 0.75rem;
+  --text-label-md--letter-spacing: 0.05em;
+
+  --text-label-sm: 0.6875rem;
+  --text-label-sm--letter-spacing: 0.05em;
+
+  /* Border radius — Kinetic Sovereign §6 */
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+/* ============================================================================
+ * BASE STYLES
+ * ========================================================================= */
+html {
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Arabic / RTL: switch primary font to Cairo at 110% to balance optical weight */
+[dir="rtl"] body {
+  font-family: var(--font-arabic), var(--font-sans), system-ui, sans-serif;
+  font-size: 110%;
+  line-height: 1.6;
+}
+
+/* Tabular numerals for financial displays — apply via .tabular-nums utility */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Reusable utility: Kinetic Sovereign primary CTA gradient */
+.btn-primary-gradient {
+  background: linear-gradient(
+    135deg,
+    var(--color-gradient-start),
+    var(--color-gradient-end)
+  );
+  color: #0d1322; /* dark text always for high contrast on the gradient */
+}
+
+/* Reusable utility: ghost border for input fields and secondary buttons */
+.ghost-border {
+  border: 1px solid color-mix(in srgb, var(--color-outline-variant) 20%, transparent);
+}
+
+/* Focus ring (DESIGN.md §11 a11y) */
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+/* Respect reduced motion — DESIGN.md §11 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
