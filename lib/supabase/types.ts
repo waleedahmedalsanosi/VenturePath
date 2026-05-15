@@ -16,6 +16,50 @@ export type Database = {
   };
   public: {
     Tables: {
+      documents: {
+        Row: {
+          created_at: string;
+          deleted_at: string | null;
+          id: string;
+          mime_type: string | null;
+          name: string;
+          size_bytes: number;
+          storage_path: string;
+          uploaded_by: string;
+          workspace_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          deleted_at?: string | null;
+          id?: string;
+          mime_type?: string | null;
+          name: string;
+          size_bytes: number;
+          storage_path: string;
+          uploaded_by: string;
+          workspace_id: string;
+        };
+        Update: {
+          created_at?: string;
+          deleted_at?: string | null;
+          id?: string;
+          mime_type?: string | null;
+          name?: string;
+          size_bytes?: number;
+          storage_path?: string;
+          uploaded_by?: string;
+          workspace_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "documents_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       shareholders: {
         Row: {
           created_at: string;

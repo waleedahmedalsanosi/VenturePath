@@ -21,9 +21,25 @@ export default async function AppLayout({
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-(--color-outline-variant)/20 px-6 py-4">
         <div className="mx-auto max-w-6xl flex items-center justify-between gap-4 flex-wrap">
-          <Link href="/" className="text-headline-sm font-semibold tracking-tight">
-            VenturePath
-          </Link>
+          <div className="flex items-center gap-6">
+            <Link href="/" className="text-headline-sm font-semibold tracking-tight">
+              VenturePath
+            </Link>
+            <nav className="flex items-center gap-4 text-body-sm">
+              <Link
+                href="/cap-table"
+                className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
+              >
+                Cap table
+              </Link>
+              <Link
+                href="/vault"
+                className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
+              >
+                Vault
+              </Link>
+            </nav>
+          </div>
           <div className="flex items-center gap-3 text-body-sm text-(--color-on-surface-variant)">
             <LanguageToggle />
             <span className="text-(--color-outline-variant)" aria-hidden>·</span>
