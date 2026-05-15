@@ -23,7 +23,7 @@ function SubmitButton() {
   );
 }
 
-export function AddShareholderForm() {
+export function AddShareholderForm({ fundingRoundId }: { fundingRoundId?: string | null }) {
   const [instrumentType, setInstrumentType] = useState<InstrumentType>("ordinary");
   const [serviceForEquity, setServiceForEquity] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +37,9 @@ export function AddShareholderForm() {
 
   return (
     <form action={handle} className="space-y-6">
+      {fundingRoundId && (
+        <input type="hidden" name="funding_round_id" value={fundingRoundId} />
+      )}
       <Field label="Name" required>
         <input name="name" required maxLength={200} className={inputClass} />
       </Field>

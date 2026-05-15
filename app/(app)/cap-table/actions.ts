@@ -92,6 +92,8 @@ const SUPPORTED_INSTRUMENTS = new Set([
   "convertible_note",
 ]);
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function addShareholder(formData: FormData): Promise<ActionResult> {
   const supabase = await createClient();
   const {
@@ -128,6 +130,19 @@ export async function addShareholder(formData: FormData): Promise<ActionResult> 
   const instrumentData = parseInstrumentData(formData, instrumentType);
   if (!("data" in instrumentData)) return instrumentData;
 
+  // Validate and verify ownership of the optional funding_round_id.
+  const rawRoundId = String(formData.get("funding_round_id") ?? "").trim();
+  let validRoundId: string | null = null;
+  if (rawRoundId && UUID_RE.test(rawRoundId)) {
+    const { data: round } = await supabase
+      .from("financing_rounds")
+      .select("id")
+      .eq("id", rawRoundId)
+      .eq("workspace_id", workspace.id)
+      .maybeSingle();
+    if (round) validRoundId = round.id;
+  }
+
   const { data: inserted, error } = await supabase
     .from("shareholders")
     .insert({
@@ -138,6 +153,7 @@ export async function addShareholder(formData: FormData): Promise<ActionResult> 
       entry_date: baseParsed.data.entry_date,
       instrument_type: instrumentType,
       instrument_data: instrumentData.data as Json,
+      funding_round_id: validRoundId,
     })
     .select("id")
     .single();
@@ -149,9 +165,57 @@ export async function addShareholder(formData: FormData): Promise<ActionResult> 
     entityType: "shareholder",
     entityId: inserted.id,
     action: "create",
-    description: `Added ${INSTRUMENT_LABELS[instrumentType]} holder "${baseParsed.data.name}"`,
+    description: `Added ${INSTRUMENT_LABELS[instrumentType]} holder "${baseParsed.data.name}"${validRoundId ? " (linked to round)" : ""}`,
     payload: { instrument_type: instrumentType, instrument_data: instrumentData.data as Json },
   });
+
+  // When adding via a round, auto-sync to the investor pipeline as "invested".
+  if (validRoundId) {
+    const email = baseParsed.data.email || null;
+    const name = baseParsed.data.name;
+
+    // Match existing pipeline entry: email first (reliable), then name fallback.
+    let existingId: string | null = null;
+    if (email) {
+      const { data } = await supabase
+        .from("investor_pipeline")
+        .select("id")
+        .eq("round_id", validRoundId)
+        .eq("email", email)
+        .is("deleted_at", null)
+        .maybeSingle();
+      if (data) existingId = data.id;
+    }
+    if (!existingId) {
+      const { data } = await supabase
+        .from("investor_pipeline")
+        .select("id")
+        .eq("round_id", validRoundId)
+        .eq("name", name)
+        .is("deleted_at", null)
+        .maybeSingle();
+      if (data) existingId = data.id;
+    }
+
+    if (existingId) {
+      await supabase
+        .from("investor_pipeline")
+        .update({ status: "invested" })
+        .eq("id", existingId);
+    } else {
+      await supabase.from("investor_pipeline").insert({
+        workspace_id: workspace.id,
+        round_id: validRoundId,
+        name,
+        email,
+        status: "invested",
+      });
+    }
+
+    revalidatePath(`/rounds/${validRoundId}`);
+    revalidatePath("/cap-table");
+    redirect(`/rounds/${validRoundId}`);
+  }
 
   revalidatePath("/cap-table");
   redirect("/cap-table");

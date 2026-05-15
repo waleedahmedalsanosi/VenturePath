@@ -2,14 +2,21 @@ import Link from "next/link";
 
 import { AddShareholderForm } from "./add-form";
 
-export default function AddShareholderPage() {
+interface PageProps {
+  searchParams: Promise<{ funding_round_id?: string }>;
+}
+
+export default async function AddShareholderPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const fundingRoundId = params.funding_round_id ?? null;
+
   return (
     <main className="mx-auto max-w-2xl px-6 py-10">
       <Link
-        href="/cap-table"
+        href={fundingRoundId ? `/rounds/${fundingRoundId}` : "/cap-table"}
         className="text-body-sm text-(--color-on-surface-variant) underline"
       >
-        ← Back to cap table
+        {fundingRoundId ? "← Back to round" : "← Back to cap table"}
       </Link>
       <h1 className="mt-4 text-display-sm font-semibold tracking-tight">
         Add a shareholder
@@ -19,7 +26,7 @@ export default function AddShareholderPage() {
         come later.
       </p>
       <div className="mt-10">
-        <AddShareholderForm />
+        <AddShareholderForm fundingRoundId={fundingRoundId} />
       </div>
     </main>
   );
