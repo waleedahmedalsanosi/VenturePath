@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { Dec } from "@/lib/cap-table/decimal";
 import { createClient } from "@/lib/supabase/server";
+import type { Json } from "@/lib/supabase/types";
 
 const DecimalString = z
   .string()
@@ -21,18 +22,45 @@ const DecimalString = z
 
 const PositiveDecimal = DecimalString.refine((s) => new Dec(s).gt(0), "must be > 0");
 
+const Percentage = DecimalString.refine((s) => {
+  const d = new Dec(s);
+  return d.gte(0) && d.lte(100);
+}, "must be between 0 and 100");
+
 const OrdinaryDataSchema = z.object({
   shares: PositiveDecimal,
   price_per_share_sar: PositiveDecimal,
+  // Service-for-Equity flag (PRD US-04-06). When true, `service_note` records
+  // what was exchanged (development, advisory, capital-equivalent, etc.).
+  service_for_equity: z.coerce.boolean().default(false),
+  service_note: z.string().max(200).optional().or(z.literal("")),
 });
 
 const ISafeDataSchema = z.object({
   investment_sar: PositiveDecimal,
   valuation_cap_sar: PositiveDecimal,
-  profit_share_ratio: DecimalString.refine((s) => {
-    const d = new Dec(s);
-    return d.gte(0) && d.lte(100);
-  }, "must be between 0 and 100"),
+  profit_share_ratio: Percentage,
+  conversion_status: z.enum(["unconverted", "converted"]).default("unconverted"),
+});
+
+// PRD US-04-03 SAFE: post-money vs pre-money, val cap, discount rate (0-100),
+// conversion status. Interest is NOT a SAFE concept (that's Convertible Note).
+const SafeDataSchema = z.object({
+  safe_type: z.enum(["post_money", "pre_money"]),
+  investment_sar: PositiveDecimal,
+  valuation_cap_sar: PositiveDecimal,
+  discount_rate: Percentage.optional().or(z.literal("")),
+  conversion_status: z.enum(["unconverted", "converted"]).default("unconverted"),
+});
+
+// PRD US-04-05 Convertible Note: principal + interest_rate + maturity_date +
+// optional conversion discount + optional val cap. Has interest, unlike SAFE.
+const ConvertibleNoteDataSchema = z.object({
+  principal_sar: PositiveDecimal,
+  interest_rate: Percentage,
+  maturity_date: z.string().min(1),
+  conversion_discount: Percentage.optional().or(z.literal("")),
+  valuation_cap_sar: PositiveDecimal.optional().or(z.literal("")),
   conversion_status: z.enum(["unconverted", "converted"]).default("unconverted"),
 });
 
@@ -47,6 +75,13 @@ export interface ActionResult {
   ok: boolean;
   error?: string;
 }
+
+const SUPPORTED_INSTRUMENTS = new Set([
+  "ordinary",
+  "isafe",
+  "safe",
+  "convertible_note",
+]);
 
 export async function addShareholder(formData: FormData): Promise<ActionResult> {
   const supabase = await createClient();
@@ -63,10 +98,15 @@ export async function addShareholder(formData: FormData): Promise<ActionResult> 
     .maybeSingle();
   if (!workspace) return { ok: false, error: "No workspace found." };
 
-  const instrumentType = String(formData.get("instrument_type") ?? "");
-  if (instrumentType !== "ordinary" && instrumentType !== "isafe") {
-    return { ok: false, error: "Unsupported instrument_type." };
+  const instrumentTypeRaw = String(formData.get("instrument_type") ?? "");
+  if (!SUPPORTED_INSTRUMENTS.has(instrumentTypeRaw)) {
+    return { ok: false, error: `Unsupported instrument_type: ${instrumentTypeRaw}.` };
   }
+  const instrumentType = instrumentTypeRaw as
+    | "ordinary"
+    | "isafe"
+    | "safe"
+    | "convertible_note";
 
   const baseParsed = BaseSchema.safeParse({
     name: formData.get("name"),
@@ -91,7 +131,7 @@ export async function addShareholder(formData: FormData): Promise<ActionResult> 
     entity_or_individual: baseParsed.data.entity_or_individual,
     entry_date: baseParsed.data.entry_date,
     instrument_type: instrumentType,
-    instrument_data: instrumentData.data,
+    instrument_data: instrumentData.data as Json,
   });
 
   if (error) return { ok: false, error: error.message };
@@ -144,7 +184,7 @@ export async function editShareholder(
       email: baseParsed.data.email || null,
       entity_or_individual: baseParsed.data.entity_or_individual,
       entry_date: baseParsed.data.entry_date,
-      instrument_data: instrumentData.data,
+      instrument_data: instrumentData.data as Json,
     })
     .eq("id", shareholderId);
 
@@ -180,18 +220,24 @@ export async function deleteShareholder(
 function parseInstrumentData(
   formData: FormData,
   instrumentType: string,
-): { data: Record<string, string> } | ActionResult {
+): { data: Record<string, unknown> } | ActionResult {
+  function err(issues: readonly { path: readonly PropertyKey[]; message: string }[]): ActionResult {
+    return {
+      ok: false,
+      error: issues
+        .map((i) => `${i.path.map(String).join(".")}: ${i.message}`)
+        .join("; "),
+    };
+  }
+
   if (instrumentType === "ordinary") {
     const parsed = OrdinaryDataSchema.safeParse({
       shares: formData.get("shares"),
       price_per_share_sar: formData.get("price_per_share_sar"),
+      service_for_equity: formData.get("service_for_equity") === "on",
+      service_note: formData.get("service_note") ?? "",
     });
-    if (!parsed.success) {
-      return {
-        ok: false,
-        error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "),
-      };
-    }
+    if (!parsed.success) return err(parsed.error.issues);
     return { data: parsed.data };
   }
 
@@ -202,12 +248,32 @@ function parseInstrumentData(
       profit_share_ratio: formData.get("profit_share_ratio"),
       conversion_status: "unconverted",
     });
-    if (!parsed.success) {
-      return {
-        ok: false,
-        error: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "),
-      };
-    }
+    if (!parsed.success) return err(parsed.error.issues);
+    return { data: parsed.data };
+  }
+
+  if (instrumentType === "safe") {
+    const parsed = SafeDataSchema.safeParse({
+      safe_type: formData.get("safe_type"),
+      investment_sar: formData.get("investment_sar"),
+      valuation_cap_sar: formData.get("valuation_cap_sar"),
+      discount_rate: formData.get("discount_rate") ?? "",
+      conversion_status: "unconverted",
+    });
+    if (!parsed.success) return err(parsed.error.issues);
+    return { data: parsed.data };
+  }
+
+  if (instrumentType === "convertible_note") {
+    const parsed = ConvertibleNoteDataSchema.safeParse({
+      principal_sar: formData.get("principal_sar"),
+      interest_rate: formData.get("interest_rate"),
+      maturity_date: formData.get("maturity_date"),
+      conversion_discount: formData.get("conversion_discount") ?? "",
+      valuation_cap_sar: formData.get("valuation_cap_sar") ?? "",
+      conversion_status: "unconverted",
+    });
+    if (!parsed.success) return err(parsed.error.issues);
     return { data: parsed.data };
   }
 

@@ -5,7 +5,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 interface DonutDatum {
   name: string;
   value: number;
-  instrument: "ordinary" | "isafe";
+  instrument: "ordinary" | "isafe" | "safe" | "convertible_note";
   colorIndex: number;
 }
 

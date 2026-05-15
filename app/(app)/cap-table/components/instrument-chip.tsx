@@ -14,6 +14,16 @@ const STYLES: Record<InstrumentType, { label: string; bg: string; fg: string }> 
     bg: "bg-(--color-success)/20",
     fg: "text-(--color-success)",
   },
+  safe: {
+    label: "SAFE",
+    bg: "bg-(--color-chart-1)/20",
+    fg: "text-(--color-chart-1)",
+  },
+  convertible_note: {
+    label: "Note",
+    bg: "bg-(--color-warning)/20",
+    fg: "text-(--color-warning)",
+  },
 };
 
 export function InstrumentChip({ type }: { type: InstrumentType }) {

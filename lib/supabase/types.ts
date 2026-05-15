@@ -238,7 +238,7 @@ export type Database = {
       compliance_recurrence: "one_time" | "monthly" | "quarterly" | "annual";
       entity_or_individual: "entity" | "individual";
       entity_status: "incorporated" | "product_only";
-      instrument_type: "ordinary" | "isafe";
+      instrument_type: "ordinary" | "isafe" | "safe" | "convertible_note";
       isafe_conversion_status: "unconverted" | "converted";
     };
     CompositeTypes: {
