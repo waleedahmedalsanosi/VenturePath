@@ -33,6 +33,7 @@ const NAV_SECTIONS = [
   { href: "/valuation", label: "Valuation", desc: "4-method valuation tool" },
   { href: "/members", label: "Members", desc: "Team access & roles" },
   { href: "/audit", label: "Audit Trail", desc: "Full activity log" },
+  { href: "/explore", label: "Explore", desc: "Discover KSA & MENA startups" },
 ];
 
 export default async function DashboardPage() {

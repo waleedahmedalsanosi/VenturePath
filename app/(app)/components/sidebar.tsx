@@ -45,6 +45,10 @@ const NAV_GROUPS: Array<{ label: string; items: Array<{ href: string; label: str
     label: "Activity",
     items: [{ href: "/audit", label: "Audit" }],
   },
+  {
+    label: "Community",
+    items: [{ href: "/explore", label: "Explore" }],
+  },
 ];
 
 function isActive(pathname: string, href: string): boolean {
