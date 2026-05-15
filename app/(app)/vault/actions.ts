@@ -213,6 +213,36 @@ export async function cycleVisibility(documentId: string): Promise<ActionResult>
   return { ok: true };
 }
 
+const TIER_CYCLE: Record<string, "intro" | "standard" | "diligence"> = {
+  intro: "standard",
+  standard: "diligence",
+  diligence: "intro",
+};
+
+export async function cycleDocumentTier(documentId: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const { data: doc } = await supabase
+    .from("documents")
+    .select("workspace_id, name, data_room_tier")
+    .eq("id", documentId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!doc) return { ok: false, error: "Document not found." };
+
+  const next = TIER_CYCLE[doc.data_room_tier] ?? "intro";
+  const { error } = await supabase
+    .from("documents")
+    .update({ data_room_tier: next })
+    .eq("id", documentId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/vault");
+  return { ok: true };
+}
+
 export async function setDocumentCategory(
   documentId: string,
   categoryId: string | null,

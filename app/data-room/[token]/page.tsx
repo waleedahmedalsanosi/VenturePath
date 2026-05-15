@@ -28,6 +28,12 @@ const MIME_ICON: Record<string, string> = {
   "image/png": "PNG",
 };
 
+const TIER_LABEL: Record<string, string> = {
+  intro: "Intro",
+  standard: "Standard",
+  diligence: "Diligence",
+};
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { token } = await params;
   const supabase = await createClient();
@@ -118,6 +124,13 @@ export default async function DataRoomPage({ params }: PageProps) {
                       <td className="px-4 py-3 font-medium">{doc.doc_name}</td>
                       <td className="px-4 py-3 text-(--color-on-surface-variant) hidden sm:table-cell">
                         {MIME_ICON[doc.doc_mime_type ?? ""] ?? "File"}
+                      </td>
+                      <td className="px-4 py-3 hidden sm:table-cell">
+                        {doc.doc_tier && (
+                          <span className="text-label-sm text-(--color-on-surface-variant) uppercase tracking-wider">
+                            {TIER_LABEL[doc.doc_tier] ?? doc.doc_tier}
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3 tabular-nums text-(--color-on-surface-variant) hidden sm:table-cell">
                         {fmtBytes(doc.doc_size_bytes)}

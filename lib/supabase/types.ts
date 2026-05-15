@@ -301,6 +301,7 @@ export type Database = {
           workspace_id: string;
           category_id: string | null;
           visibility: Database["public"]["Enums"]["document_visibility"];
+          data_room_tier: Database["public"]["Enums"]["data_room_tier"];
         };
         Insert: {
           created_at?: string;
@@ -314,6 +315,7 @@ export type Database = {
           workspace_id: string;
           category_id?: string | null;
           visibility?: Database["public"]["Enums"]["document_visibility"];
+          data_room_tier?: Database["public"]["Enums"]["data_room_tier"];
         };
         Update: {
           created_at?: string;
@@ -327,6 +329,7 @@ export type Database = {
           workspace_id?: string;
           category_id?: string | null;
           visibility?: Database["public"]["Enums"]["document_visibility"];
+          data_room_tier?: Database["public"]["Enums"]["data_room_tier"];
         };
         Relationships: [
           {
@@ -577,6 +580,7 @@ export type Database = {
           view_count: number;
           expires_at: string | null;
           created_at: string;
+          access_tier: Database["public"]["Enums"]["data_room_tier"];
         };
         Insert: {
           id?: string;
@@ -588,6 +592,7 @@ export type Database = {
           view_count?: number;
           expires_at?: string | null;
           created_at?: string;
+          access_tier?: Database["public"]["Enums"]["data_room_tier"];
         };
         Update: {
           id?: string;
@@ -599,6 +604,7 @@ export type Database = {
           view_count?: number;
           expires_at?: string | null;
           created_at?: string;
+          access_tier?: Database["public"]["Enums"]["data_room_tier"];
         };
         Relationships: [
           {
@@ -959,11 +965,13 @@ export type Database = {
           workspace_name: string;
           round_name: string | null;
           round_status: string | null;
+          access_tier: string;
           doc_id: string | null;
           doc_name: string | null;
           doc_mime_type: string | null;
           doc_size_bytes: number | null;
           doc_created_at: string | null;
+          doc_tier: string | null;
         }[];
       };
       record_data_room_view: {
@@ -991,6 +999,7 @@ export type Database = {
       instrument_type: "ordinary" | "isafe" | "safe" | "convertible_note";
       isafe_conversion_status: "unconverted" | "converted";
       document_visibility: "internal" | "data_room" | "public";
+      data_room_tier: "intro" | "standard" | "diligence";
       meeting_format: "virtual" | "in_person";
       meeting_status: "upcoming" | "completed" | "cancelled";
       resolution_status: "draft" | "pending" | "passed" | "rejected";

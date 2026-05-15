@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { cycleVisibility, deleteDocument, getSignedDownloadUrl } from "./actions";
+import { cycleVisibility, cycleDocumentTier, deleteDocument, getSignedDownloadUrl } from "./actions";
 
 const MIME_LABELS: Record<string, string> = {
   "application/pdf": "PDF",
@@ -36,6 +36,12 @@ const VISIBILITY_STYLES: Record<string, { label: string; bg: string; fg: string;
   },
 };
 
+const TIER_STYLES: Record<string, { label: string; bg: string; fg: string }> = {
+  intro:     { label: "Intro",     bg: "bg-(--color-info)/10",    fg: "text-(--color-info)" },
+  standard:  { label: "Standard",  bg: "bg-(--color-warning)/15", fg: "text-(--color-warning)" },
+  diligence: { label: "Diligence", bg: "bg-(--color-error)/10",   fg: "text-(--color-error)" },
+};
+
 function fmtDate(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleDateString(undefined, {
@@ -50,6 +56,7 @@ export function DocumentRow({
   name,
   mimeType,
   visibility,
+  dataRoomTier,
   sizeLabel,
   createdAt,
 }: {
@@ -57,6 +64,7 @@ export function DocumentRow({
   name: string;
   mimeType: string | null;
   visibility: "internal" | "data_room" | "public";
+  dataRoomTier: "intro" | "standard" | "diligence";
   sizeLabel: string;
   createdAt: string;
 }) {
@@ -87,6 +95,18 @@ export function DocumentRow({
     });
   }
 
+  function onCycleTier() {
+    startTransition(async () => {
+      setError(null);
+      const r = await cycleDocumentTier(id);
+      if (!r.ok) {
+        setError(r.error ?? "Failed.");
+        return;
+      }
+      router.refresh();
+    });
+  }
+
   function onDelete() {
     startTransition(async () => {
       const result = await deleteDocument(id);
@@ -103,6 +123,7 @@ export function DocumentRow({
     ? MIME_LABELS[mimeType] ?? mimeType.split("/")[1]?.toUpperCase()
     : "?";
   const vis = VISIBILITY_STYLES[visibility] ?? VISIBILITY_STYLES.internal!;
+  const tier = TIER_STYLES[dataRoomTier] ?? TIER_STYLES.intro!;
 
   return (
     <tr className="border-t border-(--color-outline-variant)/15">
@@ -113,15 +134,28 @@ export function DocumentRow({
         </span>
       </td>
       <td className="px-4 py-3">
-        <button
-          type="button"
-          onClick={onCycleVisibility}
-          disabled={busy}
-          title={vis.hint}
-          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-label-sm font-medium uppercase tracking-wider hover:opacity-80 disabled:opacity-50 ${vis.bg} ${vis.fg}`}
-        >
-          {vis.label}
-        </button>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <button
+            type="button"
+            onClick={onCycleVisibility}
+            disabled={busy}
+            title={vis.hint}
+            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-label-sm font-medium uppercase tracking-wider hover:opacity-80 disabled:opacity-50 ${vis.bg} ${vis.fg}`}
+          >
+            {vis.label}
+          </button>
+          {visibility === "data_room" && (
+            <button
+              type="button"
+              onClick={onCycleTier}
+              disabled={busy}
+              title="Click to change access tier (Intro → Standard → Diligence)"
+              className={`inline-flex items-center rounded-full px-2 py-0.5 text-label-sm font-medium uppercase tracking-wider hover:opacity-80 disabled:opacity-50 ${tier.bg} ${tier.fg}`}
+            >
+              {tier.label}
+            </button>
+          )}
+        </div>
       </td>
       <td className="px-4 py-3 text-end tabular-nums text-(--color-on-surface-variant)">
         {sizeLabel}

@@ -97,7 +97,7 @@ export default async function RoundDetailPage({
       .order("created_at", { ascending: true }),
     supabase
       .from("data_room_links")
-      .select("id, label, token, is_active, view_count, expires_at, created_at")
+      .select("id, label, token, is_active, view_count, expires_at, created_at, access_tier")
       .eq("round_id", id)
       .order("created_at", { ascending: false }),
     supabase

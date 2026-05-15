@@ -4,6 +4,12 @@ import { useState, useTransition } from "react";
 
 import { createDataRoomLink, revokeDataRoomLink } from "./data-room-actions";
 
+const TIER_META: Record<string, { label: string; bg: string; fg: string; description: string }> = {
+  intro:     { label: "Intro",     bg: "bg-(--color-info)/10",    fg: "text-(--color-info)",    description: "Deck, team bio, one-pager" },
+  standard:  { label: "Standard",  bg: "bg-(--color-warning)/15", fg: "text-(--color-warning)", description: "Financials, roadmap, product" },
+  diligence: { label: "Diligence", bg: "bg-(--color-error)/10",   fg: "text-(--color-error)",   description: "Full legal, contracts, cap table" },
+};
+
 interface DataRoomLink {
   id: string;
   label: string;
@@ -12,6 +18,7 @@ interface DataRoomLink {
   view_count: number;
   expires_at: string | null;
   created_at: string;
+  access_tier: "intro" | "standard" | "diligence";
 }
 
 interface ViewEvent {
@@ -153,6 +160,27 @@ export function DataRoom({ roundId, links, viewsByLink, appUrl }: DataRoomProps)
               <p className="text-body-sm text-(--color-on-surface-variant)">0 = no expiry.</p>
             </div>
           </div>
+          <div className="space-y-2">
+            <p className="text-label-lg">Access tier</p>
+            <div className="grid grid-cols-3 gap-2">
+              {(["intro", "standard", "diligence"] as const).map((t) => {
+                const m = TIER_META[t]!;
+                return (
+                  <label key={t} className="cursor-pointer">
+                    <input type="radio" name="access_tier" value={t} defaultChecked={t === "intro"}
+                      className="sr-only peer" />
+                    <div className={`rounded-lg p-3 ghost-border peer-checked:border-(--color-primary) peer-checked:bg-(--color-primary)/5 hover:bg-(--color-surface-container-high) transition-colors`}>
+                      <p className={`text-label-sm font-medium uppercase tracking-wider rounded-full px-2 py-0.5 inline-flex mb-1 ${m.bg} ${m.fg}`}>{m.label}</p>
+                      <p className="text-body-sm text-(--color-on-surface-variant)">{m.description}</p>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+            <p className="text-body-sm text-(--color-on-surface-variant)">
+              Each tier is cumulative — Diligence includes Standard and Intro docs.
+            </p>
+          </div>
           {error && (
             <p className="rounded-md bg-(--color-error)/10 px-3 py-2 text-body-sm text-(--color-error)">{error}</p>
           )}
@@ -176,9 +204,10 @@ export function DataRoom({ roundId, links, viewsByLink, appUrl }: DataRoomProps)
             <thead>
               <tr className="text-label-md uppercase text-(--color-on-surface-variant)">
                 <th className="px-4 py-3 text-start font-normal">Label</th>
+                <th className="px-4 py-3 text-start font-normal hidden sm:table-cell">Tier</th>
                 <th className="px-4 py-3 text-start font-normal">Views</th>
                 <th className="px-4 py-3 text-start font-normal hidden md:table-cell">Last viewed</th>
-                <th className="px-4 py-3 text-start font-normal hidden sm:table-cell">Expires</th>
+                <th className="px-4 py-3 text-start font-normal hidden lg:table-cell">Expires</th>
                 <th className="px-4 py-3 text-end font-normal" aria-label="Actions" />
               </tr>
             </thead>
@@ -195,6 +224,16 @@ export function DataRoom({ roundId, links, viewsByLink, appUrl }: DataRoomProps)
                         <div className="text-body-sm text-(--color-on-surface-variant) font-mono truncate max-w-[200px]">
                           /data-room/{l.token}
                         </div>
+                      </td>
+                      <td className="px-4 py-3 hidden sm:table-cell">
+                        {(() => {
+                          const m = TIER_META[l.access_tier]!;
+                          return (
+                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-label-sm font-medium uppercase tracking-wider ${m.bg} ${m.fg}`}>
+                              {m.label}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-4 py-3 tabular-nums">
                         {l.view_count > 0 ? (
@@ -213,7 +252,7 @@ export function DataRoom({ roundId, links, viewsByLink, appUrl }: DataRoomProps)
                       <td className="px-4 py-3 text-(--color-on-surface-variant) hidden md:table-cell whitespace-nowrap">
                         {lastView ? fmtRelativeDate(lastView.viewed_at) : "—"}
                       </td>
-                      <td className="px-4 py-3 text-(--color-on-surface-variant) hidden sm:table-cell whitespace-nowrap">
+                      <td className="px-4 py-3 text-(--color-on-surface-variant) hidden lg:table-cell whitespace-nowrap">
                         {l.expires_at
                           ? new Date(l.expires_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
                           : "Never"}

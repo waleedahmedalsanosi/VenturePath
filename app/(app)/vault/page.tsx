@@ -129,6 +129,7 @@ export default async function VaultPage({ searchParams }: PageProps) {
                       name={doc.name}
                       mimeType={doc.mime_type}
                       visibility={doc.visibility}
+                      dataRoomTier={doc.data_room_tier}
                       sizeLabel={fmtBytes(doc.size_bytes)}
                       createdAt={doc.created_at}
                     />
