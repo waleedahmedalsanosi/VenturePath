@@ -20,12 +20,14 @@ function fmtDate(iso: string): string {
 }
 
 const NAV_SECTIONS = [
+  { href: "/company", label: "Company", desc: "Legal entity & profile" },
   { href: "/cap-table", label: "Cap Table", desc: "Shareholders & instruments" },
   { href: "/esop", label: "ESOP", desc: "Options pool & grants" },
   { href: "/governance", label: "Governance", desc: "Board meetings & resolutions" },
   { href: "/compliance", label: "Compliance", desc: "Deadlines & obligations" },
   { href: "/vault", label: "Document Vault", desc: "Secure file storage" },
   { href: "/traction", label: "Traction", desc: "MRR, customers & runway" },
+  { href: "/dilution", label: "Dilution", desc: "Round & dilution modeler" },
   { href: "/waterfall", label: "Waterfall", desc: "Exit distribution model" },
   { href: "/acquisition", label: "M&A Modeler", desc: "Acquisition scenario analysis" },
   { href: "/valuation", label: "Valuation", desc: "4-method valuation tool" },

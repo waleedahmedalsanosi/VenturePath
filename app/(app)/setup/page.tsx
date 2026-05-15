@@ -19,14 +19,14 @@ export default async function SetupPage({ searchParams }: PageProps) {
   } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
-  // First-time setup: redirect to cap-table only if user already has any
+  // First-time setup: redirect to dashboard only if user already has any
   // workspace AND didn't explicitly request a new one.
   const { data: existing } = await supabase
     .from("workspaces")
     .select("id")
     .limit(1)
     .maybeSingle();
-  if (existing && !wantsNew) redirect("/cap-table");
+  if (existing && !wantsNew) redirect("/dashboard");
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">

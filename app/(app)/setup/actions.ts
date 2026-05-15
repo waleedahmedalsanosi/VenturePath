@@ -108,5 +108,5 @@ export async function createWorkspace(formData: FormData): Promise<ActionResult>
     path: "/",
   });
 
-  redirect("/cap-table");
+  redirect("/dashboard");
 }

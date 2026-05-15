@@ -151,8 +151,9 @@ export async function saveResolution(formData: FormData): Promise<ActionResult> 
   if (id) {
     const { data: existing } = await supabase
       .from("resolutions")
-      .select("status")
+      .select("status, title")
       .eq("id", id)
+      .eq("workspace_id", workspace.id)
       .maybeSingle();
     if (!existing) return { ok: false, error: "Resolution not found." };
     if (existing.status !== "draft") {
@@ -165,8 +166,16 @@ export async function saveResolution(formData: FormData): Promise<ActionResult> 
         body: parsed.data.body,
         meeting_id: parsed.data.meeting_id || null,
       })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("workspace_id", workspace.id);
     if (error) return { ok: false, error: error.message };
+    await logAudit({
+      workspaceId: workspace.id,
+      entityType: "workspace",
+      entityId: workspace.id,
+      action: "resolution_edit",
+      description: `Edited resolution "${parsed.data.title}"`,
+    });
   } else {
     const { error } = await supabase.from("resolutions").insert({
       workspace_id: workspace.id,
