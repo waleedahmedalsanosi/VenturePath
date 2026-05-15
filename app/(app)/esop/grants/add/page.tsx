@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { getActiveWorkspace } from "@/lib/workspace/active";
 
 import { AddGrantForm } from "./add-grant-form";
 
@@ -12,12 +13,7 @@ export default async function AddGrantPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
-  const { data: workspace } = await supabase
-    .from("workspaces")
-    .select("id")
-    .eq("owner_user_id", user.id)
-    .limit(1)
-    .maybeSingle();
+  const workspace = await getActiveWorkspace();
   if (!workspace) redirect("/setup");
 
   const { data: pool } = await supabase

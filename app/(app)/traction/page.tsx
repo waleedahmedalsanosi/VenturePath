@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { getActiveWorkspace } from "@/lib/workspace/active";
 
 import { headers } from "next/headers";
 
@@ -51,12 +52,7 @@ export default async function TractionPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
-  const { data: workspace } = await supabase
-    .from("workspaces")
-    .select("*")
-    .eq("owner_user_id", user.id)
-    .limit(1)
-    .maybeSingle();
+  const workspace = await getActiveWorkspace();
   if (!workspace) redirect("/setup");
 
   const { data: metrics } = await supabase

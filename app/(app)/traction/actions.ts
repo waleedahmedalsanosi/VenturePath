@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
+import { getActiveWorkspace } from "@/lib/workspace/active";
 
 const Schema = z.object({
   month: z.string().min(1),  // YYYY-MM-DD, must be first of month (validated below)
@@ -32,12 +33,7 @@ export async function upsertMetric(formData: FormData): Promise<ActionResult> {
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Not signed in." };
 
-  const { data: workspace } = await supabase
-    .from("workspaces")
-    .select("id")
-    .eq("owner_user_id", user.id)
-    .limit(1)
-    .maybeSingle();
+  const workspace = await getActiveWorkspace();
   if (!workspace) return { ok: false, error: "No workspace found." };
 
   const parsed = Schema.safeParse({

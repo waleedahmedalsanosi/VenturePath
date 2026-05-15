@@ -7,6 +7,7 @@ import { z } from "zod";
 import { logAudit } from "@/lib/audit/log";
 import { nextDueDate } from "@/lib/compliance/status";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveWorkspace } from "@/lib/workspace/active";
 
 const Schema = z.object({
   name: z.string().min(1).max(200),
@@ -34,12 +35,7 @@ export async function addObligation(formData: FormData): Promise<ActionResult> {
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Not signed in." };
 
-  const { data: workspace } = await supabase
-    .from("workspaces")
-    .select("id")
-    .eq("owner_user_id", user.id)
-    .limit(1)
-    .maybeSingle();
+  const workspace = await getActiveWorkspace();
   if (!workspace) return { ok: false, error: "No workspace found." };
 
   const raw = {

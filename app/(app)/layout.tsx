@@ -2,9 +2,11 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { createClient } from "@/lib/supabase/server";
+import { getActiveWorkspace, listAccessibleWorkspaces } from "@/lib/workspace/active";
 
 import { LanguageToggle } from "./components/language-toggle";
 import { ThemeToggle } from "./components/theme-toggle";
+import { WorkspaceSwitcher } from "./components/workspace-switcher";
 
 export default async function AppLayout({
   children,
@@ -17,6 +19,9 @@ export default async function AppLayout({
   } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
+  const active = await getActiveWorkspace();
+  const all = await listAccessibleWorkspaces();
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-(--color-outline-variant)/20 px-6 py-4">
@@ -25,6 +30,12 @@ export default async function AppLayout({
             <Link href="/" className="text-headline-sm font-semibold tracking-tight">
               VenturePath
             </Link>
+            {active && all.length > 0 && (
+              <WorkspaceSwitcher
+                active={{ id: active.id, name: active.name }}
+                options={all.map((w) => ({ id: w.id, name: w.name }))}
+              />
+            )}
             <nav className="flex items-center gap-4 text-body-sm">
               <Link
                 href="/company"

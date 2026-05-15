@@ -1,10 +1,12 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { logAudit } from "@/lib/audit/log";
 import { createClient } from "@/lib/supabase/server";
+import { ACTIVE_WORKSPACE_COOKIE } from "@/lib/workspace/active";
 
 const WorkspaceSchema = z
   .object({
@@ -94,6 +96,16 @@ export async function createWorkspace(formData: FormData): Promise<ActionResult>
     entityId: inserted.id,
     action: "create",
     description: `Created workspace "${parsed.data.name}"`,
+  });
+
+  // Pin this new workspace as active so the redirect lands inside it.
+  const cookieStore = await cookies();
+  cookieStore.set(ACTIVE_WORKSPACE_COOKIE, inserted.id, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 60 * 60 * 24 * 365,
+    path: "/",
   });
 
   redirect("/cap-table");

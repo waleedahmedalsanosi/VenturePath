@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { getActiveWorkspace } from "@/lib/workspace/active";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -12,12 +13,7 @@ export default async function Home() {
     redirect("/sign-in");
   }
 
-  const { data: workspace } = await supabase
-    .from("workspaces")
-    .select("id")
-    .eq("owner_user_id", user.id)
-    .limit(1)
-    .maybeSingle();
+  const workspace = await getActiveWorkspace();
 
   if (workspace) {
     redirect("/cap-table");

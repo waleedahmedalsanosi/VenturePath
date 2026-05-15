@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { logAudit } from "@/lib/audit/log";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveWorkspace } from "@/lib/workspace/active";
 
 export interface ActionResult {
   ok: boolean;
@@ -29,12 +30,7 @@ export async function uploadDocument(formData: FormData): Promise<ActionResult> 
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Not signed in." };
 
-  const { data: workspace } = await supabase
-    .from("workspaces")
-    .select("id")
-    .eq("owner_user_id", user.id)
-    .limit(1)
-    .maybeSingle();
+  const workspace = await getActiveWorkspace();
   if (!workspace) return { ok: false, error: "No workspace found." };
 
   const file = formData.get("file");
@@ -251,12 +247,7 @@ export async function createCategory(name: string): Promise<ActionResult> {
     return { ok: false, error: "Name must be 1-80 chars." };
   }
 
-  const { data: workspace } = await supabase
-    .from("workspaces")
-    .select("id")
-    .eq("owner_user_id", user.id)
-    .limit(1)
-    .maybeSingle();
+  const workspace = await getActiveWorkspace();
   if (!workspace) return { ok: false, error: "No workspace found." };
 
   const { data: existing } = await supabase

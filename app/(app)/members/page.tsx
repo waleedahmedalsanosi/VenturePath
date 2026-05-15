@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { getActiveWorkspace } from "@/lib/workspace/active";
 
 import { InviteForm } from "./invite-form";
 import { MemberActions } from "./member-actions";
@@ -26,12 +27,7 @@ export default async function MembersPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
-  const { data: workspace } = await supabase
-    .from("workspaces")
-    .select("id, name, owner_user_id")
-    .eq("owner_user_id", user.id)
-    .limit(1)
-    .maybeSingle();
+  const workspace = await getActiveWorkspace();
   if (!workspace) redirect("/setup");
 
   // Members include the owner. Join with auth.users via RPC-less workaround

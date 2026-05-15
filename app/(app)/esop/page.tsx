@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Dec } from "@/lib/cap-table/decimal";
 import { DEPARTMENT_LABELS, GRANT_STATUS_LABELS, vestedFraction } from "@/lib/esop/vesting";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveWorkspace } from "@/lib/workspace/active";
 
 import { CreatePoolForm } from "./create-pool-form";
 import { GrantRow } from "./grant-row";
@@ -33,12 +34,7 @@ export default async function EsopPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
-  const { data: workspace } = await supabase
-    .from("workspaces")
-    .select("id, name")
-    .eq("owner_user_id", user.id)
-    .limit(1)
-    .maybeSingle();
+  const workspace = await getActiveWorkspace();
   if (!workspace) redirect("/setup");
 
   const { data: pool } = await supabase

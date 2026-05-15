@@ -1,25 +1,16 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { getActiveWorkspace } from "@/lib/workspace/active";
 
 import { CapTableEmpty } from "./components/empty-state";
 import { CapTablePopulated } from "./components/populated";
 
 export default async function CapTablePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/sign-in");
-
-  const { data: workspace } = await supabase
-    .from("workspaces")
-    .select("*")
-    .eq("owner_user_id", user.id)
-    .limit(1)
-    .maybeSingle();
+  const workspace = await getActiveWorkspace();
   if (!workspace) redirect("/setup");
 
+  const supabase = await createClient();
   const { data: shareholders } = await supabase
     .from("shareholders")
     .select("*")

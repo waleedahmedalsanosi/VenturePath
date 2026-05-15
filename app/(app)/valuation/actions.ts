@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { logAudit } from "@/lib/audit/log";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveWorkspace } from "@/lib/workspace/active";
 import type { Json } from "@/lib/supabase/types";
 
 const SaveSchema = z.object({
@@ -35,12 +36,7 @@ export async function saveSession(input: {
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Not signed in." };
 
-  const { data: workspace } = await supabase
-    .from("workspaces")
-    .select("id")
-    .eq("owner_user_id", user.id)
-    .limit(1)
-    .maybeSingle();
+  const workspace = await getActiveWorkspace();
   if (!workspace) return { ok: false, error: "No workspace found." };
 
   const parsed = SaveSchema.safeParse(input);

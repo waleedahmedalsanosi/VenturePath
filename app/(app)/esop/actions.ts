@@ -7,6 +7,7 @@ import { z } from "zod";
 import { logAudit } from "@/lib/audit/log";
 import { Dec } from "@/lib/cap-table/decimal";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveWorkspace } from "@/lib/workspace/active";
 
 const PoolSchema = z.object({
   total_pool_shares: z
@@ -52,12 +53,7 @@ export async function createPool(formData: FormData): Promise<ActionResult> {
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Not signed in." };
 
-  const { data: workspace } = await supabase
-    .from("workspaces")
-    .select("id")
-    .eq("owner_user_id", user.id)
-    .limit(1)
-    .maybeSingle();
+  const workspace = await getActiveWorkspace();
   if (!workspace) return { ok: false, error: "No workspace found." };
 
   const parsed = PoolSchema.safeParse({
@@ -101,12 +97,7 @@ export async function addGrant(formData: FormData): Promise<ActionResult> {
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Not signed in." };
 
-  const { data: workspace } = await supabase
-    .from("workspaces")
-    .select("id")
-    .eq("owner_user_id", user.id)
-    .limit(1)
-    .maybeSingle();
+  const workspace = await getActiveWorkspace();
   if (!workspace) return { ok: false, error: "No workspace found." };
 
   const { data: pool } = await supabase

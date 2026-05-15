@@ -9,6 +9,7 @@ import {
   type ComplianceStatus,
 } from "@/lib/compliance/status";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveWorkspace } from "@/lib/workspace/active";
 
 import { ObligationActions } from "./obligation-actions";
 
@@ -35,12 +36,7 @@ export default async function CompliancePage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/sign-in");
 
-  const { data: workspace } = await supabase
-    .from("workspaces")
-    .select("id, name")
-    .eq("owner_user_id", user.id)
-    .limit(1)
-    .maybeSingle();
+  const workspace = await getActiveWorkspace();
   if (!workspace) redirect("/setup");
 
   const { data: obligations } = await supabase
