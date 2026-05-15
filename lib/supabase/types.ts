@@ -320,6 +320,79 @@ export type Database = {
           },
         ];
       };
+      workspace_members: {
+        Row: {
+          workspace_id: string;
+          user_id: string;
+          role: Database["public"]["Enums"]["workspace_role"];
+          added_at: string;
+        };
+        Insert: {
+          workspace_id: string;
+          user_id: string;
+          role?: Database["public"]["Enums"]["workspace_role"];
+          added_at?: string;
+        };
+        Update: {
+          workspace_id?: string;
+          user_id?: string;
+          role?: Database["public"]["Enums"]["workspace_role"];
+          added_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "workspace_members_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      workspace_invitations: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          invited_email: string;
+          role: Database["public"]["Enums"]["workspace_role"];
+          token: string;
+          invited_by: string;
+          expires_at: string;
+          accepted_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          invited_email: string;
+          role?: Database["public"]["Enums"]["workspace_role"];
+          token: string;
+          invited_by: string;
+          expires_at?: string;
+          accepted_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          invited_email?: string;
+          role?: Database["public"]["Enums"]["workspace_role"];
+          token?: string;
+          invited_by?: string;
+          expires_at?: string;
+          accepted_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "workspace_invitations_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       traction_metrics: {
         Row: {
           id: string;
@@ -462,6 +535,7 @@ export type Database = {
       esop_vesting_type: "immediate" | "graded";
       instrument_type: "ordinary" | "isafe" | "safe" | "convertible_note";
       isafe_conversion_status: "unconverted" | "converted";
+      workspace_role: "owner" | "admin" | "viewer";
     };
     CompositeTypes: {
       [_ in never]: never;
