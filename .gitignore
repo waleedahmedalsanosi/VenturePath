@@ -34,3 +34,4 @@ supabase/.temp/
 
 # Vercel
 .vercel/
+.gstack/
