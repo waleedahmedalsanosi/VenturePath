@@ -27,6 +27,14 @@ Use ~/.claude/skills/gstack/... for gstack file paths (the global path).
 Always use the `/browse` skill from gstack for all web browsing.
 Never use `mcp__claude-in-chrome__*` tools.
 
+### Design System
+
+Always read `DESIGN.md` before making any visual or UI decisions for VenturePath.
+All font choices, color tokens, spacing scales, component patterns, and bilingual
+AR/RTL conventions are defined there. The system codename is **Kinetic Sovereign**
+(creative north star: The Digital Vault). Do not deviate without explicit user
+approval. In QA mode, flag any code or mockup that doesn't match `DESIGN.md`.
+
 ### Available Skills
 
 /office-hours, /plan-ceo-review, /plan-eng-review, /plan-design-review,
