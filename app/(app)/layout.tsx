@@ -51,6 +51,12 @@ export default async function AppLayout({
                 Dilution
               </Link>
               <Link
+                href="/waterfall"
+                className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
+              >
+                Waterfall
+              </Link>
+              <Link
                 href="/vault"
                 className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
               >
