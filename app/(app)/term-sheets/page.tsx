@@ -30,23 +30,23 @@ export default async function TermSheetsIndexPage() {
 
   const supabase = await createClient();
 
-  const { data: termSheets } = await supabase
-    .from("term_sheets")
-    .select("id, investor_name, firm, instrument_type, status, version, sent_at, signed_at, created_at, round_id")
-    .eq("workspace_id", workspace.id)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false });
-
-  // Fetch round names for display
-  const roundIds = [...new Set((termSheets ?? []).map((t) => t.round_id))];
-  const roundById: Record<string, { id: string; name: string }> = {};
-  if (roundIds.length > 0) {
-    const { data: rounds } = await supabase
+  const [{ data: termSheets }, { data: allRounds }] = await Promise.all([
+    supabase
+      .from("term_sheets")
+      .select("id, investor_name, firm, instrument_type, status, version, sent_at, signed_at, created_at, round_id")
+      .eq("workspace_id", workspace.id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false }),
+    supabase
       .from("financing_rounds")
-      .select("id, name")
-      .in("id", roundIds);
-    for (const r of rounds ?? []) roundById[r.id] = r;
-  }
+      .select("id, name, status")
+      .eq("workspace_id", workspace.id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false }),
+  ]);
+
+  const roundById: Record<string, { id: string; name: string }> = {};
+  for (const r of allRounds ?? []) roundById[r.id] = { id: r.id, name: r.name };
 
   const signed = (termSheets ?? []).filter((t) => t.status === "signed").length;
   const sent = (termSheets ?? []).filter((t) => t.status === "sent").length;
@@ -73,16 +73,41 @@ export default async function TermSheetsIndexPage() {
       </div>
 
       {(termSheets ?? []).length === 0 ? (
-        <div className="rounded-xl bg-(--color-surface-container-low) px-6 py-12 text-center">
-          <p className="text-body-md text-(--color-on-surface-variant)">
-            No term sheets yet. Open a round and click <strong>Draft term sheet</strong> to get started.
-          </p>
-          <Link
-            href="/rounds"
-            className="mt-4 inline-block rounded-lg bg-(--color-primary) px-5 py-2.5 text-label-sm font-medium text-white hover:opacity-90"
-          >
-            Go to Rounds
-          </Link>
+        <div className="rounded-xl bg-(--color-surface-container-low) px-6 py-10 space-y-6">
+          <div>
+            <h2 className="text-title-md font-medium">No term sheets yet</h2>
+            <p className="mt-1 text-body-md text-(--color-on-surface-variant)">
+              Term sheets attach to a specific round. {(allRounds ?? []).length > 0
+                ? "Pick a round below to draft your first one."
+                : "Create a round first to get started."}
+            </p>
+          </div>
+
+          {(allRounds ?? []).length === 0 ? (
+            <Link
+              href="/rounds/new"
+              className="inline-block rounded-lg bg-(--color-primary) px-5 py-2.5 text-label-sm font-medium text-white hover:opacity-90"
+            >
+              Create a round
+            </Link>
+          ) : (
+            <ul className="divide-y divide-(--color-outline-variant)/15 rounded-lg bg-(--color-surface-container)">
+              {(allRounds ?? []).map((r) => (
+                <li key={r.id} className="flex items-center justify-between px-4 py-3">
+                  <div>
+                    <p className="text-body-md font-medium">{r.name}</p>
+                    <p className="text-label-sm uppercase text-(--color-on-surface-variant)">{r.status}</p>
+                  </div>
+                  <Link
+                    href={`/rounds/${r.id}#term-sheets`}
+                    className="rounded-lg bg-(--color-primary) px-4 py-2 text-label-sm font-medium text-white hover:opacity-90"
+                  >
+                    Draft term sheet
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       ) : (
         <div className="rounded-xl bg-(--color-surface-container-low) overflow-hidden">
