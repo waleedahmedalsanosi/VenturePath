@@ -18,10 +18,12 @@ export function AppShell({
   headerLeft,
   headerRight,
   children,
+  hasWorkspace,
 }: {
   headerLeft: React.ReactNode;
   headerRight: React.ReactNode;
   children: React.ReactNode;
+  hasWorkspace: boolean;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [desktopCollapsed, setDesktopCollapsed] = useState(false);
@@ -49,6 +51,7 @@ export function AppShell({
         mobileOpen={mobileOpen}
         onClose={() => setMobileOpen(false)}
         desktopCollapsed={desktopCollapsed}
+        hasWorkspace={hasWorkspace}
       />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">

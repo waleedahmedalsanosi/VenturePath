@@ -10,8 +10,16 @@ const TOP_LINKS = [
   { href: "/explore", label: "Explore" },
 ];
 
-// Collapsible nav groups
-const NAV_GROUPS: Array<{ label: string; items: Array<{ href: string; label: string }> }> = [
+type NavGroup = { label: string; items: Array<{ href: string; label: string }> };
+
+// Onboarding group shown to users who haven't created a workspace yet.
+const ONBOARDING_GROUP: NavGroup = {
+  label: "My startup",
+  items: [{ href: "/setup", label: "Add your startup" }],
+};
+
+// Collapsible nav groups (shown only once the user has a workspace)
+const NAV_GROUPS: NavGroup[] = [
   {
     label: "Company",
     items: [
@@ -56,7 +64,7 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function groupHasActive(pathname: string, group: (typeof NAV_GROUPS)[number]): boolean {
+function groupHasActive(pathname: string, group: NavGroup): boolean {
   return group.items.some((item) => isActive(pathname, item.href));
 }
 
@@ -85,27 +93,31 @@ interface SidebarProps {
   mobileOpen: boolean;
   onClose: () => void;
   desktopCollapsed: boolean;
+  hasWorkspace: boolean;
 }
 
-export function Sidebar({ mobileOpen, onClose, desktopCollapsed }: SidebarProps) {
+export function Sidebar({ mobileOpen, onClose, desktopCollapsed, hasWorkspace }: SidebarProps) {
   const pathname = usePathname();
 
-  // All groups collapsed by default; active group auto-expands
+  // Pre-workspace users see only the onboarding group; everyone else sees the full nav.
+  const groups: NavGroup[] = hasWorkspace ? NAV_GROUPS : [ONBOARDING_GROUP];
+
+  // All groups collapsed by default; active group auto-expands. Onboarding group
+  // starts open so the "Add your startup" CTA is immediately visible.
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
-    for (const g of NAV_GROUPS) {
-      initial[g.label] = false; // collapsed by default
-    }
+    for (const g of NAV_GROUPS) initial[g.label] = false;
+    initial[ONBOARDING_GROUP.label] = true;
     return initial;
   });
 
   // Auto-expand whichever group contains the current route
   useEffect(() => {
-    const activeGroup = NAV_GROUPS.find((g) => groupHasActive(pathname, g));
+    const activeGroup = groups.find((g) => groupHasActive(pathname, g));
     if (activeGroup) {
       setExpanded((prev) => ({ ...prev, [activeGroup.label]: true }));
     }
-  }, [pathname]);
+  }, [pathname, groups]);
 
   function toggleGroup(label: string) {
     setExpanded((prev) => ({ ...prev, [label]: !prev[label] }));
@@ -182,7 +194,7 @@ export function Sidebar({ mobileOpen, onClose, desktopCollapsed }: SidebarProps)
       {/* Collapsible groups */}
       <nav className="flex-1 px-2 pb-6" aria-label="Navigation sections">
         <div className="space-y-0.5">
-          {NAV_GROUPS.map((group) => {
+          {groups.map((group) => {
             const isOpen = expanded[group.label] ?? false;
             const hasActive = groupHasActive(pathname, group);
 

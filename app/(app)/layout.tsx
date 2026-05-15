@@ -52,7 +52,7 @@ export default async function AppLayout({
   );
 
   return (
-    <AppShell headerLeft={headerLeft} headerRight={headerRight}>
+    <AppShell headerLeft={headerLeft} headerRight={headerRight} hasWorkspace={!!active}>
       {children}
     </AppShell>
   );
