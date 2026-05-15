@@ -161,6 +161,115 @@ export type Database = {
           },
         ];
       };
+      esop_pools: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          total_pool_shares: number | string;
+          strike_price_reference_sar: number | string | null;
+          pool_creation_date: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          total_pool_shares: number | string;
+          strike_price_reference_sar?: number | string | null;
+          pool_creation_date?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          total_pool_shares?: number | string;
+          strike_price_reference_sar?: number | string | null;
+          pool_creation_date?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "esop_pools_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: true;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      esop_grants: {
+        Row: {
+          id: string;
+          pool_id: string;
+          workspace_id: string;
+          employee_name: string;
+          employee_email: string;
+          department: Database["public"]["Enums"]["esop_department"];
+          options_count: number | string;
+          strike_price_sar: number | string;
+          grant_date: string;
+          vesting_type: Database["public"]["Enums"]["esop_vesting_type"];
+          vesting_start_date: string | null;
+          vesting_end_date: string | null;
+          cliff_months: number;
+          vesting_frequency: Database["public"]["Enums"]["esop_vesting_frequency"] | null;
+          status: Database["public"]["Enums"]["esop_grant_status"];
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          pool_id: string;
+          workspace_id: string;
+          employee_name: string;
+          employee_email: string;
+          department: Database["public"]["Enums"]["esop_department"];
+          options_count: number | string;
+          strike_price_sar: number | string;
+          grant_date: string;
+          vesting_type: Database["public"]["Enums"]["esop_vesting_type"];
+          vesting_start_date?: string | null;
+          vesting_end_date?: string | null;
+          cliff_months?: number;
+          vesting_frequency?: Database["public"]["Enums"]["esop_vesting_frequency"] | null;
+          status?: Database["public"]["Enums"]["esop_grant_status"];
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          pool_id?: string;
+          workspace_id?: string;
+          employee_name?: string;
+          employee_email?: string;
+          department?: Database["public"]["Enums"]["esop_department"];
+          options_count?: number | string;
+          strike_price_sar?: number | string;
+          grant_date?: string;
+          vesting_type?: Database["public"]["Enums"]["esop_vesting_type"];
+          vesting_start_date?: string | null;
+          vesting_end_date?: string | null;
+          cliff_months?: number;
+          vesting_frequency?: Database["public"]["Enums"]["esop_vesting_frequency"] | null;
+          status?: Database["public"]["Enums"]["esop_grant_status"];
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "esop_grants_pool_id_fkey";
+            columns: ["pool_id"];
+            isOneToOne: false;
+            referencedRelation: "esop_pools";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       shareholders: {
         Row: {
           created_at: string;
@@ -339,6 +448,18 @@ export type Database = {
       compliance_recurrence: "one_time" | "monthly" | "quarterly" | "annual";
       entity_or_individual: "entity" | "individual";
       entity_status: "incorporated" | "product_only";
+      esop_department:
+        | "engineering"
+        | "product"
+        | "sales"
+        | "operations"
+        | "design"
+        | "legal"
+        | "finance"
+        | "other";
+      esop_grant_status: "active" | "fully_vested" | "terminated";
+      esop_vesting_frequency: "monthly" | "quarterly" | "annual";
+      esop_vesting_type: "immediate" | "graded";
       instrument_type: "ordinary" | "isafe" | "safe" | "convertible_note";
       isafe_conversion_status: "unconverted" | "converted";
     };

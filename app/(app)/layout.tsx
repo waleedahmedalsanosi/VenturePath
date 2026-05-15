@@ -33,6 +33,12 @@ export default async function AppLayout({
                 Cap table
               </Link>
               <Link
+                href="/esop"
+                className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
+              >
+                ESOP
+              </Link>
+              <Link
                 href="/vault"
                 className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
               >
