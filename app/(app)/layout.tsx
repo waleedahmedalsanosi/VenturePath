@@ -38,6 +38,12 @@ export default async function AppLayout({
             )}
             <nav className="flex items-center gap-4 text-body-sm">
               <Link
+                href="/dashboard"
+                className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
+              >
+                Dashboard
+              </Link>
+              <Link
                 href="/company"
                 className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
               >
@@ -66,6 +72,12 @@ export default async function AppLayout({
                 className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
               >
                 Waterfall
+              </Link>
+              <Link
+                href="/acquisition"
+                className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
+              >
+                M&amp;A
               </Link>
               <Link
                 href="/valuation"

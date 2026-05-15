@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -77,13 +78,21 @@ export function GrantRow({
             </button>
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={() => setConfirming(true)}
-            className="text-body-sm text-(--color-on-surface-variant) hover:text-(--color-error)"
-          >
-            Terminate
-          </button>
+          <div className="flex items-center justify-end gap-3">
+            <Link
+              href={`/esop/grants/${id}/edit`}
+              className="text-body-sm text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
+            >
+              Edit
+            </Link>
+            <button
+              type="button"
+              onClick={() => setConfirming(true)}
+              className="text-body-sm text-(--color-on-surface-variant) hover:text-(--color-error)"
+            >
+              Terminate
+            </button>
+          </div>
         )}
         {error && (
           <p className="mt-1 text-body-sm text-(--color-error) text-end" role="alert">

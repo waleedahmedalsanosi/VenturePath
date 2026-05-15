@@ -206,6 +206,100 @@ export async function addGrant(formData: FormData): Promise<ActionResult> {
   redirect("/esop");
 }
 
+const EditGrantSchema = z.object({
+  employee_name: z.string().min(1).max(200),
+  employee_email: z.string().email(),
+  department: z.enum([
+    "engineering", "product", "sales", "operations",
+    "design", "legal", "finance", "other",
+  ]),
+  strike_price_sar: z.string().min(1),
+  vesting_start_date: z.string().optional().or(z.literal("")),
+  vesting_end_date: z.string().optional().or(z.literal("")),
+  cliff_months: z.string().optional().or(z.literal("")),
+  vesting_frequency: z.enum(["monthly", "quarterly", "annual"]).optional(),
+});
+
+export async function editGrant(grantId: string, formData: FormData): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const { data: grant } = await supabase
+    .from("esop_grants")
+    .select("workspace_id, vesting_type, status")
+    .eq("id", grantId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!grant) return { ok: false, error: "Grant not found." };
+  if (grant.status === "terminated") return { ok: false, error: "Cannot edit a terminated grant." };
+
+  const parsed = EditGrantSchema.safeParse({
+    employee_name: formData.get("employee_name"),
+    employee_email: formData.get("employee_email"),
+    department: formData.get("department"),
+    strike_price_sar: formData.get("strike_price_sar"),
+    vesting_start_date: formData.get("vesting_start_date") ?? "",
+    vesting_end_date: formData.get("vesting_end_date") ?? "",
+    cliff_months: formData.get("cliff_months") ?? "0",
+    vesting_frequency: formData.get("vesting_frequency") || undefined,
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues.map((i) => `${i.path.map(String).join(".")}: ${i.message}`).join("; "),
+    };
+  }
+
+  let strikeDec: InstanceType<typeof Dec>;
+  try {
+    strikeDec = new Dec(parsed.data.strike_price_sar);
+  } catch {
+    return { ok: false, error: "Invalid strike price." };
+  }
+  if (strikeDec.lte(0)) return { ok: false, error: "Strike price must be > 0." };
+
+  if (grant.vesting_type === "graded") {
+    if (!parsed.data.vesting_start_date || !parsed.data.vesting_end_date) {
+      return { ok: false, error: "Graded vesting requires start and end dates." };
+    }
+    if (parsed.data.vesting_start_date >= parsed.data.vesting_end_date) {
+      return { ok: false, error: "Vesting end date must be after start date." };
+    }
+  }
+
+  const { error } = await supabase
+    .from("esop_grants")
+    .update({
+      employee_name: parsed.data.employee_name,
+      employee_email: parsed.data.employee_email,
+      department: parsed.data.department,
+      strike_price_sar: strikeDec.toFixed(2),
+      vesting_start_date:
+        grant.vesting_type === "graded" ? (parsed.data.vesting_start_date ?? null) : undefined,
+      vesting_end_date:
+        grant.vesting_type === "graded" ? (parsed.data.vesting_end_date ?? null) : undefined,
+      cliff_months: Number(parsed.data.cliff_months || "0"),
+      vesting_frequency:
+        grant.vesting_type === "graded" ? (parsed.data.vesting_frequency ?? null) : undefined,
+    })
+    .eq("id", grantId);
+  if (error) return { ok: false, error: error.message };
+
+  await logAudit({
+    workspaceId: grant.workspace_id,
+    entityType: "workspace",
+    entityId: grantId,
+    action: "esop_grant_edit",
+    description: `Updated ESOP grant for ${parsed.data.employee_name}`,
+  });
+
+  revalidatePath("/esop");
+  redirect("/esop");
+}
+
 export async function terminateGrant(grantId: string): Promise<ActionResult> {
   const supabase = await createClient();
   const {

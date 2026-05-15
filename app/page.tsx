@@ -16,7 +16,7 @@ export default async function Home() {
   const workspace = await getActiveWorkspace();
 
   if (workspace) {
-    redirect("/cap-table");
+    redirect("/dashboard");
   } else {
     redirect("/setup");
   }
