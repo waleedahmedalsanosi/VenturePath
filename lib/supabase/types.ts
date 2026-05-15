@@ -16,6 +16,68 @@ export type Database = {
   };
   public: {
     Tables: {
+      financing_rounds: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          name: string;
+          status: "draft" | "open" | "closed";
+          instrument_type: "isafe" | "safe" | "convertible_note" | "ordinary";
+          pre_money_valuation_sar: number | string | null;
+          target_raise_sar: number | string | null;
+          actual_raise_sar: number | string | null;
+          fd_shares_pre_round: number | string | null;
+          lead_investor: string | null;
+          close_date: string | null;
+          board_resolution_id: string | null;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          name: string;
+          status?: "draft" | "open" | "closed";
+          instrument_type?: "isafe" | "safe" | "convertible_note" | "ordinary";
+          pre_money_valuation_sar?: number | string | null;
+          target_raise_sar?: number | string | null;
+          actual_raise_sar?: number | string | null;
+          fd_shares_pre_round?: number | string | null;
+          lead_investor?: string | null;
+          close_date?: string | null;
+          board_resolution_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          name?: string;
+          status?: "draft" | "open" | "closed";
+          instrument_type?: "isafe" | "safe" | "convertible_note" | "ordinary";
+          pre_money_valuation_sar?: number | string | null;
+          target_raise_sar?: number | string | null;
+          actual_raise_sar?: number | string | null;
+          fd_shares_pre_round?: number | string | null;
+          lead_investor?: string | null;
+          close_date?: string | null;
+          board_resolution_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "financing_rounds_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       board_meetings: {
         Row: {
           id: string;
@@ -395,6 +457,7 @@ export type Database = {
           name: string;
           updated_at: string;
           workspace_id: string;
+          funding_round_id: string | null;
         };
         Insert: {
           created_at?: string;
@@ -408,6 +471,7 @@ export type Database = {
           name: string;
           updated_at?: string;
           workspace_id: string;
+          funding_round_id?: string | null;
         };
         Update: {
           created_at?: string;
@@ -421,6 +485,7 @@ export type Database = {
           name?: string;
           updated_at?: string;
           workspace_id?: string;
+          funding_round_id?: string | null;
         };
         Relationships: [
           {

@@ -26,6 +26,7 @@ function ordinary(
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
     deleted_at: null,
+    funding_round_id: null,
   };
 }
 
@@ -53,6 +54,7 @@ function isafe(
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
     deleted_at: null,
+    funding_round_id: null,
   };
 }
 
