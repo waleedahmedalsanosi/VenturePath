@@ -1,18 +1,46 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 
 import { openRound, closeRound, deleteRound } from "../actions";
+
+interface SignedTermSheet {
+  investor_name: string;
+  firm: string | null;
+  instrument_type: string;
+  terms: Record<string, unknown>;
+}
 
 interface RoundActionsProps {
   roundId: string;
   status: "draft" | "open" | "closed";
+  signedTermSheets?: SignedTermSheet[];
 }
 
-export function RoundActions({ roundId, status }: RoundActionsProps) {
+function sarFromTerms(ts: SignedTermSheet): number {
+  const t = ts.terms;
+  if (ts.instrument_type === "ordinary") {
+    const shares = Number(t.shares ?? 0);
+    const price = Number(t.price_per_share_sar ?? 0);
+    return shares * price;
+  }
+  const inv = Number(t.investment_sar ?? t.principal_sar ?? 0);
+  return inv;
+}
+
+function fmtSAR(n: number): string {
+  return `SAR ${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+}
+
+export function RoundActions({ roundId, status, signedTermSheets = [] }: RoundActionsProps) {
   const [showCloseForm, setShowCloseForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const totalSignedSar = useMemo(
+    () => signedTermSheets.reduce((sum, ts) => sum + sarFromTerms(ts), 0),
+    [signedTermSheets],
+  );
 
   function handleOpen() {
     setError(null);
@@ -88,6 +116,28 @@ export function RoundActions({ roundId, status }: RoundActionsProps) {
             </p>
           </div>
 
+          {/* Signed term sheet preview */}
+          {signedTermSheets.length > 0 && (
+            <div className="rounded-lg bg-(--color-success)/8 px-4 py-3 space-y-1.5">
+              <p className="text-label-sm font-medium text-(--color-success)">
+                {signedTermSheets.length} signed term sheet{signedTermSheets.length !== 1 ? "s" : ""} will be promoted to the cap table
+              </p>
+              <ul className="space-y-0.5">
+                {signedTermSheets.map((ts, i) => (
+                  <li key={i} className="text-body-sm text-(--color-on-surface-variant) flex items-center justify-between">
+                    <span>{ts.firm ? `${ts.investor_name} (${ts.firm})` : ts.investor_name}</span>
+                    <span className="tabular-nums">{sarFromTerms(ts) > 0 ? fmtSAR(sarFromTerms(ts)) : ts.instrument_type.toUpperCase()}</span>
+                  </li>
+                ))}
+              </ul>
+              {totalSignedSar > 0 && (
+                <p className="text-label-sm text-(--color-success) font-medium pt-1 border-t border-(--color-success)/20">
+                  Total: {fmtSAR(totalSignedSar)}
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <label className="text-label-lg" htmlFor="pre_money_valuation_sar">
@@ -136,8 +186,14 @@ export function RoundActions({ roundId, status }: RoundActionsProps) {
                 min="0"
                 step="1"
                 placeholder="e.g. 1800000"
+                defaultValue={totalSignedSar > 0 ? String(Math.round(totalSignedSar)) : undefined}
                 className="w-full rounded-lg bg-(--color-surface-container-high) px-4 py-2.5 text-body-md ghost-border focus:outline-none focus:ring-2 focus:ring-(--color-primary)/40"
               />
+              {totalSignedSar > 0 && (
+                <p className="text-body-sm text-(--color-on-surface-variant)">
+                  Pre-filled from signed term sheets. Edit if needed.
+                </p>
+              )}
             </div>
           </div>
 

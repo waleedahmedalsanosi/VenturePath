@@ -8,6 +8,7 @@ import type { Database } from "@/lib/supabase/types";
 import { OwnershipDonut } from "./donut-chart";
 import { InstrumentChip } from "./instrument-chip";
 import { RowActions } from "./row-actions";
+import { PrintButton } from "@/components/print-button";
 
 type Workspace = Database["public"]["Tables"]["workspaces"]["Row"];
 type Shareholder = Database["public"]["Tables"]["shareholders"]["Row"];
@@ -55,12 +56,15 @@ export function CapTablePopulated({
             {workspace.one_liner}
           </p>
         </div>
-        <Link
-          href="/cap-table/add"
-          className="rounded-lg ghost-border px-5 py-2 text-label-lg hover:bg-(--color-surface-container-high)"
-        >
-          + Add shareholder
-        </Link>
+        <div className="flex items-center gap-2">
+          <PrintButton label="Export PDF" />
+          <Link
+            href="/cap-table/add"
+            className="rounded-lg ghost-border px-5 py-2 text-label-lg hover:bg-(--color-surface-container-high)"
+          >
+            + Add shareholder
+          </Link>
+        </div>
       </header>
 
       {/* KPI tiles */}

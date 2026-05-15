@@ -285,7 +285,82 @@ export async function closeRound(
   }
   const { pre_money_valuation_sar, fd_shares_pre_round, actual_raise_sar } = parsed.data;
 
-  // Fetch all unconverted iSAFE + SAFE holders in this workspace.
+  const closeDate = new Date().toISOString().slice(0, 10);
+
+  // Auto-promote all signed term sheets for this round that haven't been promoted yet.
+  const { data: signedTermSheets } = await supabase
+    .from("term_sheets")
+    .select("*")
+    .eq("round_id", roundId)
+    .eq("status", "signed")
+    .is("deleted_at", null);
+
+  for (const ts of signedTermSheets ?? []) {
+    // Skip if this investor is already on the cap table in this workspace.
+    const { data: existing } = await supabase
+      .from("shareholders")
+      .select("id")
+      .eq("workspace_id", workspace.id)
+      .eq("instrument_type", ts.instrument_type)
+      .eq("name", ts.firm ? `${ts.investor_name} (${ts.firm})` : ts.investor_name)
+      .is("deleted_at", null)
+      .limit(1)
+      .maybeSingle();
+    if (existing) continue;
+
+    const terms = (ts.terms ?? {}) as Record<string, unknown>;
+    let instrumentData: Record<string, unknown>;
+
+    if (ts.instrument_type === "isafe") {
+      instrumentData = {
+        investment_sar: String(terms.investment_sar ?? "0"),
+        valuation_cap_sar: String(terms.valuation_cap_sar ?? "0"),
+        profit_share_ratio: String(terms.profit_share_ratio ?? "0"),
+        conversion_status: "unconverted",
+      };
+    } else if (ts.instrument_type === "safe") {
+      instrumentData = {
+        safe_type: terms.safe_type ?? "post_money",
+        investment_sar: String(terms.investment_sar ?? "0"),
+        valuation_cap_sar: String(terms.valuation_cap_sar ?? "0"),
+        ...(terms.discount_rate ? { discount_rate: String(terms.discount_rate) } : {}),
+        conversion_status: "unconverted",
+      };
+    } else if (ts.instrument_type === "convertible_note") {
+      instrumentData = {
+        principal_sar: String(terms.principal_sar ?? "0"),
+        interest_rate: String(terms.interest_rate ?? "0"),
+        maturity_date: String(terms.maturity_date ?? ""),
+        ...(terms.conversion_discount ? { conversion_discount: String(terms.conversion_discount) } : {}),
+        ...(terms.valuation_cap_sar ? { valuation_cap_sar: String(terms.valuation_cap_sar) } : {}),
+      };
+    } else {
+      instrumentData = {
+        shares: String(terms.shares ?? "0"),
+        price_per_share_sar: String(terms.price_per_share_sar ?? "0"),
+      };
+    }
+
+    await supabase.from("shareholders").insert({
+      workspace_id: workspace.id,
+      name: ts.firm ? `${ts.investor_name} (${ts.firm})` : ts.investor_name,
+      email: ts.investor_email ?? null,
+      entity_or_individual: ts.firm ? "entity" : "individual",
+      entry_date: closeDate,
+      instrument_type: ts.instrument_type as "ordinary" | "isafe" | "safe" | "convertible_note",
+      instrument_data: instrumentData as Json,
+      funding_round_id: roundId,
+    });
+
+    if (ts.pipeline_contact_id) {
+      await supabase
+        .from("investor_pipeline")
+        .update({ status: "invested" })
+        .eq("id", ts.pipeline_contact_id);
+    }
+  }
+
+  // Fetch all unconverted iSAFE + SAFE holders in this workspace (now includes just-promoted ones).
   const { data: convertibles } = await supabase
     .from("shareholders")
     .select("id, name, email, entity_or_individual, entry_date, instrument_type, instrument_data")
@@ -302,8 +377,6 @@ export async function closeRound(
     pre_money_valuation_sar: new Dec(pre_money_valuation_sar),
     fd_shares_pre_round: new Dec(fd_shares_pre_round),
   };
-
-  const closeDate = new Date().toISOString().slice(0, 10);
 
   for (const holder of toConvert) {
     const d = holder.instrument_data as Record<string, string>;

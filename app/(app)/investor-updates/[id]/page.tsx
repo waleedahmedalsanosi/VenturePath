@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveWorkspace } from "@/lib/workspace/active";
 
 import { UpdateActions } from "./update-actions-bar";
+import { PrintButton } from "@/components/print-button";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -95,12 +96,15 @@ export default async function InvestorUpdateViewPage({ params }: PageProps) {
         >
           ← Back to {round?.name ?? "round"}
         </Link>
-        <UpdateActions
-          updateId={id}
-          roundId={update.round_id}
-          status={update.status}
-          publicUrl={publicUrl}
-        />
+        <div className="flex items-center gap-2">
+          <PrintButton label="Export PDF" />
+          <UpdateActions
+            updateId={id}
+            roundId={update.round_id}
+            status={update.status}
+            publicUrl={publicUrl}
+          />
+        </div>
       </div>
 
       {/* Analytics bar — only for published updates */}

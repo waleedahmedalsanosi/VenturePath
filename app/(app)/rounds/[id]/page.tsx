@@ -13,6 +13,7 @@ import { Blockers } from "./blockers";
 import { TermSheetsSection } from "./term-sheets-section";
 import { ClosingLegal } from "./closing-legal";
 import { InvestorUpdatesSection } from "./investor-updates-section";
+import { PrintButton } from "@/components/print-button";
 
 const STATUS_STYLES: Record<string, string> = {
   draft: "bg-(--color-surface-bright) text-(--color-on-surface-variant)",
@@ -196,11 +197,14 @@ export default async function RoundDetailPage({
               {round.name}
             </h1>
           </div>
-          <span
-            className={`mt-2 inline-flex items-center rounded-full px-3 py-1 text-label-sm font-medium uppercase tracking-wider shrink-0 ${STATUS_STYLES[round.status]}`}
-          >
-            {round.status}
-          </span>
+          <div className="flex items-center gap-2 shrink-0 mt-2">
+            <PrintButton label="Export PDF" />
+            <span
+              className={`inline-flex items-center rounded-full px-3 py-1 text-label-sm font-medium uppercase tracking-wider ${STATUS_STYLES[round.status]}`}
+            >
+              {round.status}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -376,7 +380,18 @@ export default async function RoundDetailPage({
 
       {/* Actions */}
       {round.status !== "closed" && (
-        <RoundActions roundId={round.id} status={round.status} />
+        <RoundActions
+          roundId={round.id}
+          status={round.status}
+          signedTermSheets={(termSheets ?? [])
+            .filter((ts) => ts.status === "signed")
+            .map((ts) => ({
+              investor_name: ts.investor_name,
+              firm: ts.firm ?? null,
+              instrument_type: ts.instrument_type,
+              terms: (ts.terms ?? {}) as Record<string, unknown>,
+            }))}
+        />
       )}
 
       {/* Closed summary */}

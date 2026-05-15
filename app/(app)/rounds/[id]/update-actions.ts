@@ -3,9 +3,11 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { headers } from "next/headers";
 
 import { createClient } from "@/lib/supabase/server";
 import { getActiveWorkspace } from "@/lib/workspace/active";
+import { sendInvestorUpdateEmails } from "@/lib/email/resend";
 
 export interface ActionResult {
   ok: boolean;
@@ -112,7 +114,7 @@ export async function publishInvestorUpdate(updateId: string): Promise<ActionRes
 
   const { data: update } = await supabase
     .from("investor_updates")
-    .select("round_id")
+    .select("round_id, subject, body, highlights, mrr_sar, runway_months, token")
     .eq("id", updateId)
     .eq("workspace_id", workspace.id)
     .maybeSingle();
@@ -124,6 +126,43 @@ export async function publishInvestorUpdate(updateId: string): Promise<ActionRes
     .eq("id", updateId)
     .eq("workspace_id", workspace.id);
   if (error) return { ok: false, error: error.message };
+
+  // Send email to all pipeline contacts with an email address for this round.
+  const { data: contacts } = await supabase
+    .from("investor_pipeline")
+    .select("email")
+    .eq("round_id", update.round_id)
+    .not("email", "is", null)
+    .is("deleted_at", null);
+
+  const recipients = (contacts ?? [])
+    .map((c) => c.email)
+    .filter((e): e is string => typeof e === "string" && e.includes("@"));
+
+  if (recipients.length > 0) {
+    const hdrs = await headers();
+    const host = hdrs.get("host") ?? "venturepath.co";
+    const proto = host.startsWith("localhost") ? "http" : "https";
+    const publicUrl = `${proto}://${host}/updates/${update.token}`;
+
+    const { data: round } = await supabase
+      .from("financing_rounds")
+      .select("name")
+      .eq("id", update.round_id)
+      .maybeSingle();
+
+    await sendInvestorUpdateEmails({
+      to: recipients,
+      companyName: workspace.name,
+      roundName: round?.name ?? "Round",
+      subject: update.subject,
+      body: update.body,
+      highlights: (update.highlights ?? []) as string[],
+      mrrSar: update.mrr_sar != null ? Number(update.mrr_sar) : null,
+      runwayMonths: update.runway_months != null ? Number(update.runway_months) : null,
+      publicUrl,
+    });
+  }
 
   revalidatePath(`/investor-updates/${updateId}`);
   revalidatePath(`/rounds/${update.round_id}`);
