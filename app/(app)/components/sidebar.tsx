@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 // Standalone top-level links (outside any collapsible group).
 // Dashboard is gated behind having a workspace; Explore is open to everyone.
@@ -99,9 +99,15 @@ export function Sidebar({ mobileOpen, onClose, desktopCollapsed, hasWorkspace }:
   const pathname = usePathname();
 
   // Pre-workspace users see only the onboarding group; everyone else sees the full nav.
-  const groups: NavGroup[] = hasWorkspace ? NAV_GROUPS : [ONBOARDING_GROUP];
+  const groups = useMemo<NavGroup[]>(
+    () => (hasWorkspace ? NAV_GROUPS : [ONBOARDING_GROUP]),
+    [hasWorkspace],
+  );
   // Dashboard is hidden until the user has a workspace (owner or shareholder).
-  const topLinks = hasWorkspace ? [DASHBOARD_LINK, EXPLORE_LINK] : [EXPLORE_LINK];
+  const topLinks = useMemo(
+    () => (hasWorkspace ? [DASHBOARD_LINK, EXPLORE_LINK] : [EXPLORE_LINK]),
+    [hasWorkspace],
+  );
 
   // All groups collapsed by default; active group auto-expands. Onboarding group
   // starts open so the "Add your startup" CTA is immediately visible.
