@@ -44,7 +44,7 @@ export default async function DashboardPage() {
   if (!user) redirect("/sign-in");
 
   const workspace = await getActiveWorkspace();
-  if (!workspace) return <DashboardWelcome email={user.email ?? ""} />;
+  if (!workspace) redirect("/setup");
 
   // Fetch all dashboard data concurrently.
   const [
@@ -221,50 +221,6 @@ export default async function DashboardPage() {
           </div>
         </section>
       )}
-    </main>
-  );
-}
-
-function DashboardWelcome({ email }: { email: string }) {
-  return (
-    <main className="mx-auto max-w-3xl px-6 py-16">
-      <p className="text-label-md uppercase text-(--color-on-surface-variant)">
-        Welcome{email ? `, ${email}` : ""}
-      </p>
-      <h1 className="mt-1 text-display-sm font-semibold tracking-tight">
-        Let&rsquo;s set up your startup
-      </h1>
-      <p className="mt-3 max-w-xl text-body-md text-(--color-on-surface-variant)">
-        Add your startup&rsquo;s basic details to unlock your cap table, ESOP, governance,
-        compliance, and the rest of VenturePath. You can also browse other founders&rsquo;
-        public profiles in Explore while you decide.
-      </p>
-
-      <div className="mt-8 rounded-xl bg-(--color-surface-container-low) p-6">
-        <p className="text-label-md uppercase text-(--color-on-surface-variant)">
-          My startup
-        </p>
-        <h2 className="mt-1 text-headline-sm font-semibold tracking-tight">
-          Add your startup information
-        </h2>
-        <p className="mt-2 text-body-sm text-(--color-on-surface-variant)">
-          Name, jurisdiction, and currency — under a minute. We&rsquo;ll seed the rest.
-        </p>
-        <div className="mt-5 flex flex-wrap gap-3">
-          <Link
-            href="/setup"
-            className="btn-primary-gradient rounded-lg px-5 py-2.5 text-label-lg font-medium"
-          >
-            Add your startup
-          </Link>
-          <Link
-            href="/explore"
-            className="rounded-lg bg-(--color-surface-container-high) px-5 py-2.5 text-label-lg font-medium text-(--color-on-surface) hover:bg-(--color-surface-bright) transition-colors"
-          >
-            Browse Explore
-          </Link>
-        </div>
-      </div>
     </main>
   );
 }

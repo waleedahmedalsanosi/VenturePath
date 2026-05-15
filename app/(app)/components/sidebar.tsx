@@ -4,11 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 
-// Standalone top-level links (outside any collapsible group)
-const TOP_LINKS = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/explore", label: "Explore" },
-];
+// Standalone top-level links (outside any collapsible group).
+// Dashboard is gated behind having a workspace; Explore is open to everyone.
+const EXPLORE_LINK = { href: "/explore", label: "Explore" };
+const DASHBOARD_LINK = { href: "/dashboard", label: "Dashboard" };
 
 type NavGroup = { label: string; items: Array<{ href: string; label: string }> };
 
@@ -101,6 +100,8 @@ export function Sidebar({ mobileOpen, onClose, desktopCollapsed, hasWorkspace }:
 
   // Pre-workspace users see only the onboarding group; everyone else sees the full nav.
   const groups: NavGroup[] = hasWorkspace ? NAV_GROUPS : [ONBOARDING_GROUP];
+  // Dashboard is hidden until the user has a workspace (owner or shareholder).
+  const topLinks = hasWorkspace ? [DASHBOARD_LINK, EXPLORE_LINK] : [EXPLORE_LINK];
 
   // All groups collapsed by default; active group auto-expands. Onboarding group
   // starts open so the "Add your startup" CTA is immediately visible.
@@ -163,7 +164,7 @@ export function Sidebar({ mobileOpen, onClose, desktopCollapsed, hasWorkspace }:
       {/* Top standalone links */}
       <nav className="px-2 pb-2" aria-label="Main shortcuts">
         <ul className="space-y-0.5">
-          {TOP_LINKS.map((link) => {
+          {topLinks.map((link) => {
             const active = isActive(pathname, link.href);
             return (
               <li key={link.href}>
