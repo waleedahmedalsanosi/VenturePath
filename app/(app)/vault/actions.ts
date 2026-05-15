@@ -39,6 +39,11 @@ export async function uploadDocument(formData: FormData): Promise<ActionResult> 
 
   const file = formData.get("file");
   const nameField = String(formData.get("name") ?? "").trim();
+  const categoryId = (formData.get("category_id") as string) || null;
+  const visibility = (formData.get("visibility") as string) || "internal";
+  if (!["internal", "data_room", "public"].includes(visibility)) {
+    return { ok: false, error: `Invalid visibility: ${visibility}` };
+  }
 
   if (!(file instanceof File)) {
     return { ok: false, error: "No file uploaded." };
@@ -78,6 +83,8 @@ export async function uploadDocument(formData: FormData): Promise<ActionResult> 
     size_bytes: file.size,
     mime_type: file.type,
     uploaded_by: user.id,
+    category_id: categoryId,
+    visibility: visibility as "internal" | "data_room" | "public",
   });
   if (insertError) {
     // Best-effort cleanup so we don't orphan storage objects.
@@ -168,4 +175,181 @@ export async function getSignedDownloadUrl(
   }
 
   return { ok: true, url: signed.data.signedUrl };
+}
+
+const VISIBILITY_CYCLE: Record<string, "internal" | "data_room" | "public"> = {
+  internal: "data_room",
+  data_room: "public",
+  public: "internal",
+};
+
+export async function cycleVisibility(documentId: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const { data: doc } = await supabase
+    .from("documents")
+    .select("workspace_id, name, visibility")
+    .eq("id", documentId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!doc) return { ok: false, error: "Document not found." };
+
+  const next = VISIBILITY_CYCLE[doc.visibility] ?? "internal";
+  const { error } = await supabase
+    .from("documents")
+    .update({ visibility: next })
+    .eq("id", documentId);
+  if (error) return { ok: false, error: error.message };
+
+  await logAudit({
+    workspaceId: doc.workspace_id,
+    entityType: "document",
+    entityId: documentId,
+    action: "visibility_change",
+    description: `"${doc.name}" visibility: ${doc.visibility} → ${next}`,
+  });
+
+  revalidatePath("/vault");
+  return { ok: true };
+}
+
+export async function setDocumentCategory(
+  documentId: string,
+  categoryId: string | null,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const { error } = await supabase
+    .from("documents")
+    .update({ category_id: categoryId })
+    .eq("id", documentId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/vault");
+  return { ok: true };
+}
+
+// Category management.
+
+export async function createCategory(name: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const cleanName = name.trim();
+  if (!cleanName || cleanName.length > 80) {
+    return { ok: false, error: "Name must be 1-80 chars." };
+  }
+
+  const { data: workspace } = await supabase
+    .from("workspaces")
+    .select("id")
+    .eq("owner_user_id", user.id)
+    .limit(1)
+    .maybeSingle();
+  if (!workspace) return { ok: false, error: "No workspace found." };
+
+  const { data: existing } = await supabase
+    .from("vault_categories")
+    .select("sort_order")
+    .eq("workspace_id", workspace.id)
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const nextSort = (existing?.sort_order ?? -1) + 1;
+
+  const { error } = await supabase.from("vault_categories").insert({
+    workspace_id: workspace.id,
+    name: cleanName,
+    sort_order: nextSort,
+  });
+  if (error) {
+    // Unique violation = duplicate name (case-insensitive).
+    if (error.code === "23505") return { ok: false, error: "Name already used." };
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/vault");
+  return { ok: true };
+}
+
+export async function renameCategory(
+  categoryId: string,
+  newName: string,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const clean = newName.trim();
+  if (!clean || clean.length > 80) return { ok: false, error: "Name must be 1-80 chars." };
+
+  // Block renaming locked (Data Room) categories.
+  const { data: category } = await supabase
+    .from("vault_categories")
+    .select("is_locked")
+    .eq("id", categoryId)
+    .maybeSingle();
+  if (!category) return { ok: false, error: "Category not found." };
+  if (category.is_locked) return { ok: false, error: "Data Room cannot be renamed." };
+
+  const { error } = await supabase
+    .from("vault_categories")
+    .update({ name: clean })
+    .eq("id", categoryId);
+  if (error) {
+    if (error.code === "23505") return { ok: false, error: "Name already used." };
+    return { ok: false, error: error.message };
+  }
+  revalidatePath("/vault");
+  return { ok: true };
+}
+
+export async function deleteCategory(categoryId: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const { data: category } = await supabase
+    .from("vault_categories")
+    .select("is_locked, name")
+    .eq("id", categoryId)
+    .maybeSingle();
+  if (!category) return { ok: false, error: "Category not found." };
+  if (category.is_locked) return { ok: false, error: "Data Room cannot be deleted." };
+
+  // PRD US-09-02: deletion only if zero documents.
+  const { count } = await supabase
+    .from("documents")
+    .select("id", { count: "exact", head: true })
+    .eq("category_id", categoryId)
+    .is("deleted_at", null);
+  if ((count ?? 0) > 0) {
+    return {
+      ok: false,
+      error: "Remove all documents from this category before deleting it.",
+    };
+  }
+
+  const { error } = await supabase
+    .from("vault_categories")
+    .delete()
+    .eq("id", categoryId);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/vault");
+  return { ok: true };
 }

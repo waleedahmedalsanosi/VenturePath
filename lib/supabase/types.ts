@@ -128,6 +128,8 @@ export type Database = {
           storage_path: string;
           uploaded_by: string;
           workspace_id: string;
+          category_id: string | null;
+          visibility: Database["public"]["Enums"]["document_visibility"];
         };
         Insert: {
           created_at?: string;
@@ -139,6 +141,8 @@ export type Database = {
           storage_path: string;
           uploaded_by: string;
           workspace_id: string;
+          category_id?: string | null;
+          visibility?: Database["public"]["Enums"]["document_visibility"];
         };
         Update: {
           created_at?: string;
@@ -150,6 +154,8 @@ export type Database = {
           storage_path?: string;
           uploaded_by?: string;
           workspace_id?: string;
+          category_id?: string | null;
+          visibility?: Database["public"]["Enums"]["document_visibility"];
         };
         Relationships: [
           {
@@ -487,6 +493,44 @@ export type Database = {
           },
         ];
       };
+      vault_categories: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          name: string;
+          is_data_room: boolean;
+          is_locked: boolean;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          name: string;
+          is_data_room?: boolean;
+          is_locked?: boolean;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          name?: string;
+          is_data_room?: boolean;
+          is_locked?: boolean;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "vault_categories_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       workspaces: {
         Row: {
           city: string;
@@ -582,6 +626,7 @@ export type Database = {
       esop_vesting_type: "immediate" | "graded";
       instrument_type: "ordinary" | "isafe" | "safe" | "convertible_note";
       isafe_conversion_status: "unconverted" | "converted";
+      document_visibility: "internal" | "data_room" | "public";
       valuation_methodology: "revenue_multiple" | "scorecard" | "berkus" | "dcf";
       workspace_role: "owner" | "admin" | "viewer";
     };

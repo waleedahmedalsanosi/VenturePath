@@ -6,6 +6,12 @@ import { useRouter } from "next/navigation";
 
 import { uploadDocument } from "./actions";
 
+interface Category {
+  id: string;
+  name: string;
+  is_data_room: boolean;
+}
+
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
@@ -19,7 +25,7 @@ function SubmitButton() {
   );
 }
 
-export function UploadForm() {
+export function UploadForm({ categories }: { categories: Category[] }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [filename, setFilename] = useState<string>("");
@@ -35,12 +41,14 @@ export function UploadForm() {
     router.refresh();
   }
 
+  const dataRoom = categories.find((c) => c.is_data_room);
+
   return (
     <form
       action={handle}
-      className="rounded-xl bg-(--color-surface-container-low) p-6 flex flex-wrap items-end gap-4"
+      className="rounded-xl bg-(--color-surface-container-low) p-6 grid grid-cols-1 md:grid-cols-12 gap-4"
     >
-      <label className="flex-1 min-w-48 block">
+      <label className="md:col-span-4 block">
         <span className="text-label-md uppercase text-(--color-on-surface-variant)">
           File
         </span>
@@ -54,9 +62,9 @@ export function UploadForm() {
         />
       </label>
 
-      <label className="flex-1 min-w-48 block">
+      <label className="md:col-span-3 block">
         <span className="text-label-md uppercase text-(--color-on-surface-variant)">
-          Display name (optional)
+          Display name
         </span>
         <input
           name="name"
@@ -67,11 +75,54 @@ export function UploadForm() {
         />
       </label>
 
-      <SubmitButton />
+      <label className="md:col-span-2 block">
+        <span className="text-label-md uppercase text-(--color-on-surface-variant)">
+          Category
+        </span>
+        <select
+          name="category_id"
+          className="mt-1 block w-full rounded-sm bg-(--color-surface-container-high) ghost-border px-3 py-2"
+          defaultValue=""
+        >
+          <option value="">Uncategorized</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.is_data_room ? "🔒 " : ""}{c.name}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="md:col-span-2 block">
+        <span className="text-label-md uppercase text-(--color-on-surface-variant)">
+          Visibility
+        </span>
+        <select
+          name="visibility"
+          defaultValue="internal"
+          className="mt-1 block w-full rounded-sm bg-(--color-surface-container-high) ghost-border px-3 py-2"
+        >
+          <option value="internal">Internal (owner)</option>
+          <option value="data_room">Data Room (invited)</option>
+          <option value="public">Public (anyone)</option>
+        </select>
+      </label>
+
+      <div className="md:col-span-1 flex items-end">
+        <SubmitButton />
+      </div>
 
       {error && (
-        <p className="basis-full text-body-sm text-(--color-error)" role="alert">
+        <p className="md:col-span-12 text-body-sm text-(--color-error)" role="alert">
           {error}
+        </p>
+      )}
+
+      {dataRoom && (
+        <p className="md:col-span-12 text-body-sm text-(--color-on-surface-variant)">
+          Tip: documents tagged as <strong>Data Room</strong> visibility appear
+          in the Data Room category for invited investors. Tag as{" "}
+          <strong>Public</strong> to show on your public profile.
         </p>
       )}
     </form>

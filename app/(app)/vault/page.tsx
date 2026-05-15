@@ -4,6 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 
 import { UploadForm } from "./upload-form";
 import { DocumentRow } from "./document-row";
+import { CategorySidebar } from "./category-sidebar";
+
+interface PageProps {
+  searchParams: Promise<{ category?: string }>;
+}
 
 function fmtBytes(b: number): string {
   if (b < 1024) return `${b} B`;
@@ -11,7 +16,10 @@ function fmtBytes(b: number): string {
   return `${(b / 1024 / 1024).toFixed(1)} MB`;
 }
 
-export default async function VaultPage() {
+export default async function VaultPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const filterCategoryId = params.category ?? null;
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -26,17 +34,45 @@ export default async function VaultPage() {
     .maybeSingle();
   if (!workspace) redirect("/setup");
 
-  const { data: documents } = await supabase
+  const { data: categories } = await supabase
+    .from("vault_categories")
+    .select("*")
+    .eq("workspace_id", workspace.id)
+    .order("sort_order", { ascending: true });
+
+  // Count documents per category for the sidebar.
+  const { data: allDocs } = await supabase
+    .from("documents")
+    .select("id, category_id")
+    .eq("workspace_id", workspace.id)
+    .is("deleted_at", null);
+
+  const countsByCategory: Record<string, number> = {};
+  let uncategorizedCount = 0;
+  for (const d of allDocs ?? []) {
+    if (d.category_id) {
+      countsByCategory[d.category_id] = (countsByCategory[d.category_id] ?? 0) + 1;
+    } else {
+      uncategorizedCount += 1;
+    }
+  }
+
+  let docsQuery = supabase
     .from("documents")
     .select("*")
     .eq("workspace_id", workspace.id)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false });
+    .is("deleted_at", null);
+  if (filterCategoryId === "uncategorized") {
+    docsQuery = docsQuery.is("category_id", null);
+  } else if (filterCategoryId) {
+    docsQuery = docsQuery.eq("category_id", filterCategoryId);
+  }
+  const { data: documents } = await docsQuery.order("created_at", { ascending: false });
 
   const rows = documents ?? [];
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10 space-y-10">
+    <main className="mx-auto max-w-6xl px-6 py-10 space-y-10">
       <header>
         <p className="text-label-md uppercase text-(--color-on-surface-variant)">
           Document vault
@@ -45,54 +81,68 @@ export default async function VaultPage() {
           {workspace.name}
         </h1>
         <p className="mt-2 text-body-md text-(--color-on-surface-variant)">
-          PDF, DOCX, XLSX, JPG, PNG. Max 50 MB per file. 1 GB total on free
-          tier. Files are encrypted at rest by Supabase Storage and visible
-          only to the workspace owner.
+          PDF, DOCX, XLSX, JPG, PNG. Max 50 MB per file. Categorise documents and
+          set per-document visibility — Internal (owner only), Data Room
+          (invited investors), Public (anyone).
         </p>
       </header>
 
-      <UploadForm />
+      <UploadForm categories={categories ?? []} />
 
-      <section>
-        <h2 className="text-label-md uppercase text-(--color-on-surface-variant) mb-4">
-          {rows.length === 0 ? "No documents yet" : `${rows.length} document${rows.length === 1 ? "" : "s"}`}
-        </h2>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <aside className="lg:col-span-1">
+          <CategorySidebar
+            categories={categories ?? []}
+            countsByCategory={countsByCategory}
+            uncategorizedCount={uncategorizedCount}
+            activeCategoryId={filterCategoryId}
+          />
+        </aside>
 
-        {rows.length === 0 ? (
-          <div className="rounded-xl bg-(--color-surface-container-low) p-12 text-center">
-            <p className="text-body-md text-(--color-on-surface-variant)">
-              Upload a document to start your vault. Incorporation papers, SHAs,
-              iSAFE term sheets — anything you want one place for.
-            </p>
-          </div>
-        ) : (
-          <div className="rounded-xl bg-(--color-surface-container-low) overflow-hidden">
-            <table className="w-full text-body-sm">
-              <thead>
-                <tr className="text-label-md uppercase text-(--color-on-surface-variant)">
-                  <th className="px-4 py-3 text-start font-normal">Name</th>
-                  <th className="px-4 py-3 text-start font-normal">Type</th>
-                  <th className="px-4 py-3 text-end font-normal">Size</th>
-                  <th className="px-4 py-3 text-end font-normal">Uploaded</th>
-                  <th className="px-4 py-3 text-end font-normal" aria-label="Actions" />
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((doc) => (
-                  <DocumentRow
-                    key={doc.id}
-                    id={doc.id}
-                    name={doc.name}
-                    mimeType={doc.mime_type}
-                    sizeLabel={fmtBytes(doc.size_bytes)}
-                    createdAt={doc.created_at}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+        <section className="lg:col-span-3">
+          <h2 className="text-label-md uppercase text-(--color-on-surface-variant) mb-4">
+            {rows.length === 0
+              ? "No documents in this view"
+              : `${rows.length} document${rows.length === 1 ? "" : "s"}`}
+          </h2>
+
+          {rows.length === 0 ? (
+            <div className="rounded-xl bg-(--color-surface-container-low) p-12 text-center">
+              <p className="text-body-md text-(--color-on-surface-variant)">
+                Upload documents to populate this category.
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-xl bg-(--color-surface-container-low) overflow-hidden">
+              <table className="w-full text-body-sm">
+                <thead>
+                  <tr className="text-label-md uppercase text-(--color-on-surface-variant)">
+                    <th className="px-4 py-3 text-start font-normal">Name</th>
+                    <th className="px-4 py-3 text-start font-normal">Type</th>
+                    <th className="px-4 py-3 text-start font-normal">Visibility</th>
+                    <th className="px-4 py-3 text-end font-normal">Size</th>
+                    <th className="px-4 py-3 text-end font-normal">Uploaded</th>
+                    <th className="px-4 py-3 text-end font-normal" aria-label="Actions" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((doc) => (
+                    <DocumentRow
+                      key={doc.id}
+                      id={doc.id}
+                      name={doc.name}
+                      mimeType={doc.mime_type}
+                      visibility={doc.visibility}
+                      sizeLabel={fmtBytes(doc.size_bytes)}
+                      createdAt={doc.created_at}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </div>
     </main>
   );
 }

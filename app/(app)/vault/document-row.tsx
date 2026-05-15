@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { deleteDocument, getSignedDownloadUrl } from "./actions";
+import { cycleVisibility, deleteDocument, getSignedDownloadUrl } from "./actions";
 
 const MIME_LABELS: Record<string, string> = {
   "application/pdf": "PDF",
@@ -13,6 +13,27 @@ const MIME_LABELS: Record<string, string> = {
   "application/vnd.ms-excel": "XLS",
   "image/jpeg": "JPEG",
   "image/png": "PNG",
+};
+
+const VISIBILITY_STYLES: Record<string, { label: string; bg: string; fg: string; hint: string }> = {
+  internal: {
+    label: "Internal",
+    bg: "bg-(--color-surface-bright)",
+    fg: "text-(--color-on-surface-variant)",
+    hint: "Owner only — click to share with data room",
+  },
+  data_room: {
+    label: "Data Room",
+    bg: "bg-(--color-warning)/20",
+    fg: "text-(--color-warning)",
+    hint: "Invited investors only — click to make public",
+  },
+  public: {
+    label: "Public",
+    bg: "bg-(--color-success)/20",
+    fg: "text-(--color-success)",
+    hint: "Anyone can view — click to make internal",
+  },
 };
 
 function fmtDate(iso: string): string {
@@ -28,12 +49,14 @@ export function DocumentRow({
   id,
   name,
   mimeType,
+  visibility,
   sizeLabel,
   createdAt,
 }: {
   id: string;
   name: string;
   mimeType: string | null;
+  visibility: "internal" | "data_room" | "public";
   sizeLabel: string;
   createdAt: string;
 }) {
@@ -49,8 +72,19 @@ export function DocumentRow({
       setError(result.error);
       return;
     }
-    // Open in a new tab so the current page state is preserved.
     window.open(result.url, "_blank", "noopener");
+  }
+
+  function onCycleVisibility() {
+    startTransition(async () => {
+      setError(null);
+      const r = await cycleVisibility(id);
+      if (!r.ok) {
+        setError(r.error ?? "Failed.");
+        return;
+      }
+      router.refresh();
+    });
   }
 
   function onDelete() {
@@ -65,7 +99,10 @@ export function DocumentRow({
     });
   }
 
-  const typeLabel = mimeType ? (MIME_LABELS[mimeType] ?? mimeType.split("/")[1]?.toUpperCase()) : "?";
+  const typeLabel = mimeType
+    ? MIME_LABELS[mimeType] ?? mimeType.split("/")[1]?.toUpperCase()
+    : "?";
+  const vis = VISIBILITY_STYLES[visibility] ?? VISIBILITY_STYLES.internal!;
 
   return (
     <tr className="border-t border-(--color-outline-variant)/15">
@@ -74,6 +111,17 @@ export function DocumentRow({
         <span className="inline-flex items-center rounded-full bg-(--color-surface-bright) px-2.5 py-0.5 text-label-sm font-medium uppercase tracking-wider">
           {typeLabel}
         </span>
+      </td>
+      <td className="px-4 py-3">
+        <button
+          type="button"
+          onClick={onCycleVisibility}
+          disabled={busy}
+          title={vis.hint}
+          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-label-sm font-medium uppercase tracking-wider hover:opacity-80 disabled:opacity-50 ${vis.bg} ${vis.fg}`}
+        >
+          {vis.label}
+        </button>
       </td>
       <td className="px-4 py-3 text-end tabular-nums text-(--color-on-surface-variant)">
         {sizeLabel}
