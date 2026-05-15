@@ -393,6 +393,53 @@ export type Database = {
           },
         ];
       };
+      valuation_sessions: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          label: string;
+          methodology: Database["public"]["Enums"]["valuation_methodology"];
+          inputs: Json;
+          result_low_sar: number | string | null;
+          result_mid_sar: number | string | null;
+          result_high_sar: number | string | null;
+          created_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          label: string;
+          methodology: Database["public"]["Enums"]["valuation_methodology"];
+          inputs: Json;
+          result_low_sar?: number | string | null;
+          result_mid_sar?: number | string | null;
+          result_high_sar?: number | string | null;
+          created_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          label?: string;
+          methodology?: Database["public"]["Enums"]["valuation_methodology"];
+          inputs?: Json;
+          result_low_sar?: number | string | null;
+          result_mid_sar?: number | string | null;
+          result_high_sar?: number | string | null;
+          created_at?: string;
+          deleted_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "valuation_sessions_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       traction_metrics: {
         Row: {
           id: string;
@@ -535,6 +582,7 @@ export type Database = {
       esop_vesting_type: "immediate" | "graded";
       instrument_type: "ordinary" | "isafe" | "safe" | "convertible_note";
       isafe_conversion_status: "unconverted" | "converted";
+      valuation_methodology: "revenue_multiple" | "scorecard" | "berkus" | "dcf";
       workspace_role: "owner" | "admin" | "viewer";
     };
     CompositeTypes: {

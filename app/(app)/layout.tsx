@@ -57,6 +57,12 @@ export default async function AppLayout({
                 Waterfall
               </Link>
               <Link
+                href="/valuation"
+                className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
+              >
+                Valuation
+              </Link>
+              <Link
                 href="/vault"
                 className="text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
               >
