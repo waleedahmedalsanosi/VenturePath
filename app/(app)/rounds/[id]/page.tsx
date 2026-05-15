@@ -89,7 +89,7 @@ export default async function RoundDetailPage({
       .is("deleted_at", null),
     supabase
       .from("investor_pipeline")
-      .select("id, name, email, firm, status, notes, last_contacted_at")
+      .select("id, name, email, firm, status, notes, last_contacted_at, ticket_size_sar, is_hot")
       .eq("round_id", id)
       .is("deleted_at", null)
       .order("created_at", { ascending: true }),
@@ -261,6 +261,7 @@ export default async function RoundDetailPage({
       <InvestorCrm
         roundId={round.id}
         contacts={(pipelineContacts ?? []) as Parameters<typeof InvestorCrm>[0]["contacts"]}
+        targetRaiseSar={round.target_raise_sar ? Number(round.target_raise_sar) : null}
       />
 
       {/* Data room */}

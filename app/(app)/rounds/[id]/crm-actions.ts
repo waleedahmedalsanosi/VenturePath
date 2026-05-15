@@ -12,6 +12,16 @@ export interface ActionResult {
   error?: string;
 }
 
+const PositiveDecimalStr = z
+  .string()
+  .optional()
+  .or(z.literal(""))
+  .refine((s) => {
+    if (!s) return true;
+    const n = Number(s);
+    return isFinite(n) && n > 0;
+  }, "must be a positive number");
+
 const PipelineSchema = z.object({
   name: z.string().min(1).max(200),
   email: z.string().email().optional().or(z.literal("")),
@@ -19,6 +29,8 @@ const PipelineSchema = z.object({
   status: z.enum(["prospect", "contacted", "in_discussion", "term_sheet", "passed", "invested"]),
   notes: z.string().max(2000).optional().or(z.literal("")),
   last_contacted_at: z.string().optional().or(z.literal("")),
+  ticket_size_sar: PositiveDecimalStr,
+  is_hot: z.coerce.boolean().default(false),
 });
 
 export async function addPipelineContact(
@@ -39,6 +51,8 @@ export async function addPipelineContact(
     status: formData.get("status") ?? "prospect",
     notes: formData.get("notes") ?? "",
     last_contacted_at: formData.get("last_contacted_at") ?? "",
+    ticket_size_sar: formData.get("ticket_size_sar") ?? "",
+    is_hot: formData.get("is_hot") === "on",
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues.map((i) => i.message).join("; ") };
@@ -54,6 +68,8 @@ export async function addPipelineContact(
     status: d.status,
     notes: d.notes || null,
     last_contacted_at: d.last_contacted_at || null,
+    ticket_size_sar: d.ticket_size_sar ? Number(d.ticket_size_sar) : null,
+    is_hot: d.is_hot,
   });
   if (error) return { ok: false, error: error.message };
 
@@ -64,6 +80,49 @@ export async function addPipelineContact(
     action: "pipeline_add",
     description: `Added investor "${d.name}"${d.firm ? ` (${d.firm})` : ""} to pipeline`,
   });
+
+  revalidatePath(`/rounds/${roundId}`);
+  return { ok: true };
+}
+
+export async function updatePipelineContact(
+  contactId: string,
+  roundId: string,
+  formData: FormData,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const parsed = PipelineSchema.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email") ?? "",
+    firm: formData.get("firm") ?? "",
+    status: formData.get("status") ?? "prospect",
+    notes: formData.get("notes") ?? "",
+    last_contacted_at: formData.get("last_contacted_at") ?? "",
+    ticket_size_sar: formData.get("ticket_size_sar") ?? "",
+    is_hot: formData.get("is_hot") === "on",
+  });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues.map((i) => i.message).join("; ") };
+  }
+  const d = parsed.data;
+
+  const { error } = await supabase
+    .from("investor_pipeline")
+    .update({
+      name: d.name,
+      email: d.email || null,
+      firm: d.firm || null,
+      status: d.status,
+      notes: d.notes || null,
+      last_contacted_at: d.last_contacted_at || null,
+      ticket_size_sar: d.ticket_size_sar ? Number(d.ticket_size_sar) : null,
+      is_hot: d.is_hot,
+    })
+    .eq("id", contactId);
+  if (error) return { ok: false, error: error.message };
 
   revalidatePath(`/rounds/${roundId}`);
   return { ok: true };

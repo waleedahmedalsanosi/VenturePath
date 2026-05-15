@@ -511,6 +511,8 @@ export type Database = {
           status: "prospect" | "contacted" | "in_discussion" | "term_sheet" | "passed" | "invested";
           notes: string | null;
           last_contacted_at: string | null;
+          ticket_size_sar: number | null;
+          is_hot: boolean;
           created_at: string;
           updated_at: string;
           deleted_at: string | null;
@@ -525,6 +527,8 @@ export type Database = {
           status?: "prospect" | "contacted" | "in_discussion" | "term_sheet" | "passed" | "invested";
           notes?: string | null;
           last_contacted_at?: string | null;
+          ticket_size_sar?: number | null;
+          is_hot?: boolean;
           created_at?: string;
           updated_at?: string;
           deleted_at?: string | null;
@@ -539,6 +543,8 @@ export type Database = {
           status?: "prospect" | "contacted" | "in_discussion" | "term_sheet" | "passed" | "invested";
           notes?: string | null;
           last_contacted_at?: string | null;
+          ticket_size_sar?: number | null;
+          is_hot?: boolean;
           created_at?: string;
           updated_at?: string;
           deleted_at?: string | null;
