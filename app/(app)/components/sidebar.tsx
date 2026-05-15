@@ -31,7 +31,14 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/cap-table", label: "Cap table" },
       { href: "/esop", label: "ESOP" },
+    ],
+  },
+  {
+    label: "Investment",
+    items: [
       { href: "/rounds", label: "Rounds" },
+      { href: "/term-sheets", label: "Term sheets" },
+      { href: "/investor-updates", label: "Investor updates" },
     ],
   },
   {
