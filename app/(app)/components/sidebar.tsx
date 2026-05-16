@@ -142,8 +142,7 @@ export function Sidebar({ mobileOpen, onClose, desktopCollapsed, hasWorkspace }:
         fixed md:sticky top-0 start-0 z-50 flex flex-col h-screen shrink-0
         bg-(--color-surface-container-low) overflow-y-auto overflow-x-hidden
         transition-[width,transform] duration-250 ease-out
-        ${mobileOpen ? "translate-x-0" : "rtl:translate-x-full ltr:-translate-x-full"}
-        md:translate-x-0
+        ${mobileOpen ? "max-md:translate-x-0" : "max-md:rtl:translate-x-full max-md:ltr:-translate-x-full"}
         ${desktopCollapsed ? "md:w-0" : "md:w-60"}
         w-60
       `}
