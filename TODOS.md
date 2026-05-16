@@ -110,31 +110,15 @@ Samir is the first and only planned exit beta user.
 
 ---
 
-### Connections Hub filter UX pattern (implementation-time decision)
-
-**What:** Decide the filter UI pattern for /connections browse page when
-implementing. The plan calls for filtering by listing_type (exit /
-partnership) and status (open). The UX pattern (horizontal chip row vs
-dropdown vs sidebar) is deferred to implementation when the cards are
-rendered and the live density is visible.
-
-**Why:** Design review specified the card content (Pass 1B) but didn't
-lock the filter pattern. Choosing the pattern before the cards exist
-risks specifying wrongly. Best to make the call once a developer can
-see the rendered list.
-
-**Default if unspecified:** Horizontal chip row above the list, chips
-labeled "All" (default) | "Exit" | "Partnership" | "My listings",
-filtering via URL search params. This is the safest default; revisit
-if it feels wrong against the live cards.
-
-**Depends on:** Connections Hub implementation reaching a renderable
-state.
-
-**Contact:** Connections Hub implementer.
-
 ---
 
 ## Closed
 
-(none yet)
+### Connections Hub filter UX pattern (implementation-time decision)
+
+**What:** Decide the filter UI pattern for /connections browse page.
+**Resolved:** Shipped as a horizontal chip row above the listing list
+(`app/(app)/connections/page.tsx` `FilterChips` component). Chips:
+"All" | "Exit" | "Partnership" | "My listings", filtering via the
+`?filter=` URL search param. Matches the design review's safe default.
+**Completed:** v0.2.0.0 (2026-05-16)
