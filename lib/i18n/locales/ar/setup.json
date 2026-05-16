@@ -1,0 +1,20 @@
+{
+  "title": "أضف شركتك الناشئة",
+  "eyebrow": "الإعداد",
+  "subtitle": "أخبرنا عن شركتك حتى نُهيّئ جدول المساهمين والامتثال وصفحات المستثمرين.",
+  "form.name.label": "اسم الشركة",
+  "form.name.placeholder": "مثال: Probuy",
+  "form.country.label": "الدولة",
+  "form.city.label": "المدينة",
+  "form.sector.label": "القطاع",
+  "form.sector.placeholder": "مثال: SaaS B2B، تقنية مالية، خدمات لوجستية",
+  "form.stage.label": "مرحلة التمويل",
+  "form.one_liner.label": "وصف مختصر",
+  "form.one_liner.placeholder": "ما الذي تقوم به شركتك في جملة واحدة.",
+  "form.entity_status.label": "الوضع القانوني",
+  "form.entity_status.product_only": "ما قبل التأسيس (منتج فقط)",
+  "form.entity_status.incorporated": "مُؤسَّسة",
+  "submit": "إنشاء مساحة العمل",
+  "submitting": "جارٍ إنشاء مساحة العمل…",
+  "error.failed": "تعذّر إنشاء مساحة العمل. حاول مرة أخرى."
+}

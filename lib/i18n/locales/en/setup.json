@@ -1,0 +1,20 @@
+{
+  "title": "Add your startup",
+  "eyebrow": "Setup",
+  "subtitle": "Tell us about your company so we can scaffold your cap table, compliance, and investor pages.",
+  "form.name.label": "Company name",
+  "form.name.placeholder": "e.g. Probuy",
+  "form.country.label": "Country",
+  "form.city.label": "City",
+  "form.sector.label": "Sector",
+  "form.sector.placeholder": "e.g. B2B SaaS, fintech, logistics",
+  "form.stage.label": "Funding stage",
+  "form.one_liner.label": "One-liner",
+  "form.one_liner.placeholder": "What your company does in one sentence.",
+  "form.entity_status.label": "Legal status",
+  "form.entity_status.product_only": "Pre-incorporation (product only)",
+  "form.entity_status.incorporated": "Incorporated",
+  "submit": "Create workspace",
+  "submitting": "Creating workspace…",
+  "error.failed": "Could not create workspace. Please try again."
+}
