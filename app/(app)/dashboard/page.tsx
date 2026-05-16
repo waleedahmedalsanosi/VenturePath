@@ -6,6 +6,7 @@ import { vestedFraction } from "@/lib/esop/vesting";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveWorkspace } from "@/lib/workspace/active";
 
+import { ConnectionsPulse } from "./components/connections-pulse";
 import { MarketplacePulse } from "./components/marketplace-pulse";
 
 function fmtSAR(n: number | null): string {
@@ -288,6 +289,9 @@ export default async function DashboardPage() {
 
       {/* Marketplace pulse — kill-criteria gauge for Approach A */}
       <MarketplacePulse workspaceId={workspace.id} />
+
+      {/* Connections Hub pulse — open listings + inquiries this week */}
+      <ConnectionsPulse workspaceId={workspace.id} />
 
       {/* Quick nav */}
       <section>

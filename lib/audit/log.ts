@@ -16,7 +16,9 @@ export type EntityType =
   | "document"
   | "compliance_obligation"
   | "share_listing"
-  | "rofr_notification";
+  | "rofr_notification"
+  | "connection_listing"
+  | "connection_inquiry";
 
 export interface AuditEventInput {
   workspaceId: string;
