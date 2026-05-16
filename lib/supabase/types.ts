@@ -1148,6 +1148,7 @@ export type Database = {
           expires_at: string | null;
           closed_at: string | null;
           closed_reason: string | null;
+          is_public: boolean;
           created_at: string;
           updated_at: string;
           deleted_at: string | null;
@@ -1165,6 +1166,7 @@ export type Database = {
           expires_at?: string | null;
           closed_at?: string | null;
           closed_reason?: string | null;
+          is_public?: boolean;
           created_at?: string;
           updated_at?: string;
           deleted_at?: string | null;
@@ -1182,6 +1184,7 @@ export type Database = {
           expires_at?: string | null;
           closed_at?: string | null;
           closed_reason?: string | null;
+          is_public?: boolean;
           created_at?: string;
           updated_at?: string;
           deleted_at?: string | null;

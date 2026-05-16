@@ -1,11 +1,11 @@
-import Link from "next/link";
-
 import { AppShell } from "@/app/(app)/shell";
 import { LanguageToggle } from "@/app/(app)/components/language-toggle";
 import { ThemeToggle } from "@/app/(app)/components/theme-toggle";
 import { WorkspaceSwitcher } from "@/app/(app)/components/workspace-switcher";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveWorkspace, listAccessibleWorkspaces } from "@/lib/workspace/active";
+
+import { GuestHeader, SignOutButton } from "./layout-client";
 
 export default async function ExploreLayout({
   children,
@@ -40,14 +40,7 @@ export default async function ExploreLayout({
         <ThemeToggle />
         <span className="text-(--color-outline-variant)" aria-hidden>·</span>
         <span className="font-mono hidden sm:inline">{user.email}</span>
-        <form action="/auth/sign-out" method="post">
-          <button
-            type="submit"
-            className="underline hover:text-(--color-on-surface)"
-          >
-            Sign out
-          </button>
-        </form>
+        <SignOutButton />
       </div>
     );
 
@@ -58,33 +51,9 @@ export default async function ExploreLayout({
     );
   }
 
-  // Guests: simple public header
   return (
     <div className="min-h-screen">
-      <header className="px-6 py-4">
-        <div className="mx-auto max-w-6xl flex items-center justify-between gap-4">
-          <Link
-            href="/"
-            className="text-headline-sm font-semibold tracking-tight"
-          >
-            VenturePath
-          </Link>
-          <nav className="flex items-center gap-4 text-body-sm">
-            <Link
-              href="/sign-in"
-              className="text-(--color-on-surface-variant) hover:text-(--color-on-surface) transition-colors"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/sign-up"
-              className="btn-primary-gradient rounded-lg px-4 py-1.5 text-label-lg font-medium"
-            >
-              Get started
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <GuestHeader />
       {children}
     </div>
   );

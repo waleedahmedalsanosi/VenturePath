@@ -142,6 +142,26 @@ export function NewListingForm({
         />
       </div>
 
+      <div className="rounded-lg ghost-border p-4 space-y-2">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            name="is_public"
+            value="1"
+            className="mt-1"
+          />
+          <span>
+            <span className="text-label-md font-medium block">
+              Show this listing on the public marketplace
+            </span>
+            <span className="text-body-sm text-(--color-on-surface-variant) block mt-1">
+              When on, any signed-in VenturePath user can see this listing on /explore.
+              When off (default), only members of your workspace can see it.
+            </span>
+          </span>
+        </label>
+      </div>
+
       <div className="rounded-lg bg-(--color-surface-container-high) p-4 space-y-2">
         <p className="text-label-md font-semibold">Before you list</p>
         <ul className="text-body-sm text-(--color-on-surface-variant) space-y-1 list-disc list-inside">

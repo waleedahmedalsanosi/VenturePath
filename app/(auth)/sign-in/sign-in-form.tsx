@@ -8,9 +8,12 @@ import { useT } from "@/lib/i18n/useT";
 import { createClient } from "@/lib/supabase/client";
 
 function safeReturnTo(value: string | null): string {
-  if (!value) return "/";
-  if (!value.startsWith("/")) return "/";
-  if (value.startsWith("//")) return "/";
+  // Default destination after sign-in is the explore page (discovery).
+  // Users with workspaces still see /dashboard via the sidebar; explore
+  // surfaces other people's listings and companies.
+  if (!value) return "/explore";
+  if (!value.startsWith("/")) return "/explore";
+  if (value.startsWith("//")) return "/explore";
   return value;
 }
 

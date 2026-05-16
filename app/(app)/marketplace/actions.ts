@@ -41,11 +41,13 @@ export async function createListing(formData: FormData): Promise<ActionResult> {
     ask_price_sar: formData.get("ask_price_sar"),
     notes: formData.get("notes") ?? "",
     expires_at: formData.get("expires_at") ?? "",
+    is_public: formData.get("is_public") ?? "",
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
   const input = parsed.data;
+  const isPublic = input.is_public === "1" || input.is_public === "on";
 
   const expiresIso = input.expires_at ? new Date(input.expires_at).toISOString() : null;
 
@@ -60,6 +62,16 @@ export async function createListing(formData: FormData): Promise<ActionResult> {
   });
   if (rpcErr || !listingId) {
     return { ok: false, error: rpcErr?.message ?? "Failed to create listing." };
+  }
+
+  // Set is_public flag after the RPC insert (the RPC's signature stays
+  // stable; the flag is a workspace-owner toggle that doesn't affect the
+  // RPC's business logic).
+  if (isPublic) {
+    await supabase
+      .from("share_listings")
+      .update({ is_public: true })
+      .eq("id", listingId);
   }
 
   await logAudit({
