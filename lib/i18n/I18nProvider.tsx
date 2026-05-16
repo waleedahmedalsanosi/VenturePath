@@ -31,6 +31,7 @@ import enExplore from "./locales/en/explore.json";
 import enDataRoom from "./locales/en/data_room.json";
 import enUpdates from "./locales/en/updates.json";
 import enInvite from "./locales/en/invite.json";
+import enLanding from "./locales/en/landing.json";
 
 import arCommon from "./locales/ar/common.json";
 import arNav from "./locales/ar/nav.json";
@@ -59,13 +60,14 @@ import arExplore from "./locales/ar/explore.json";
 import arDataRoom from "./locales/ar/data_room.json";
 import arUpdates from "./locales/ar/updates.json";
 import arInvite from "./locales/ar/invite.json";
+import arLanding from "./locales/ar/landing.json";
 
 const NAMESPACES = [
   "common", "nav", "auth", "setup", "dashboard", "cap_table", "esop",
   "rounds", "term_sheets", "investor_updates", "marketplace", "connections",
   "governance", "compliance", "vault", "traction", "valuation", "dilution",
   "waterfall", "acquisition", "members", "audit", "company", "explore",
-  "data_room", "updates", "invite",
+  "data_room", "updates", "invite", "landing",
 ] as const;
 
 const resources = {
@@ -79,7 +81,7 @@ const resources = {
     valuation: enValuation, dilution: enDilution, waterfall: enWaterfall,
     acquisition: enAcquisition, members: enMembers, audit: enAudit,
     company: enCompany, explore: enExplore, data_room: enDataRoom,
-    updates: enUpdates, invite: enInvite,
+    updates: enUpdates, invite: enInvite, landing: enLanding,
   },
   ar: {
     common: arCommon, nav: arNav, auth: arAuth, setup: arSetup,
@@ -91,7 +93,7 @@ const resources = {
     valuation: arValuation, dilution: arDilution, waterfall: arWaterfall,
     acquisition: arAcquisition, members: arMembers, audit: arAudit,
     company: arCompany, explore: arExplore, data_room: arDataRoom,
-    updates: arUpdates, invite: arInvite,
+    updates: arUpdates, invite: arInvite, landing: arLanding,
   },
 };
 

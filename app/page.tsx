@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import { getActiveWorkspace } from "@/lib/workspace/active";
+
+import { LandingPage } from "./landing-page";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -9,15 +10,12 @@ export default async function Home() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect("/sign-in");
+  // Signed-in users skip the marketing page and go straight to /explore.
+  // First-time signed-in users without a workspace still see /explore;
+  // they can create a workspace later via the sidebar.
+  if (user) {
+    redirect("/explore");
   }
 
-  const workspace = await getActiveWorkspace();
-
-  if (workspace) {
-    redirect("/dashboard");
-  } else {
-    redirect("/setup");
-  }
+  return <LandingPage />;
 }

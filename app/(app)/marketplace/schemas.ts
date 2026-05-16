@@ -19,6 +19,7 @@ export const CreateListingSchema = z.object({
   ask_price_sar: PositiveDecString,
   notes: z.string().max(2000).optional().or(z.literal("")),
   expires_at: z.string().optional().or(z.literal("")),
+  is_public: z.union([z.literal("1"), z.literal("on"), z.literal("")]).optional(),
 });
 
 export const WithdrawListingSchema = z.object({
