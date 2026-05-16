@@ -1,14 +1,22 @@
 # PRD: Connections Hub
 
-**Version:** 1.0
-**Status:** Shipped (v0.2.0.0, 2026-05-16)
+**Version:** 1.1
+**Status:** Shipped (v0.2.0.0, 2026-05-16; v1.1 navigation + inbox updates 2026-05-16)
 **Owner:** Waleed Alsanosi
 **Repo:** waleedahmedalsanosi/VenturePath
 **Related artifacts:**
 - Design doc: `~/.gstack/projects/waleedahmedalsanosi-VenturePath/root-claude_activate-bypass-permissions-0sjk1-design-20260516-081800.md`
 - Design system updates: `DESIGN.md` §3.6, §8, §12
-- Migrations: `supabase/migrations/20260516000004_connections_hub.sql` through `20260516000006_data_room_token_default_fix.sql`
+- Migrations: `supabase/migrations/20260516000004_connections_hub.sql` through `20260516000007_share_listings_is_public.sql`
 - PR: https://github.com/waleedahmedalsanosi/VenturePath/pull/1
+
+### Changelog
+
+- **v1.1 (2026-05-16):** Surface restructure to match the redesigned
+  shell. The Connections Hub data model and RPCs are unchanged; what
+  shipped is a new top-level navigation, a dedicated inquiry inbox, and
+  role-scoped partnership entry points. See §18 for the full delta and
+  the supersedes notes on Decisions #10 and #13.
 
 ---
 
@@ -200,7 +208,7 @@ Reverting any of them is a deliberate v2 scope choice, not a bug fix.
 | 7 | Exit + partnership cannot coexist | One listing = one intent. |
 | 8 | Glass-card status panel for inquiry states | Each state has warmth and context, not just a different button color. Reuses DESIGN.md §7 glass-refraction primitive. |
 | 9 | Same URL for owner vs non-owner detail page | Conditional sections; one listing = one identity. |
-| 10 | Inquiries live on the listing detail page (not a separate inbox) | At v1 scale (1-2 listings per owner) the ROFR-row pattern is sufficient. Inbox route is a deferred TODO. |
+| 10 | Inquiries live on the listing detail page (not a separate inbox) | ~~At v1 scale (1-2 listings per owner) the ROFR-row pattern is sufficient. Inbox route is a deferred TODO.~~ **Superseded in v1.1:** shipped `/messages` as the unified inbox; the listing detail page still shows per-listing inquiries (no regression), but `/messages` is the primary entry point from the sidebar. |
 | 11 | Email DNA matches investor-update template | Avoids AI-slop patterns; reinforces a single brand voice for transactional emails. |
 | 12 | Three migrations (schema, RPC regression, latent-bug fix) | Each is independently meaningful and bisectable. |
 
@@ -316,8 +324,25 @@ is needed.
 ## 13. Distribution
 
 Web service. Same Next.js / Supabase / Vercel stack as the rest of
-VenturePath. No new distribution channel. Sidebar entry under the
-**Investment** group, between **Marketplace** and Modeling.
+VenturePath. No new distribution channel.
+
+**v1.0 sidebar shape:** single entry under the **Investment** group,
+between **Marketplace** and Modeling.
+
+**v1.1 sidebar shape (superseded):** the Investment group was dissolved
+and Connections is now reached from four top-level sidebar entries:
+
+| Entry | Route | Surface |
+|---|---|---|
+| Marketplace | `/marketplace` (Browse tab) | Cross-workspace public secondary listings + open exit listings, side by side. Exits read from `connection_listings WHERE listing_type='exit' AND status='open'`. |
+| Round | `/rounds` (Open tab) | Cross-workspace open rounds. Adjacent to Connections, not part of it, but built with the same `is_public` opt-in pattern. |
+| Messages | `/messages` | Inquiry inbox (see §18.2). |
+| Talents | `/connections?seeking=senior_hire` | Partnership listings filtered to `type_data->>'seeking_type' = 'senior_hire'`. |
+| Advisors | `/connections?seeking=advisor` | Partnership listings filtered to `type_data->>'seeking_type' = 'advisor'`. |
+
+The unfiltered `/connections` page is still reachable from the Messages
+empty-state CTA, the Marketplace exit-listing detail links, and direct
+URL entry; partnership and exit filter chips behave as before.
 
 ## 14. Dependencies
 
@@ -357,8 +382,9 @@ VenturePath. No new distribution channel. Sidebar entry under the
 - Anonymous / blind listings tier
 - DocuSign-style real NDA at data-room access tier upgrade
 - Sector / proximity filters on browse
-- Inquiry inbox route (when an owner has 10+ listings)
-- On-platform messaging
+- ~~Inquiry inbox route (when an owner has 10+ listings)~~ — **Shipped in v1.1** as `/messages` (see §18.2)
+- On-platform messaging (the `/messages` inbox is a *read-only* status
+  view of `connection_inquiries`; no in-thread DMs)
 - Monetization (listing fees, view-counts, paywalls)
 - Co-founder sub-marketplace separate from partnership listings
 - Advisory marketplace with pricing
@@ -377,3 +403,126 @@ VenturePath. No new distribution channel. Sidebar entry under the
 - TODOS.md
 - CHANGELOG.md v0.2.0.0 entry
 - PR #1: https://github.com/waleedahmedalsanosi/VenturePath/pull/1
+
+## 18. v1.1 Surface Updates (2026-05-16)
+
+The v1.0 data model, RPCs, RLS, and audit trail are unchanged in v1.1.
+What shipped is a navigation restructure that gives the Connections Hub
+four entry points instead of one, plus a dedicated inquiry inbox.
+
+### 18.1 Sidebar restructure
+
+The sidebar was redesigned to surface cross-workspace discovery as
+top-level concepts. Connections-relevant entries are itemised in §13
+above. The four implications for the Connections Hub:
+
+1. **Exit listings are co-located with secondary share listings on
+   `/marketplace`.** Buyers no longer have to context-switch between
+   /marketplace (shareholders selling equity) and /connections (companies
+   open to exit) — the redesigned `/marketplace` Browse tab queries both
+   in one round-trip. The /connections page remains canonical for the
+   exit listing detail and inquiry flow.
+2. **Partnership browse is now role-scoped by default.** A founder
+   landing on the sidebar's "Talents" or "Advisors" entry sees a
+   pre-filtered partnership list, not the full mix. Co-founder and
+   business-partner listings are still reachable via the unfiltered
+   `/connections` page and the existing partnership filter chip.
+3. **Connections is no longer behind a workspace nav group.** It is
+   surfaced at top level, increasing visibility for cross-workspace
+   browse — the original v1 placement under Investment was workspace-
+   centric and obscured the cross-workspace nature.
+4. **The Messages entry replaces the inline inquiry-row pattern as the
+   primary entry point** (see §18.2 and the supersedes note on
+   Decision #10).
+
+### 18.2 `/messages` — inquiry inbox
+
+A dedicated read surface for `connection_inquiries` where one of the
+user's accessible workspaces is on either side of the inquiry.
+
+**Data model:** none added. Reuses the existing
+`connection_inquiries_visible_to_parties` RLS policy — a single SELECT
+returns the user's full inbox; incoming vs outgoing is classified in JS
+by comparing `inquirer_workspace_id` against the user's owned/joined
+workspace IDs.
+
+**Filters:**
+
+- Direction: `?direction=incoming|outgoing` (default: all)
+- Status: `?status=sent|accepted|declined|closed` (default: all)
+
+**Counts:** the chips show All / Incoming / Outgoing with live counts
+from the same query result (no extra round-trips).
+
+**Row contents:** status chip (with tone per state), direction chip,
+listing type chip (exit / partnership), counterparty workspace name
+(listing owner if outgoing; inquirer workspace if incoming), inquiry
+message or listing summary, sent date. Row click navigates to the
+listing detail page (`/connections/[id]`), which remains the canonical
+place to *act* on an inquiry (accept / decline / close). The inbox is
+read-only by design — it is the routing surface, not a second action
+surface.
+
+**Empty state:** routes the user to `/connections` to browse listings,
+since an empty inbox at v1.1 scale almost always means the user has not
+sent any inquiries yet.
+
+### 18.3 Seeking filter on `/connections`
+
+`/connections/page.tsx` honors a new query param surface:
+
+- `?seeking=co_founder|advisor|senior_hire|business_partner` —
+  filters `connection_listings` by `type_data->>'seeking_type'`.
+- `?role=talent|talents|advisor|advisors` — alias the sidebar uses;
+  mapped to canonical seeking values (`talent[s]` → `senior_hire`,
+  `advisor[s]` → `advisor`).
+- A seeking filter implies `filter=partnership` even if filter wasn't
+  passed.
+
+When a seeking filter is active, the page heading swaps to the seeking
+label (e.g. "Advisor") and a "Clear filter" link appears below the
+header, returning to the unfiltered `/connections`.
+
+The filter chips bar still renders the four base filters (All / Exit /
+Partnership / Mine); the seeking chip is implicit in the URL rather than
+a separate chip in the bar, since there are four mutually-exclusive
+seeking values and chip-bar real estate is already saturated. This is a
+v1.1 trade-off — a future v1.2 may replace the implicit URL with an
+inline seeking dropdown if usage data shows the URL-driven model is
+unintuitive.
+
+### 18.4 i18n surface
+
+Three new namespaces (`settings`, `profile`, `messages`) registered in
+`I18nProvider` with full EN + AR resources. The existing `nav`,
+`marketplace`, `rounds`, and `connections` namespaces gained keys for:
+
+- `nav.{messages,talents,advisors,marketplace_top,rounds_top,my_profile}`
+- `marketplace.{tabs.*,browse.*}`
+- `rounds.{tabs.*,browse.*}`
+- `connections.filter.clear`
+
+Arabic translations cover all new keys; the RTL layout is preserved on
+every redesigned surface (sidebar logical properties, marketplace browse,
+rounds browse, messages inbox, settings, profile).
+
+### 18.5 What did *not* ship in v1.1
+
+The following items were considered for v1.1 but explicitly deferred:
+
+- **A schema column for `partnership_role`.** Talents and Advisors are
+  filtered via JSONB (`type_data->>'seeking_type'`), which keeps the v1
+  data model intact but requires a JSONB index for scale. If
+  `/connections?seeking=...` becomes a hot path, promote `seeking_type`
+  to a first-class column with an index.
+- **Action capabilities on `/messages`.** The inbox is read-only;
+  accepting/declining/closing still happens on the listing detail page.
+  In-row actions are a deferred v1.2 nice-to-have once inquiry volume
+  per owner exceeds the ~5 mark.
+- **Publish flow for `share_listings.is_public` and
+  `financing_rounds.is_public`.** The redesigned Marketplace and Round
+  browse tabs already query these columns, but there is no UI yet for a
+  shareholder/founder to flip the flag from inside the app — current
+  default is `false`, opt-in by SQL. This is a separate Publish PRD
+  (P0 for round/listing publishers, currently blocking discoverability
+  on a fresh workspace).
