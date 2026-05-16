@@ -45,7 +45,14 @@ export default async function ExploreLayout({
     );
 
     return (
-      <AppShell headerLeft={headerLeft} headerRight={headerRight} hasWorkspace={!!active}>
+      <AppShell
+        headerLeft={headerLeft}
+        headerRight={headerRight}
+        hasWorkspace={!!active}
+        workspaces={all.map((w) => ({ id: w.id, name: w.name }))}
+        activeWorkspaceId={active?.id ?? null}
+        userEmail={user.email ?? ""}
+      >
         {children}
       </AppShell>
     );

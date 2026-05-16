@@ -15,16 +15,27 @@ function HamburgerIcon() {
   );
 }
 
+interface Workspace {
+  id: string;
+  name: string;
+}
+
 export function AppShell({
   headerLeft,
   headerRight,
   children,
   hasWorkspace,
+  workspaces,
+  activeWorkspaceId,
+  userEmail,
 }: {
   headerLeft: React.ReactNode;
   headerRight: React.ReactNode;
   children: React.ReactNode;
   hasWorkspace: boolean;
+  workspaces: Workspace[];
+  activeWorkspaceId: string | null;
+  userEmail: string;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [desktopCollapsed, setDesktopCollapsed] = useState(false);
@@ -53,12 +64,14 @@ export function AppShell({
         onClose={() => setMobileOpen(false)}
         desktopCollapsed={desktopCollapsed}
         hasWorkspace={hasWorkspace}
+        workspaces={workspaces}
+        activeWorkspaceId={activeWorkspaceId}
+        userEmail={userEmail}
       />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <header className="px-4 md:px-6 py-3 shrink-0 border-b border-(--color-outline-variant)/30 bg-(--color-surface)/80 backdrop-blur-sm sticky top-0 z-30">
           <div className="flex items-center gap-3">
-            {/* Left: hamburger (always visible) + workspace switcher */}
             <button
               type="button"
               onClick={toggleSidebar}
@@ -69,12 +82,10 @@ export function AppShell({
             </button>
             <div className="shrink-0 hidden sm:flex">{headerLeft}</div>
 
-            {/* Center: search */}
             <div className="flex-1 flex justify-center px-2">
               <SearchBar />
             </div>
 
-            {/* Right: actions */}
             <div className="shrink-0">{headerRight}</div>
           </div>
         </header>
