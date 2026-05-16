@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, Cairo } from "next/font/google";
 import "./globals.css";
 
+import { I18nProvider } from "@/lib/i18n/I18nProvider";
+
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
@@ -33,7 +35,9 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
       </head>
-      <body className="min-h-screen">{children}</body>
+      <body className="min-h-screen">
+        <I18nProvider>{children}</I18nProvider>
+      </body>
     </html>
   );
 }

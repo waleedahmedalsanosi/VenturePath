@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 
+import { useT } from "@/lib/i18n/useT";
+
 import { createWorkspace } from "./actions";
 
 const COUNTRIES = ["KSA", "UAE", "Egypt", "Jordan", "Kuwait", "Qatar", "Bahrain", "Other"];
@@ -31,13 +33,14 @@ const LEGAL_ENTITIES = ["Saudi LLC", "Cayman Holding", "DIFC Entity", "Other"];
 
 function SubmitButton() {
   const { pending } = useFormStatus();
+  const t = useT("setup");
   return (
     <button
       type="submit"
       disabled={pending}
       className="btn-primary-gradient rounded-lg px-6 py-2.5 text-label-lg font-medium disabled:opacity-50"
     >
-      {pending ? "Creating…" : "Create workspace"}
+      {pending ? t("submitting") : t("submit")}
     </button>
   );
 }
@@ -47,30 +50,32 @@ export function SetupForm() {
     "product_only",
   );
   const [error, setError] = useState<string | null>(null);
+  const t = useT("setup");
+  const tCommon = useT();
 
   async function handleAction(formData: FormData) {
     setError(null);
     const result = await createWorkspace(formData);
-    if (result && !result.ok) setError(result.error ?? "Failed to create workspace.");
+    if (result && !result.ok) setError(result.error ?? t("error.failed"));
   }
 
   const isIncorporated = entityStatus === "incorporated";
 
   return (
     <form action={handleAction} className="space-y-6">
-      <Field label="Company / product name" required>
+      <Field label={t("form.name.label")} required>
         <input name="name" required maxLength={80} className={inputClass} />
       </Field>
 
       <Field
-        label="One-liner"
+        label={t("form.one_liner.label")}
         required
-        hint="Max 140 characters. Shows on your public profile later."
+        hint={t("form.one_liner.hint")}
       >
         <input name="one_liner" required maxLength={140} className={inputClass} />
       </Field>
 
-      <Field label="Entity status" required>
+      <Field label={t("form.entity_status.label")} required>
         <select
           name="entity_status"
           required
@@ -78,16 +83,16 @@ export function SetupForm() {
           onChange={(e) => setEntityStatus(e.target.value as typeof entityStatus)}
           className={inputClass}
         >
-          <option value="product_only">Product only (pre-incorporation)</option>
-          <option value="incorporated">Incorporated</option>
+          <option value="product_only">{t("form.entity_status.product_only_long")}</option>
+          <option value="incorporated">{t("form.entity_status.incorporated_long")}</option>
         </select>
       </Field>
 
       {isIncorporated && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Legal entity type" required>
+          <Field label={t("form.legal_entity.label")} required>
             <select name="legal_entity" required className={inputClass}>
-              <option value="">Select…</option>
+              <option value="">{t("form.select_placeholder")}</option>
               {LEGAL_ENTITIES.map((e) => (
                 <option key={e} value={e}>
                   {e}
@@ -96,7 +101,7 @@ export function SetupForm() {
             </select>
           </Field>
 
-          <Field label="Founded year" required>
+          <Field label={t("form.founded_year.label")} required>
             <input
               name="founded_year"
               type="number"
@@ -110,9 +115,9 @@ export function SetupForm() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Country" required>
+        <Field label={tCommon("labels.country")} required>
           <select name="country" required className={inputClass}>
-            <option value="">Select…</option>
+            <option value="">{t("form.select_placeholder")}</option>
             {COUNTRIES.map((c) => (
               <option key={c} value={c}>
                 {c}
@@ -121,15 +126,15 @@ export function SetupForm() {
           </select>
         </Field>
 
-        <Field label="City" required>
+        <Field label={tCommon("labels.city")} required>
           <input name="city" required className={inputClass} />
         </Field>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field label="Sector" required>
+        <Field label={tCommon("labels.sector")} required>
           <select name="sector" required className={inputClass}>
-            <option value="">Select…</option>
+            <option value="">{t("form.select_placeholder")}</option>
             {SECTORS.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -138,9 +143,9 @@ export function SetupForm() {
           </select>
         </Field>
 
-        <Field label="Funding stage" required>
+        <Field label={t("form.stage.label")} required>
           <select name="funding_stage" required className={inputClass}>
-            <option value="">Select…</option>
+            <option value="">{t("form.select_placeholder")}</option>
             {STAGES.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -150,7 +155,7 @@ export function SetupForm() {
         </Field>
       </div>
 
-      <Field label="Website" hint="Optional. http(s):// or app store URL.">
+      <Field label={t("form.website.label")} hint={t("form.website.hint")}>
         <input name="website_url" type="url" className={inputClass} />
       </Field>
 

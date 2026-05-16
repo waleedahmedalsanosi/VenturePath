@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from "react";
 
+import { useT } from "@/lib/i18n/useT";
+
 type Theme = "light" | "dark";
 
 export function ThemeToggle() {
+  const t = useT("nav");
   const [theme, setTheme] = useState<Theme | null>(null);
 
   useEffect(() => {
@@ -39,10 +42,10 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+      aria-label={theme === "dark" ? t("theme.switch_to_light") : t("theme.switch_to_dark")}
       className="rounded-sm px-2 py-1 text-body-sm text-(--color-on-surface-variant) hover:text-(--color-on-surface) tabular-nums"
     >
-      {theme === "dark" ? "☀ Light" : "☾ Dark"}
+      {theme === "dark" ? `☀ ${t("theme.label.light")}` : `☾ ${t("theme.label.dark")}`}
     </button>
   );
 }

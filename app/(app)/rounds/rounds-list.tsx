@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { useRoundsT } from "@/lib/i18n/use-t";
+import { useT } from "@/lib/i18n/useT";
 
 const STATUS_STYLES: Record<string, string> = {
   draft: "bg-(--color-surface-bright) text-(--color-on-surface-variant)",
@@ -35,20 +35,20 @@ function fmtDate(s: string | null | undefined): string {
 }
 
 export function RoundsList({ rounds, workspaceName }: { rounds: Round[]; workspaceName: string }) {
-  const t = useRoundsT();
+  const t = useT("rounds");
 
   if (rounds.length === 0) {
     return (
       <div className="rounded-xl bg-(--color-surface-container-low) p-12 text-center space-y-3">
-        <p className="text-body-lg font-medium">{t("rounds.empty.heading")}</p>
+        <p className="text-body-lg font-medium">{t("empty.heading")}</p>
         <p className="text-body-md text-(--color-on-surface-variant) max-w-md mx-auto">
-          {t("rounds.empty.body")}
+          {t("empty.body")}
         </p>
         <Link
           href="/rounds/new"
           className="inline-block mt-4 rounded-lg bg-(--color-primary)/15 px-5 py-2.5 text-label-lg text-(--color-primary) hover:bg-(--color-primary)/25 transition-colors"
         >
-          {t("rounds.empty.cta")}
+          {t("empty.cta")}
         </Link>
       </div>
     );
@@ -59,12 +59,12 @@ export function RoundsList({ rounds, workspaceName }: { rounds: Round[]; workspa
       <table className="w-full text-body-sm">
         <thead>
           <tr className="text-label-md uppercase text-(--color-on-surface-variant)">
-            <th className="px-4 py-3 text-start font-normal">{t("rounds.col.round")}</th>
-            <th className="px-4 py-3 text-start font-normal hidden sm:table-cell">{t("rounds.col.instrument")}</th>
-            <th className="px-4 py-3 text-start font-normal hidden md:table-cell">{t("rounds.col.pre_money")}</th>
-            <th className="px-4 py-3 text-start font-normal hidden md:table-cell">{t("rounds.col.target")}</th>
-            <th className="px-4 py-3 text-start font-normal hidden sm:table-cell">{t("rounds.col.close")}</th>
-            <th className="px-4 py-3 text-start font-normal">{t("rounds.col.status")}</th>
+            <th className="px-4 py-3 text-start font-normal">{t("col.round")}</th>
+            <th className="px-4 py-3 text-start font-normal hidden sm:table-cell">{t("col.instrument")}</th>
+            <th className="px-4 py-3 text-start font-normal hidden md:table-cell">{t("col.pre_money")}</th>
+            <th className="px-4 py-3 text-start font-normal hidden md:table-cell">{t("col.target")}</th>
+            <th className="px-4 py-3 text-start font-normal hidden sm:table-cell">{t("col.close")}</th>
+            <th className="px-4 py-3 text-start font-normal">{t("col.status")}</th>
             <th className="px-4 py-3 text-end font-normal" aria-label="Actions" />
           </tr>
         </thead>
@@ -85,7 +85,7 @@ export function RoundsList({ rounds, workspaceName }: { rounds: Round[]; workspa
                 )}
               </td>
               <td className="px-4 py-3 text-(--color-on-surface-variant) hidden sm:table-cell">
-                {t(`rounds.instrument.${r.instrument_type}` as Parameters<typeof t>[0]) || r.instrument_type}
+                {t(`instrument.${r.instrument_type}`) || r.instrument_type}
               </td>
               <td className="px-4 py-3 tabular-nums text-(--color-on-surface-variant) hidden md:table-cell">
                 {fmtSar(r.pre_money_valuation_sar)}
@@ -98,7 +98,7 @@ export function RoundsList({ rounds, workspaceName }: { rounds: Round[]; workspa
               </td>
               <td className="px-4 py-3">
                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-label-sm font-medium uppercase tracking-wider ${STATUS_STYLES[r.status]}`}>
-                  {t(`rounds.status.${r.status}` as Parameters<typeof t>[0])}
+                  {t(`status.${r.status}`)}
                 </span>
               </td>
               <td className="px-4 py-3 text-end">

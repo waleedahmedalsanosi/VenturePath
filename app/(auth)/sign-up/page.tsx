@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
+import { useT } from "@/lib/i18n/useT";
 import { createClient } from "@/lib/supabase/client";
 
 export default function SignUpPage() {
@@ -11,6 +12,8 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const t = useT("auth");
+  const tCommon = useT();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,18 +42,20 @@ export default function SignUpPage() {
   if (sent) {
     return (
       <div className="space-y-4">
-        <h2 className="text-headline-md font-medium">Check your email</h2>
-        <p className="text-body-md text-(--color-on-surface-variant)">
-          We sent a confirmation link to <strong>{email}</strong>. Click it to finish
-          setting up your account.
-        </p>
+        <h2 className="text-headline-md font-medium">{t("sign_up.check_email.heading")}</h2>
+        <p
+          className="text-body-md text-(--color-on-surface-variant)"
+          dangerouslySetInnerHTML={{
+            __html: t("sign_up.check_email.body", { email }),
+          }}
+        />
         <p className="text-body-sm text-(--color-on-surface-variant)">
-          Wrong address?{" "}
+          {t("sign_up.check_email.wrong_address")}{" "}
           <button
             onClick={() => setSent(false)}
             className="text-(--color-primary) underline"
           >
-            Try again
+            {t("sign_up.check_email.try_again")}
           </button>
         </p>
       </div>
@@ -59,10 +64,12 @@ export default function SignUpPage() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <h2 className="text-headline-md font-medium">Create your account</h2>
+      <h2 className="text-headline-md font-medium">{t("sign_up.heading")}</h2>
 
       <label className="block">
-        <span className="text-label-md uppercase text-(--color-on-surface-variant)">Email</span>
+        <span className="text-label-md uppercase text-(--color-on-surface-variant)">
+          {tCommon("labels.email")}
+        </span>
         <input
           type="email"
           required
@@ -74,7 +81,9 @@ export default function SignUpPage() {
       </label>
 
       <label className="block">
-        <span className="text-label-md uppercase text-(--color-on-surface-variant)">Password</span>
+        <span className="text-label-md uppercase text-(--color-on-surface-variant)">
+          {tCommon("labels.password")}
+        </span>
         <input
           type="password"
           required
@@ -85,7 +94,7 @@ export default function SignUpPage() {
           className="mt-1 block w-full rounded-sm bg-(--color-surface-container-high) ghost-border px-3 py-2 focus:outline-none focus:border-(--color-primary)"
         />
         <span className="mt-1 block text-body-sm text-(--color-on-surface-variant)">
-          At least 8 characters.
+          {t("sign_up.password_hint")}
         </span>
       </label>
 
@@ -100,13 +109,13 @@ export default function SignUpPage() {
         disabled={busy}
         className="btn-primary-gradient w-full rounded-lg py-2.5 text-label-lg font-medium disabled:opacity-50"
       >
-        {busy ? "Creating account…" : "Create account"}
+        {busy ? t("sign_up.creating") : t("sign_up.submit")}
       </button>
 
       <p className="text-body-sm text-(--color-on-surface-variant)">
-        Already have an account?{" "}
+        {t("sign_up.have_account")}{" "}
         <Link href="/sign-in" className="text-(--color-primary) underline">
-          Sign in
+          {t("sign_up.sign_in_link")}
         </Link>
       </p>
     </form>

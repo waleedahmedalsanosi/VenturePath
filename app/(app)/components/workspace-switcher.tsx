@@ -3,6 +3,8 @@
 import { useState, useTransition, useRef, useEffect } from "react";
 import Link from "next/link";
 
+import { useT } from "@/lib/i18n/useT";
+
 import { switchWorkspace } from "./workspace-actions";
 
 interface Workspace {
@@ -20,6 +22,7 @@ export function WorkspaceSwitcher({
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const ref = useRef<HTMLDivElement>(null);
+  const t = useT("nav");
 
   useEffect(() => {
     if (!open) return;
@@ -48,6 +51,7 @@ export function WorkspaceSwitcher({
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
+        aria-label={t("workspace.switcher.label")}
         className="flex items-center gap-2 rounded-md ghost-border px-3 py-1.5 text-body-sm hover:bg-(--color-surface-container-high)"
       >
         <span className="truncate max-w-48">{active.name}</span>
@@ -80,7 +84,7 @@ export function WorkspaceSwitcher({
               onClick={() => setOpen(false)}
               className="block w-full rounded-md px-3 py-2 text-start text-body-sm text-(--color-primary) hover:bg-(--color-surface-container-high)"
             >
-              + New workspace
+              {t("workspace.switcher.create")}
             </Link>
           </div>
         </div>
