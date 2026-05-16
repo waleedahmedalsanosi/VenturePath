@@ -114,22 +114,22 @@ function createI18n(lang: "en" | "ar"): i18n {
 }
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
+  // Synchronous lazy init: the instance exists on the very first render
+  // (SSR + client first paint), pre-populated with English. The MutationObserver
+  // below switches the language once the pre-paint <html lang> bootstrap script
+  // runs in the browser. This avoids rendering raw keys ("items.cap_table",
+  // "hero.headline") on the server pass.
+  const [instance] = useState<i18n>(() => createI18n("en"));
   const [lang, setLang] = useState<"en" | "ar">("en");
-  const [instance, setInstance] = useState<i18n | null>(null);
 
   useEffect(() => {
-    // Hydrate from <html lang>; LanguageToggle keeps html in sync.
     const attr = document.documentElement.getAttribute("lang");
     const initial: "en" | "ar" = attr === "ar" ? "ar" : "en";
-    setLang(initial);
-    setInstance(createI18n(initial));
+    if (initial !== "en") setLang(initial);
 
     const observer = new MutationObserver(() => {
       const next = document.documentElement.getAttribute("lang") === "ar" ? "ar" : "en";
-      setLang((curr) => {
-        if (curr === next) return curr;
-        return next;
-      });
+      setLang((curr) => (curr === next ? curr : next));
     });
     observer.observe(document.documentElement, {
       attributes: true,
@@ -139,18 +139,10 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!instance) return;
     if (instance.language !== lang) {
       instance.changeLanguage(lang);
     }
   }, [lang, instance]);
-
-  if (!instance) {
-    // First render server-side or before hydrate: render plain children.
-    // useT will fall back to key names until provider is ready, which is fine
-    // because the fallback render is the SSR pass with English.
-    return <>{children}</>;
-  }
 
   return <I18nextProvider i18n={instance}>{children}</I18nextProvider>;
 }
