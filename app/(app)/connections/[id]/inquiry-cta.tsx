@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 
+import { useT } from "@/lib/i18n/useT";
+
 import { closeConnectionInquiry, sendConnectionInquiry } from "../actions";
 
 type InquiryStatus = "sent" | "accepted" | "declined" | "closed";
@@ -31,6 +33,8 @@ export function InquiryCta({
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const t = useT("connections");
+  const tCommon = useT();
 
   function handleSend() {
     setError(null);
@@ -41,7 +45,7 @@ export function InquiryCta({
     startTransition(async () => {
       const res = await sendConnectionInquiry(fd);
       if (!res.ok) {
-        setError(res.error ?? "Failed to send inquiry.");
+        setError(res.error ?? tCommon("messages.failed"));
         return;
       }
       if (res.emailWarning) setWarning(res.emailWarning);
@@ -59,20 +63,19 @@ export function InquiryCta({
     });
   }
 
-  // ── State: no inquiry yet — show CTA ─────────────────────────────────────
   if (!inquiry) {
     if (showForm) {
       return (
         <section className="rounded-lg p-5 ghost-border space-y-3">
           <h2 className="text-label-md uppercase text-(--color-on-surface-variant)">
-            Send inquiry
+            {t("inquiry.form.heading")}
           </h2>
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={3}
             maxLength={500}
-            placeholder="Optional: why you&rsquo;re interested (max 500 chars)"
+            placeholder={t("inquiry.form.placeholder")}
             className="w-full rounded-lg bg-(--color-surface-container-high) px-3 py-2 ghost-border focus:outline-none focus:ring-2 focus:ring-(--color-primary)"
           />
           {error && (
@@ -86,7 +89,7 @@ export function InquiryCta({
               onClick={() => setShowForm(false)}
               className="rounded-lg ghost-border px-4 py-2 text-label-sm hover:bg-(--color-surface-container-high)"
             >
-              Cancel
+              {tCommon("actions.cancel")}
             </button>
             <button
               type="button"
@@ -94,7 +97,7 @@ export function InquiryCta({
               disabled={pending}
               className="rounded-lg bg-(--color-primary) text-(--color-on-primary) px-4 py-2 text-label-sm hover:opacity-90 disabled:opacity-50 min-h-[44px]"
             >
-              {pending ? "Sending…" : "Send inquiry"}
+              {pending ? t("inquiry.form.sending") : t("inquiry.form.send")}
             </button>
           </div>
         </section>
@@ -103,29 +106,25 @@ export function InquiryCta({
     return (
       <section className="rounded-lg p-5 ghost-border space-y-3">
         <h2 className="text-label-md uppercase text-(--color-on-surface-variant)">
-          Interested?
+          {t("inquiry.cta.heading")}
         </h2>
         <p className="text-body-sm text-(--color-on-surface-variant)">
-          Send an inquiry. {ownerCompanyName} can accept (revealing contact details
-          and granting data room access) or decline.
+          {t("inquiry.cta.body", { company: ownerCompanyName })}
         </p>
         <button
           type="button"
           onClick={() => setShowForm(true)}
           className="rounded-lg bg-(--color-primary) text-(--color-on-primary) px-4 py-2 text-label-sm hover:opacity-90 min-h-[44px]"
         >
-          I&rsquo;m interested
+          {t("inquiry.cta.button")}
         </button>
         {warning && (
-          <p className="text-body-sm text-(--color-on-surface-variant)">
-            Note: {warning}
-          </p>
+          <p className="text-body-sm text-(--color-on-surface-variant)">{warning}</p>
         )}
       </section>
     );
   }
 
-  // ── State: glass-card status panel per inquiry state (per DESIGN.md §8) ──
   return (
     <GlassStatusPanel
       inquiry={inquiry}
@@ -147,10 +146,7 @@ function GlassStatusPanel({
   onClose?: () => void;
   pending: boolean;
 }) {
-  // Per DESIGN.md §8 Glass-card Status Panel:
-  //   bg surface_container_high @ 40%
-  //   backdrop-blur 24px
-  //   border-radius lg
+  const t = useT("connections");
   const baseClass =
     "rounded-lg p-5 space-y-3 backdrop-blur-[24px] bg-(--color-surface-container-high)/40";
 
@@ -173,16 +169,18 @@ function GlassStatusPanel({
 
   if (inquiry.status === "sent") {
     return (
-      <section className={baseClass} aria-label="Inquiry pending">
+      <section className={baseClass}>
         <div className="flex items-center justify-between flex-wrap gap-2">
           <h2 className="text-label-md uppercase text-(--color-on-surface-variant)">
-            Your inquiry
+            {t("inquiry.status.sent.heading")}
           </h2>
-          {chip("Pending", "info")}
+          {chip(t("inquiry.status.sent.chip"), "info")}
         </div>
         <p className="text-body-md">
-          Sent {relativeTime(inquiry.sent_at)}. You&rsquo;ll be notified when{" "}
-          {ownerCompanyName} responds.
+          {t("inquiry.status.sent.body", {
+            when: relativeTime(inquiry.sent_at, t),
+            company: ownerCompanyName,
+          })}
         </p>
       </section>
     );
@@ -190,16 +188,16 @@ function GlassStatusPanel({
 
   if (inquiry.status === "accepted") {
     return (
-      <section className={baseClass} aria-label="Inquiry accepted">
+      <section className={baseClass}>
         <div className="flex items-center justify-between flex-wrap gap-2">
           <h2 className="text-label-md uppercase text-(--color-on-surface-variant)">
-            Inquiry accepted
+            {t("inquiry.status.accepted.heading")}
           </h2>
-          {chip("Accepted", "success")}
+          {chip(t("inquiry.status.accepted.chip"), "success")}
         </div>
         <div className="rounded-lg bg-(--color-surface-container-low) p-4 space-y-1">
           <p className="text-label-md uppercase text-(--color-on-surface-variant)">
-            Contact
+            {t("inquiry.status.accepted.contact")}
           </p>
           <p className="text-body-lg font-semibold">
             {inquiry.owner_name ?? ownerCompanyName}
@@ -220,7 +218,7 @@ function GlassStatusPanel({
             href={`/data-room/${inquiry.data_room_token}`}
             className="inline-block rounded-lg bg-(--color-primary) text-(--color-on-primary) px-4 py-2 text-label-sm hover:opacity-90 min-h-[44px]"
           >
-            Open data room →
+            {t("inquiry.status.accepted.data_room")}
           </a>
         )}
         {onClose && (
@@ -231,7 +229,7 @@ function GlassStatusPanel({
               disabled={pending}
               className="text-body-sm text-(--color-on-surface-variant) hover:underline disabled:opacity-50"
             >
-              Mark conversation complete
+              {t("inquiry.status.accepted.close")}
             </button>
           </div>
         )}
@@ -241,15 +239,15 @@ function GlassStatusPanel({
 
   if (inquiry.status === "declined") {
     return (
-      <section className={baseClass} aria-label="Inquiry declined">
+      <section className={baseClass}>
         <div className="flex items-center justify-between flex-wrap gap-2">
           <h2 className="text-label-md uppercase text-(--color-on-surface-variant)">
-            Inquiry update
+            {t("inquiry.status.declined.heading")}
           </h2>
-          {chip("Declined", "error")}
+          {chip(t("inquiry.status.declined.chip"), "error")}
         </div>
         <p className="text-body-md text-(--color-on-surface-variant)">
-          {ownerCompanyName} is not pursuing this at the moment.
+          {t("inquiry.status.declined.body", { company: ownerCompanyName })}
         </p>
       </section>
     );
@@ -257,31 +255,31 @@ function GlassStatusPanel({
 
   // closed
   return (
-    <section className={baseClass} aria-label="Inquiry closed">
+    <section className={baseClass}>
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-label-md uppercase text-(--color-on-surface-variant)">
-          Inquiry closed
+          {t("inquiry.status.closed.heading")}
         </h2>
-        {chip("Closed", "neutral")}
+        {chip(t("inquiry.status.closed.chip"), "neutral")}
       </div>
       <p className="text-body-md text-(--color-on-surface-variant)">
-        Closed on{" "}
-        {inquiry.closed_at
-          ? new Date(inquiry.closed_at).toLocaleDateString()
-          : "an earlier date"}
-        .
+        {t("inquiry.status.closed.body", {
+          date: inquiry.closed_at
+            ? new Date(inquiry.closed_at).toLocaleDateString()
+            : "",
+        })}
       </p>
     </section>
   );
 }
 
-function relativeTime(iso: string): string {
+function relativeTime(iso: string, t: (key: string, opts?: Record<string, unknown>) => string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  if (minutes < 1) return t("time.just_now", { ns: "common" });
+  if (minutes < 60) return t(minutes === 1 ? "time.minutes_ago" : "time.minutes_ago_plural", { count: minutes, ns: "common" });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  if (hours < 24) return t(hours === 1 ? "time.hours_ago" : "time.hours_ago_plural", { count: hours, ns: "common" });
   const days = Math.floor(hours / 24);
-  return `${days} day${days === 1 ? "" : "s"} ago`;
+  return t(days === 1 ? "time.days_ago" : "time.days_ago_plural", { count: days, ns: "common" });
 }

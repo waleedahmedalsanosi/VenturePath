@@ -4,66 +4,66 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
 
+import { useT } from "@/lib/i18n/useT";
+
+type NavItem = { href: string; labelKey: string };
+type NavGroup = { labelKey: string; items: NavItem[] };
+
 // Standalone top-level links (outside any collapsible group).
-// Dashboard is gated behind having a workspace; Explore is open to everyone.
-const EXPLORE_LINK = { href: "/explore", label: "Explore" };
-const DASHBOARD_LINK = { href: "/dashboard", label: "Dashboard" };
+const EXPLORE_LINK: NavItem = { href: "/explore", labelKey: "explore" };
+const DASHBOARD_LINK: NavItem = { href: "/dashboard", labelKey: "dashboard" };
 
-type NavGroup = { label: string; items: Array<{ href: string; label: string }> };
-
-// Onboarding group shown to users who haven't created a workspace yet.
 const ONBOARDING_GROUP: NavGroup = {
-  label: "My startup",
-  items: [{ href: "/setup", label: "Add your startup" }],
+  labelKey: "onboarding.label",
+  items: [{ href: "/setup", labelKey: "onboarding.add" }],
 };
 
-// Collapsible nav groups (shown only once the user has a workspace)
 const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Company",
+    labelKey: "groups.company",
     items: [
-      { href: "/company", label: "Company" },
-      { href: "/members", label: "Members" },
+      { href: "/company", labelKey: "items.company" },
+      { href: "/members", labelKey: "items.members" },
     ],
   },
   {
-    label: "Equity",
+    labelKey: "groups.equity",
     items: [
-      { href: "/cap-table", label: "Cap table" },
-      { href: "/esop", label: "ESOP" },
+      { href: "/cap-table", labelKey: "items.cap_table" },
+      { href: "/esop", labelKey: "items.esop" },
     ],
   },
   {
-    label: "Investment",
+    labelKey: "groups.investment",
     items: [
-      { href: "/rounds", label: "Rounds" },
-      { href: "/term-sheets", label: "Term sheets" },
-      { href: "/investor-updates", label: "Investor updates" },
-      { href: "/marketplace", label: "Marketplace" },
-      { href: "/connections", label: "Connections" },
+      { href: "/rounds", labelKey: "items.rounds" },
+      { href: "/term-sheets", labelKey: "items.term_sheets" },
+      { href: "/investor-updates", labelKey: "items.investor_updates" },
+      { href: "/marketplace", labelKey: "items.marketplace" },
+      { href: "/connections", labelKey: "items.connections" },
     ],
   },
   {
-    label: "Modeling",
+    labelKey: "groups.modeling",
     items: [
-      { href: "/dilution", label: "Dilution" },
-      { href: "/waterfall", label: "Waterfall" },
-      { href: "/acquisition", label: "M&A" },
-      { href: "/valuation", label: "Valuation" },
+      { href: "/dilution", labelKey: "items.dilution" },
+      { href: "/waterfall", labelKey: "items.waterfall" },
+      { href: "/acquisition", labelKey: "items.acquisition" },
+      { href: "/valuation", labelKey: "items.valuation" },
     ],
   },
   {
-    label: "Operations",
+    labelKey: "groups.operations",
     items: [
-      { href: "/governance", label: "Governance" },
-      { href: "/compliance", label: "Compliance" },
-      { href: "/vault", label: "Vault" },
-      { href: "/traction", label: "Traction" },
+      { href: "/governance", labelKey: "items.governance" },
+      { href: "/compliance", labelKey: "items.compliance" },
+      { href: "/vault", labelKey: "items.vault" },
+      { href: "/traction", labelKey: "items.traction" },
     ],
   },
   {
-    label: "Activity",
-    items: [{ href: "/audit", label: "Audit" }],
+    labelKey: "groups.activity",
+    items: [{ href: "/audit", labelKey: "items.audit" }],
   },
 ];
 
@@ -107,53 +107,48 @@ interface SidebarProps {
 
 export function Sidebar({ mobileOpen, onClose, desktopCollapsed, hasWorkspace }: SidebarProps) {
   const pathname = usePathname();
+  const t = useT("nav");
 
-  // Pre-workspace users see only the onboarding group; everyone else sees the full nav.
   const groups = useMemo<NavGroup[]>(
     () => (hasWorkspace ? NAV_GROUPS : [ONBOARDING_GROUP]),
     [hasWorkspace],
   );
-  // Dashboard is hidden until the user has a workspace (owner or shareholder).
   const topLinks = useMemo(
     () => (hasWorkspace ? [DASHBOARD_LINK, EXPLORE_LINK] : [EXPLORE_LINK]),
     [hasWorkspace],
   );
 
-  // All groups collapsed by default; active group auto-expands. Onboarding group
-  // starts open so the "Add your startup" CTA is immediately visible.
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
-    for (const g of NAV_GROUPS) initial[g.label] = false;
-    initial[ONBOARDING_GROUP.label] = true;
+    for (const g of NAV_GROUPS) initial[g.labelKey] = false;
+    initial[ONBOARDING_GROUP.labelKey] = true;
     return initial;
   });
 
-  // Auto-expand whichever group contains the current route
   useEffect(() => {
     const activeGroup = groups.find((g) => groupHasActive(pathname, g));
     if (activeGroup) {
-      setExpanded((prev) => ({ ...prev, [activeGroup.label]: true }));
+      setExpanded((prev) => ({ ...prev, [activeGroup.labelKey]: true }));
     }
   }, [pathname, groups]);
 
-  function toggleGroup(label: string) {
-    setExpanded((prev) => ({ ...prev, [label]: !prev[label] }));
+  function toggleGroup(labelKey: string) {
+    setExpanded((prev) => ({ ...prev, [labelKey]: !prev[labelKey] }));
   }
 
   return (
     <aside
       className={`
-        fixed md:sticky top-0 left-0 z-50 flex flex-col h-screen shrink-0
+        fixed md:sticky top-0 start-0 z-50 flex flex-col h-screen shrink-0
         bg-(--color-surface-container-low) overflow-y-auto overflow-x-hidden
         transition-[width,transform] duration-250 ease-out
-        ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
+        ${mobileOpen ? "translate-x-0" : "rtl:translate-x-full ltr:-translate-x-full"}
         md:translate-x-0
         ${desktopCollapsed ? "md:w-0" : "md:w-60"}
         w-60
       `}
-      aria-label="Primary navigation"
+      aria-label={t("groups.company")}
     >
-      {/* Sidebar top: logo + mobile close */}
       <div className="flex items-center justify-between px-4 pt-5 pb-3 shrink-0">
         <Link
           href="/dashboard"
@@ -166,7 +161,7 @@ export function Sidebar({ mobileOpen, onClose, desktopCollapsed, hasWorkspace }:
           type="button"
           onClick={onClose}
           className="md:hidden flex items-center justify-center rounded-md p-1.5 text-(--color-on-surface-variant) hover:text-(--color-on-surface) hover:bg-(--color-surface-container-high) transition-colors"
-          aria-label="Close navigation"
+          aria-label={t("language.switch_to", { lang: t("language.en") })}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
             <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -174,11 +169,9 @@ export function Sidebar({ mobileOpen, onClose, desktopCollapsed, hasWorkspace }:
         </button>
       </div>
 
-      {/* Thin tonal divider (no border — tonal shift only) */}
       <div className="mx-3 mb-2 h-px bg-(--color-surface-container-high)" />
 
-      {/* Top standalone links */}
-      <nav className="px-2 pb-2" aria-label="Main shortcuts">
+      <nav className="px-2 pb-2">
         <ul className="space-y-0.5">
           {topLinks.map((link) => {
             const active = isActive(pathname, link.href);
@@ -198,7 +191,7 @@ export function Sidebar({ mobileOpen, onClose, desktopCollapsed, hasWorkspace }:
                   {active && (
                     <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-(--color-primary)" aria-hidden />
                   )}
-                  {link.label}
+                  {t(link.labelKey)}
                 </Link>
               </li>
             );
@@ -208,19 +201,17 @@ export function Sidebar({ mobileOpen, onClose, desktopCollapsed, hasWorkspace }:
 
       <div className="mx-3 mb-2 h-px bg-(--color-surface-container-high)" />
 
-      {/* Collapsible groups */}
-      <nav className="flex-1 px-2 pb-6" aria-label="Navigation sections">
+      <nav className="flex-1 px-2 pb-6">
         <div className="space-y-0.5">
           {groups.map((group) => {
-            const isOpen = expanded[group.label] ?? false;
+            const isOpen = expanded[group.labelKey] ?? false;
             const hasActive = groupHasActive(pathname, group);
 
             return (
-              <div key={group.label}>
-                {/* Group header */}
+              <div key={group.labelKey}>
                 <button
                   type="button"
-                  onClick={() => toggleGroup(group.label)}
+                  onClick={() => toggleGroup(group.labelKey)}
                   className={`
                     w-full flex items-center justify-between px-3 py-2 rounded-md
                     text-label-sm uppercase tracking-wider transition-colors whitespace-nowrap
@@ -232,11 +223,10 @@ export function Sidebar({ mobileOpen, onClose, desktopCollapsed, hasWorkspace }:
                   `}
                   aria-expanded={isOpen}
                 >
-                  <span>{group.label}</span>
+                  <span>{t(group.labelKey)}</span>
                   <Chevron open={isOpen} />
                 </button>
 
-                {/* Animated items via CSS grid rows */}
                 <div
                   className="grid transition-[grid-template-rows] duration-200 ease-out"
                   style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
@@ -260,7 +250,7 @@ export function Sidebar({ mobileOpen, onClose, desktopCollapsed, hasWorkspace }:
                             {active && (
                               <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-(--color-primary)" aria-hidden />
                             )}
-                            {item.label}
+                            {t(item.labelKey)}
                           </Link>
                         </li>
                       );

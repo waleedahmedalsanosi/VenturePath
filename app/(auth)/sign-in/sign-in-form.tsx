@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
+import { useT } from "@/lib/i18n/useT";
 import { createClient } from "@/lib/supabase/client";
 
-// Only allow relative-path returnTo values to prevent open-redirect attacks.
 function safeReturnTo(value: string | null): string {
   if (!value) return "/";
   if (!value.startsWith("/")) return "/";
@@ -22,6 +22,8 @@ export function SignInForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const t = useT("auth");
+  const tCommon = useT();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -46,10 +48,12 @@ export function SignInForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <h2 className="text-headline-md font-medium">Sign in</h2>
+      <h2 className="text-headline-md font-medium">{t("sign_in.heading")}</h2>
 
       <label className="block">
-        <span className="text-label-md uppercase text-(--color-on-surface-variant)">Email</span>
+        <span className="text-label-md uppercase text-(--color-on-surface-variant)">
+          {tCommon("labels.email")}
+        </span>
         <input
           type="email"
           required
@@ -61,7 +65,9 @@ export function SignInForm() {
       </label>
 
       <label className="block">
-        <span className="text-label-md uppercase text-(--color-on-surface-variant)">Password</span>
+        <span className="text-label-md uppercase text-(--color-on-surface-variant)">
+          {tCommon("labels.password")}
+        </span>
         <input
           type="password"
           required
@@ -83,13 +89,13 @@ export function SignInForm() {
         disabled={busy}
         className="btn-primary-gradient w-full rounded-lg py-2.5 text-label-lg font-medium disabled:opacity-50"
       >
-        {busy ? "Signing in…" : "Sign in"}
+        {busy ? t("sign_in.signing_in") : t("sign_in.submit")}
       </button>
 
       <p className="text-body-sm text-(--color-on-surface-variant)">
-        New here?{" "}
+        {t("sign_in.no_account")}{" "}
         <Link href="/sign-up" className="text-(--color-primary) underline">
-          Create an account
+          {t("sign_in.create_account")}
         </Link>
       </p>
     </form>

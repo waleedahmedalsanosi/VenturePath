@@ -33,5 +33,7 @@
   "language.en": "English",
   "language.ar": "العربية",
   "theme.switch_to_dark": "Switch to dark mode",
-  "theme.switch_to_light": "Switch to light mode"
+  "theme.switch_to_light": "Switch to light mode",
+  "theme.label.dark": "Dark",
+  "theme.label.light": "Light"
 }

@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { useT } from "@/lib/i18n/useT";
+
 import { createConnectionListing } from "../actions";
 
 type ListingType = "exit" | "partnership";
@@ -21,20 +23,19 @@ export function NewListingForm({
   const [pending, startTransition] = useTransition();
   const [type, setType] = useState<ListingType>(initialType);
   const [error, setError] = useState<string | null>(null);
+  const t = useT("connections");
+  const tCommon = useT();
 
-  // Exit fields
   const [askType, setAskType] = useState<ExitAskType>("open_to_offers");
   const [askAmount, setAskAmount] = useState("");
   const [sector, setSector] = useState("");
   const [stage, setStage] = useState("");
 
-  // Partnership fields
   const [seekingType, setSeekingType] = useState<SeekingType>("co_founder");
   const [skillsInput, setSkillsInput] = useState("");
   const [equityExpectations, setEquityExpectations] = useState("");
   const [commitmentType, setCommitmentType] = useState<CommitmentType>("full_time");
 
-  // Shared fields
   const [publicSummary, setPublicSummary] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -70,7 +71,7 @@ export function NewListingForm({
     startTransition(async () => {
       const res = await createConnectionListing(fd);
       if (!res.ok) {
-        setError(res.error ?? "Failed to create listing.");
+        setError(res.error ?? t("new.error.generic"));
         return;
       }
       router.push(`/connections/${res.listingId}`);
@@ -79,78 +80,73 @@ export function NewListingForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      {/* Type selector */}
       <fieldset className="space-y-3">
         <legend className="text-label-md uppercase text-(--color-on-surface-variant)">
-          Listing type
+          {t("new.field.listing_type")}
         </legend>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <TypeRadio
             value="exit"
             current={type}
             onChange={setType}
-            label="Exit"
-            description={`Sell, merge, or acqui-hire ${workspaceName}.`}
+            label={t("new.field.listing_type.exit.label")}
+            description={t("new.field.listing_type.exit.description", { company: workspaceName })}
             color="#C73E9D"
           />
           <TypeRadio
             value="partnership"
             current={type}
             onChange={setType}
-            label="Partnership"
-            description="Seek a co-founder, advisor, senior hire, or business partner."
+            label={t("new.field.listing_type.partnership.label")}
+            description={t("new.field.listing_type.partnership.description")}
             color="#8A6FE8"
           />
         </div>
       </fieldset>
 
-      {/* Type-specific fields */}
       {type === "exit" ? (
         <fieldset className="space-y-4">
           <legend className="text-label-md uppercase text-(--color-on-surface-variant)">
-            Exit details
+            {t("new.exit.heading")}
           </legend>
-          <Field label="Ask type">
+          <Field label={t("new.exit.ask_type.label")}>
             <select
               value={askType}
               onChange={(e) => setAskType(e.target.value as ExitAskType)}
               className="w-full rounded-lg bg-(--color-surface-container-high) px-3 py-2 ghost-border focus:outline-none focus:ring-2 focus:ring-(--color-primary)"
             >
-              <option value="active_sale">Active sale</option>
-              <option value="open_to_offers">Open to offers</option>
-              <option value="acqui_hire">Acqui-hire</option>
-              <option value="merger">Merger</option>
+              <option value="active_sale">{t("new.exit.ask_type.active_sale")}</option>
+              <option value="open_to_offers">{t("new.exit.ask_type.open_to_offers")}</option>
+              <option value="acqui_hire">{t("new.exit.ask_type.acqui_hire")}</option>
+              <option value="merger">{t("new.exit.ask_type.merger")}</option>
             </select>
           </Field>
-          <Field
-            label="Ask amount (SAR)"
-            hint="Optional. Leave blank for &lsquo;open to offers&rsquo;."
-          >
+          <Field label={t("new.exit.ask_amount.label")} hint={t("new.exit.ask_amount.hint")}>
             <input
               type="text"
               inputMode="numeric"
               value={askAmount}
               onChange={(e) => setAskAmount(e.target.value)}
-              placeholder="e.g. 12000000"
+              placeholder={t("new.exit.ask_amount.placeholder")}
               className="w-full rounded-lg bg-(--color-surface-container-high) px-3 py-2 ghost-border focus:outline-none focus:ring-2 focus:ring-(--color-primary) tabular-nums"
             />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Sector">
+            <Field label={t("new.exit.sector.label")}>
               <input
                 type="text"
                 value={sector}
                 onChange={(e) => setSector(e.target.value)}
-                placeholder="e.g. B2B procurement"
+                placeholder={t("new.exit.sector.placeholder")}
                 className="w-full rounded-lg bg-(--color-surface-container-high) px-3 py-2 ghost-border focus:outline-none focus:ring-2 focus:ring-(--color-primary)"
               />
             </Field>
-            <Field label="Stage">
+            <Field label={t("new.exit.stage.label")}>
               <input
                 type="text"
                 value={stage}
                 onChange={(e) => setStage(e.target.value)}
-                placeholder="e.g. Series A"
+                placeholder={t("new.exit.stage.placeholder")}
                 className="w-full rounded-lg bg-(--color-surface-container-high) px-3 py-2 ghost-border focus:outline-none focus:ring-2 focus:ring-(--color-primary)"
               />
             </Field>
@@ -159,65 +155,55 @@ export function NewListingForm({
       ) : (
         <fieldset className="space-y-4">
           <legend className="text-label-md uppercase text-(--color-on-surface-variant)">
-            Partnership details
+            {t("new.partnership.heading")}
           </legend>
-          <Field label="Seeking">
+          <Field label={t("new.partnership.seeking_type.label")}>
             <select
               value={seekingType}
               onChange={(e) => setSeekingType(e.target.value as SeekingType)}
               className="w-full rounded-lg bg-(--color-surface-container-high) px-3 py-2 ghost-border focus:outline-none focus:ring-2 focus:ring-(--color-primary)"
             >
-              <option value="co_founder">Co-founder</option>
-              <option value="advisor">Advisor</option>
-              <option value="senior_hire">Senior hire</option>
-              <option value="business_partner">Business partner</option>
+              <option value="co_founder">{t("new.partnership.seeking_type.co_founder")}</option>
+              <option value="advisor">{t("new.partnership.seeking_type.advisor")}</option>
+              <option value="senior_hire">{t("new.partnership.seeking_type.senior_hire")}</option>
+              <option value="business_partner">{t("new.partnership.seeking_type.business_partner")}</option>
             </select>
           </Field>
-          <Field
-            label="Skills"
-            hint="Comma-separated, up to 10."
-          >
+          <Field label={t("new.partnership.skills.label")} hint={t("new.partnership.skills.hint")}>
             <input
               type="text"
               value={skillsInput}
               onChange={(e) => setSkillsInput(e.target.value)}
-              placeholder="growth, b2b sales, KSA market"
+              placeholder={t("new.partnership.skills.placeholder")}
               className="w-full rounded-lg bg-(--color-surface-container-high) px-3 py-2 ghost-border focus:outline-none focus:ring-2 focus:ring-(--color-primary)"
             />
           </Field>
-          <Field label="Commitment">
+          <Field label={t("new.partnership.commitment.label")}>
             <select
               value={commitmentType}
               onChange={(e) => setCommitmentType(e.target.value as CommitmentType)}
               className="w-full rounded-lg bg-(--color-surface-container-high) px-3 py-2 ghost-border focus:outline-none focus:ring-2 focus:ring-(--color-primary)"
             >
-              <option value="full_time">Full-time</option>
-              <option value="part_time">Part-time</option>
-              <option value="advisory">Advisory</option>
-              <option value="flexible">Flexible</option>
+              <option value="full_time">{t("new.partnership.commitment.full_time")}</option>
+              <option value="part_time">{t("new.partnership.commitment.part_time")}</option>
+              <option value="advisory">{t("new.partnership.commitment.advisory")}</option>
+              <option value="flexible">{t("new.partnership.commitment.flexible")}</option>
             </select>
           </Field>
-          <Field
-            label="Equity expectations"
-            hint="Optional. What the prospective partner would receive."
-          >
+          <Field label={t("new.partnership.equity.label")} hint={t("new.partnership.equity.hint")}>
             <textarea
               value={equityExpectations}
               onChange={(e) => setEquityExpectations(e.target.value)}
               rows={2}
               maxLength={200}
-              placeholder="e.g. 5-15% equity vesting over 4 years"
+              placeholder={t("new.partnership.equity.placeholder")}
               className="w-full rounded-lg bg-(--color-surface-container-high) px-3 py-2 ghost-border focus:outline-none focus:ring-2 focus:ring-(--color-primary)"
             />
           </Field>
         </fieldset>
       )}
 
-      {/* Shared fields */}
-      <Field
-        label="Public summary"
-        hint={`Up to 500 characters. Visible to all VenturePath members.`}
-      >
+      <Field label={t("new.public_summary.label")} hint={t("new.public_summary.hint")}>
         <textarea
           value={publicSummary}
           onChange={(e) => setPublicSummary(e.target.value)}
@@ -226,20 +212,17 @@ export function NewListingForm({
           required
           placeholder={
             type === "exit"
-              ? "What you can share publicly about the exit opportunity."
-              : "What you're looking for and what you bring to the table."
+              ? t("new.public_summary.placeholder.exit")
+              : t("new.public_summary.placeholder.partnership")
           }
           className="w-full rounded-lg bg-(--color-surface-container-high) px-3 py-2 ghost-border focus:outline-none focus:ring-2 focus:ring-(--color-primary)"
         />
         <p className="text-body-sm text-(--color-on-surface-variant) tabular-nums">
-          {publicSummary.length}/500
+          {t("new.public_summary.counter", { count: publicSummary.length })}
         </p>
       </Field>
 
-      <Field
-        label="Private notes"
-        hint="Optional, not shown publicly. For your own reference."
-      >
+      <Field label={t("new.notes.label")} hint={t("new.notes.hint")}>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -264,14 +247,14 @@ export function NewListingForm({
           onClick={() => router.push("/connections")}
           className="rounded-lg ghost-border px-4 py-2 text-label-sm hover:bg-(--color-surface-container-high)"
         >
-          Cancel
+          {tCommon("actions.cancel")}
         </button>
         <button
           type="submit"
           disabled={pending}
           className="rounded-lg bg-(--color-primary) text-(--color-on-primary) px-4 py-2 text-label-sm hover:opacity-90 disabled:opacity-50"
         >
-          {pending ? "Publishing…" : "Publish listing"}
+          {pending ? t("new.submitting") : t("new.submit")}
         </button>
       </div>
     </form>
@@ -298,7 +281,7 @@ function TypeRadio({
     <button
       type="button"
       onClick={() => onChange(value)}
-      className={`text-left rounded-xl p-4 space-y-1 transition-colors ${
+      className={`text-start rounded-xl p-4 space-y-1 transition-colors ${
         checked
           ? "bg-(--color-surface-container-high) ring-2 ring-(--color-primary)"
           : "ghost-border hover:bg-(--color-surface-container-high)"

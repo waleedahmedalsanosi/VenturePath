@@ -4,12 +4,6 @@ import { useEffect, useState } from "react";
 
 type Lang = "en" | "ar";
 
-/**
- * Prototype language toggle: flips `dir` and `lang` on <html>, which switches
- * the body font to Cairo (per DESIGN.md §4) and triggers RTL mirroring via
- * Tailwind's [dir="rtl"] variant on consumers. UI strings are NOT yet
- * translated — this proves the wiring works structurally.
- */
 export function LanguageToggle() {
   const [lang, setLang] = useState<Lang | null>(null);
 
@@ -34,11 +28,14 @@ export function LanguageToggle() {
     return <span className="inline-block h-6 w-12" aria-hidden />;
   }
 
+  // Aria label is intentionally bilingual (announces the destination language
+  // in the destination language) so screen readers in either mode read it
+  // sensibly. The button shows the OTHER language code.
   return (
     <button
       type="button"
       onClick={toggle}
-      aria-label={`Switch to ${lang === "ar" ? "English" : "العربية"}`}
+      aria-label={lang === "ar" ? "Switch to English" : "التحويل إلى العربية"}
       className="rounded-sm px-2 py-1 text-body-sm text-(--color-on-surface-variant) hover:text-(--color-on-surface)"
     >
       {lang === "ar" ? "EN" : "AR"}
