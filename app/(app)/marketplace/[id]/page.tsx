@@ -6,6 +6,7 @@ import { formatSar, formatShares, pricePerShare } from "@/lib/marketplace/money"
 import { getActiveWorkspace } from "@/lib/workspace/active";
 
 import { ListingActions } from "./listing-actions";
+import { RofrRowActions } from "./rofr-row-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +64,7 @@ export default async function ListingDetailPage({
     data: { user },
   } = await supabase.auth.getUser();
   const isSeller = user?.id === listing.seller_user_id;
+  const isOwner = user?.id === workspace.owner_user_id;
 
   const counts = {
     exercise: rofrRows.filter((r) => effectiveStatus(r) === "exercise").length,
@@ -128,6 +130,7 @@ export default async function ListingDetailPage({
                 <th className="py-2">Window expires</th>
                 <th className="py-2">Status</th>
                 <th className="py-2">Email sent</th>
+                {isOwner && <th className="py-2">Action</th>}
               </tr>
             </thead>
             <tbody>
@@ -147,6 +150,13 @@ export default async function ListingDetailPage({
                     <td className="py-2 text-(--color-on-surface-variant)">
                       {r.email_sent_at ? new Date(r.email_sent_at).toLocaleDateString() : "—"}
                     </td>
+                    {isOwner && (
+                      <td className="py-2">
+                        {status === "pending" && (
+                          <RofrRowActions notificationId={r.id} />
+                        )}
+                      </td>
+                    )}
                   </tr>
                 );
               })}
