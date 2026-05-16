@@ -44,5 +44,17 @@
   "actions.confirm_withdraw": "تأكيد السحب",
   "actions.reason_placeholder": "السبب (اختياري)",
   "rofr.actions.exercise": "ممارسة",
-  "rofr.actions.decline": "رفض"
+  "rofr.actions.decline": "رفض",
+  "tabs.aria_label": "عرض السوق",
+  "tabs.browse": "تصفّح الكل",
+  "tabs.mine": "قوائمي",
+  "browse.eyebrow": "السوق",
+  "browse.title": "مساهمون يبيعون، شركات معروضة للبيع",
+  "browse.subtitle": "قوائم الأسهم الثانوية العامة وقوائم الخروج الكاملة من مختلف مساحات العمل في VenturePath. لا تحويل أموال على المنصة — يتم الإغلاق خارجها.",
+  "browse.section.secondaries": "قوائم الأسهم الثانوية",
+  "browse.section.exits": "شركات منفتحة على الخروج",
+  "browse.empty.secondaries": "لا توجد قوائم ثانوية عامة بعد. يمكن للمساهمين تفعيل قوائمهم للظهور عبر مساحات العمل.",
+  "browse.empty.exits": "لا توجد شركات أعلنت عن رغبتها في الخروج بعد.",
+  "browse.unknown_workspace": "شركة غير معروفة",
+  "browse.secondary.detail": "{{shareholder}} · أُدرج {{date}}"
 }

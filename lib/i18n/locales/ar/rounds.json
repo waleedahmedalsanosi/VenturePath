@@ -66,5 +66,20 @@
   "new.field.lead": "المستثمر الرئيسي (اختياري)",
   "new.field.close_date": "تاريخ الإغلاق المتوقع",
   "new.submit": "إنشاء الجولة",
-  "new.submitting": "جارٍ الإنشاء…"
+  "new.submitting": "جارٍ الإنشاء…",
+  "tabs.aria_label": "عرض الجولات",
+  "tabs.open": "الجولات المفتوحة",
+  "tabs.mine": "جولاتي",
+  "browse.eyebrow": "الجولة",
+  "browse.title": "الجولات المفتوحة عبر VenturePath",
+  "browse.subtitle": "شركات تجمع التمويل حالياً. تُعرض الجولات العامة فقط — يفعّل المؤسسون جولتهم للظهور عبر مساحات العمل.",
+  "browse.count": "{{count}} جولة مفتوحة",
+  "browse.open_own": "افتح جولاتي",
+  "browse.unknown_workspace": "شركة غير معروفة",
+  "browse.empty.title": "لا توجد جولات مفتوحة بعد",
+  "browse.empty.body": "لم تنشر أي شركة جولة مفتوحة. عندما يفعّل المؤسسون جولاتهم كعامة، ستظهر هنا.",
+  "browse.row.lead": "المستثمر الرئيسي · {{investor}}",
+  "browse.row.no_lead": "لا يوجد مستثمر رئيسي بعد",
+  "browse.row.pre_money": "قبل التمويل · {{amount}}",
+  "browse.row.close_by": "الإغلاق · {{date}}"
 }

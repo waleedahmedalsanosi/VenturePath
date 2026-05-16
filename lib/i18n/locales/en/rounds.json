@@ -66,5 +66,20 @@
   "new.field.lead": "Lead investor (optional)",
   "new.field.close_date": "Expected close date",
   "new.submit": "Create round",
-  "new.submitting": "Creating…"
+  "new.submitting": "Creating…",
+  "tabs.aria_label": "Rounds view",
+  "tabs.open": "Open rounds",
+  "tabs.mine": "My rounds",
+  "browse.eyebrow": "Round",
+  "browse.title": "Open rounds across VenturePath",
+  "browse.subtitle": "Companies actively raising. Public rounds only — founders opt their round in to cross-workspace discovery.",
+  "browse.count": "{{count}} open round(s)",
+  "browse.open_own": "Open my rounds",
+  "browse.unknown_workspace": "Unknown company",
+  "browse.empty.title": "No open rounds yet",
+  "browse.empty.body": "No companies have published an open round. Once founders mark a round as public, it surfaces here.",
+  "browse.row.lead": "Lead · {{investor}}",
+  "browse.row.no_lead": "No lead investor yet",
+  "browse.row.pre_money": "Pre-money · {{amount}}",
+  "browse.row.close_by": "Close · {{date}}"
 }

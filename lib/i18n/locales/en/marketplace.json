@@ -44,5 +44,17 @@
   "actions.confirm_withdraw": "Confirm withdraw",
   "actions.reason_placeholder": "Reason (optional)",
   "rofr.actions.exercise": "Exercise",
-  "rofr.actions.decline": "Decline"
+  "rofr.actions.decline": "Decline",
+  "tabs.aria_label": "Marketplace view",
+  "tabs.browse": "Browse all",
+  "tabs.mine": "My listings",
+  "browse.eyebrow": "Marketplace",
+  "browse.title": "Shareholders selling, companies for sale",
+  "browse.subtitle": "Public secondary-share listings and whole-company exit listings across every VenturePath workspace. No fund movement on platform — closing happens off-platform.",
+  "browse.section.secondaries": "Secondary share listings",
+  "browse.section.exits": "Companies open to exit",
+  "browse.empty.secondaries": "No public secondary listings yet. Shareholders can opt their listings in for cross-workspace discovery.",
+  "browse.empty.exits": "No companies have listed an exit interest yet.",
+  "browse.unknown_workspace": "Unknown company",
+  "browse.secondary.detail": "{{shareholder}} · Listed {{date}}"
 }
