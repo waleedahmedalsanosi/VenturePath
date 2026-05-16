@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 
 import { Dec } from "@/lib/cap-table/decimal";
 import { summarize, withOwnership } from "@/lib/cap-table/ownership";
+import { useT } from "@/lib/i18n/useT";
 
 import type { Database } from "@/lib/supabase/types";
 
@@ -14,8 +17,6 @@ type Workspace = Database["public"]["Tables"]["workspaces"]["Row"];
 type Shareholder = Database["public"]["Tables"]["shareholders"]["Row"];
 
 function fmtSAR(d: InstanceType<typeof Dec>): string {
-  // Truncate trailing zero decimals; group thousands. Tabular numerals
-  // applied at the component level.
   return `SAR ${d.toFixed(2).replace(/\.00$/, "").replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
 }
 
@@ -25,9 +26,7 @@ function fmtPct(d: InstanceType<typeof Dec> | null): string {
 }
 
 function fmtShares(d: InstanceType<typeof Dec>): string {
-  return d
-    .toFixed(0)
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return d.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 export function CapTablePopulated({
@@ -39,15 +38,14 @@ export function CapTablePopulated({
 }) {
   const summary = summarize(shareholders);
   const rows = withOwnership(shareholders);
+  const t = useT("cap_table");
 
   return (
     <section className="space-y-10">
-      {/* Hero — total cap table (founder-slice variant deferred until the
-          founder-shareholder link exists in V1). */}
       <header className="flex items-start justify-between gap-6 flex-wrap">
         <div>
           <p className="text-label-md uppercase text-(--color-on-surface-variant)">
-            Cap table
+            {t("eyebrow")}
           </p>
           <h1 className="mt-1 text-display-md font-semibold tracking-tight">
             {workspace.name}
@@ -57,32 +55,31 @@ export function CapTablePopulated({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <PrintButton label="Export PDF" />
+          <PrintButton label={t("export_pdf")} />
           <Link
             href="/cap-table/add"
             className="rounded-lg ghost-border px-5 py-2 text-label-lg hover:bg-(--color-surface-container-high)"
           >
-            + Add shareholder
+            {t("add_shareholder")}
           </Link>
         </div>
       </header>
 
-      {/* KPI tiles */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KpiTile
-          label="Ordinary shares issued"
+          label={t("kpi.ordinary_issued")}
           value={fmtShares(summary.total_ordinary_shares)}
         />
         <KpiTile
-          label="iSAFEs outstanding"
+          label={t("kpi.isafes_outstanding")}
           value={String(summary.isafe_count)}
         />
         <KpiTile
-          label="iSAFE raised"
+          label={t("kpi.isafe_raised")}
           value={fmtSAR(summary.total_isafe_investment_sar)}
         />
         <KpiTile
-          label="Highest iSAFE cap"
+          label={t("kpi.highest_isafe_cap")}
           value={
             summary.highest_isafe_cap_sar.eq(0)
               ? "—"
@@ -91,11 +88,10 @@ export function CapTablePopulated({
         />
       </div>
 
-      {/* Donut + list */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         <div className="lg:col-span-2 rounded-xl bg-(--color-surface-container-low) p-6">
           <h2 className="text-label-md uppercase text-(--color-on-surface-variant) mb-4">
-            Ownership distribution
+            {t("ownership_distribution")}
           </h2>
           <OwnershipDonut
             data={rows
@@ -113,11 +109,11 @@ export function CapTablePopulated({
           <table className="w-full text-body-sm">
             <thead>
               <tr className="text-label-md uppercase text-(--color-on-surface-variant)">
-                <th className="px-4 py-3 text-start font-normal">Name</th>
-                <th className="px-4 py-3 text-start font-normal">Instrument</th>
-                <th className="px-4 py-3 text-end font-normal">Shares</th>
-                <th className="px-4 py-3 text-end font-normal">Ownership</th>
-                <th className="px-4 py-3 text-end font-normal" aria-label="Actions" />
+                <th className="px-4 py-3 text-start font-normal">{t("col.name")}</th>
+                <th className="px-4 py-3 text-start font-normal">{t("col.instrument")}</th>
+                <th className="px-4 py-3 text-end font-normal">{t("col.shares")}</th>
+                <th className="px-4 py-3 text-end font-normal">{t("col.ownership")}</th>
+                <th className="px-4 py-3 text-end font-normal" aria-label={t("col.actions")} />
               </tr>
             </thead>
             <tbody>
