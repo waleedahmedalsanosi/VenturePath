@@ -193,7 +193,7 @@ export type Database = {
           workspace_id: string;
           actor_user_id: string;
           actor_email: string;
-          entity_type: "workspace" | "shareholder" | "document" | "compliance_obligation" | "share_listing" | "rofr_notification";
+          entity_type: "workspace" | "shareholder" | "document" | "compliance_obligation" | "share_listing" | "rofr_notification" | "connection_listing" | "connection_inquiry";
           entity_id: string | null;
           action: string;
           description: string;
@@ -205,7 +205,7 @@ export type Database = {
           workspace_id: string;
           actor_user_id: string;
           actor_email: string;
-          entity_type: "workspace" | "shareholder" | "document" | "compliance_obligation" | "share_listing" | "rofr_notification";
+          entity_type: "workspace" | "shareholder" | "document" | "compliance_obligation" | "share_listing" | "rofr_notification" | "connection_listing" | "connection_inquiry";
           entity_id?: string | null;
           action: string;
           description: string;
@@ -1263,6 +1263,80 @@ export type Database = {
           },
         ];
       };
+      connection_listings: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          owner_user_id: string;
+          listing_type: "exit" | "partnership";
+          status: "open" | "withdrawn";
+          public_summary: string;
+          type_data: Json;
+          notes: string | null;
+          listed_at: string;
+          closed_at: string | null;
+          closed_reason: string | null;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          owner_user_id: string;
+          listing_type: "exit" | "partnership";
+          status?: "open" | "withdrawn";
+          public_summary: string;
+          type_data?: Json;
+          notes?: string | null;
+          listed_at?: string;
+          closed_at?: string | null;
+          closed_reason?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["connection_listings"]["Insert"]>;
+        Relationships: [];
+      };
+      connection_inquiries: {
+        Row: {
+          id: string;
+          listing_id: string;
+          inquirer_user_id: string;
+          inquirer_workspace_id: string;
+          status: "sent" | "accepted" | "declined" | "closed";
+          message: string | null;
+          data_room_link_id: string | null;
+          sent_at: string;
+          responded_at: string | null;
+          closed_at: string | null;
+          closed_by_user_id: string | null;
+          closed_reason: string | null;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          listing_id: string;
+          inquirer_user_id: string;
+          inquirer_workspace_id: string;
+          status?: "sent" | "accepted" | "declined" | "closed";
+          message?: string | null;
+          data_room_link_id?: string | null;
+          sent_at?: string;
+          responded_at?: string | null;
+          closed_at?: string | null;
+          closed_by_user_id?: string | null;
+          closed_reason?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["connection_inquiries"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -1314,6 +1388,70 @@ export type Database = {
       record_rofr_response: {
         Args: { p_notification_id: string; p_response: "exercise" | "decline" };
         Returns: void;
+      };
+      create_connection_listing: {
+        Args: {
+          p_workspace_id: string;
+          p_listing_type: "exit" | "partnership";
+          p_public_summary: string;
+          p_type_data: Json;
+          p_notes: string | null;
+        };
+        Returns: string;
+      };
+      withdraw_connection_listing: {
+        Args: { p_listing_id: string; p_reason: string | null };
+        Returns: void;
+      };
+      send_connection_inquiry: {
+        Args: {
+          p_listing_id: string;
+          p_inquirer_workspace_id: string;
+          p_message: string | null;
+        };
+        Returns: string;
+      };
+      accept_connection_inquiry: {
+        Args: {
+          p_inquiry_id: string;
+          p_data_room_round_id: string | null;
+          p_access_tier: "intro" | "standard" | "diligence";
+          p_token_ttl_days: number;
+        };
+        Returns: {
+          inquiry_id: string;
+          data_room_token: string;
+          data_room_link_id: string;
+        }[];
+      };
+      decline_connection_inquiry: {
+        Args: { p_inquiry_id: string; p_reason: string | null };
+        Returns: void;
+      };
+      close_connection_inquiry: {
+        Args: { p_inquiry_id: string; p_reason: string | null };
+        Returns: void;
+      };
+      get_connection_inquiry_emails: {
+        Args: { p_inquiry_id: string };
+        Returns: {
+          owner_user_id: string;
+          owner_email: string;
+          inquirer_user_id: string;
+          inquirer_email: string;
+          owner_workspace_name: string;
+          inquirer_workspace_name: string;
+          listing_type: string;
+        }[];
+      };
+      get_connection_listing_owner_contact: {
+        Args: { p_listing_id: string };
+        Returns: {
+          owner_user_id: string;
+          owner_email: string;
+          owner_workspace_name: string;
+          listing_type: string;
+        }[];
       };
     };
     Enums: {

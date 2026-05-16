@@ -40,6 +40,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/term-sheets", label: "Term sheets" },
       { href: "/investor-updates", label: "Investor updates" },
       { href: "/marketplace", label: "Marketplace" },
+      { href: "/connections", label: "Connections" },
     ],
   },
   {

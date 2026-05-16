@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS connection_inquiries (
   responded_at             TIMESTAMPTZ,
   closed_at                TIMESTAMPTZ,
   closed_by_user_id        UUID        REFERENCES auth.users(id),
+  closed_reason            TEXT        CHECK (closed_reason IS NULL OR char_length(closed_reason) <= 500),
   created_at               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at               TIMESTAMPTZ,
@@ -615,3 +616,91 @@ $$;
 
 REVOKE EXECUTE ON FUNCTION close_connection_inquiry(UUID, TEXT) FROM anon, PUBLIC;
 GRANT EXECUTE ON FUNCTION close_connection_inquiry(UUID, TEXT) TO authenticated;
+
+-- get_connection_inquiry_emails: SECURITY DEFINER helper to look up the
+-- owner + inquirer emails for an inquiry. The standard supabase client
+-- cannot read auth.users for users other than auth.uid(), but server
+-- actions need both emails to fan out acceptance emails. Gated to the two
+-- parties only.
+CREATE OR REPLACE FUNCTION get_connection_inquiry_emails(p_inquiry_id UUID)
+RETURNS TABLE (
+  owner_user_id     UUID,
+  owner_email       TEXT,
+  inquirer_user_id  UUID,
+  inquirer_email    TEXT,
+  owner_workspace_name    TEXT,
+  inquirer_workspace_name TEXT,
+  listing_type      TEXT
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'not authenticated';
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    cl.owner_user_id,
+    owner_u.email::text,
+    ci.inquirer_user_id,
+    inquirer_u.email::text,
+    owner_w.name::text,
+    inquirer_w.name::text,
+    cl.listing_type::text
+  FROM connection_inquiries ci
+  JOIN connection_listings cl ON cl.id = ci.listing_id
+  JOIN auth.users owner_u    ON owner_u.id = cl.owner_user_id
+  JOIN auth.users inquirer_u ON inquirer_u.id = ci.inquirer_user_id
+  JOIN workspaces owner_w    ON owner_w.id = cl.workspace_id
+  JOIN workspaces inquirer_w ON inquirer_w.id = ci.inquirer_workspace_id
+  WHERE ci.id = p_inquiry_id
+    AND ci.deleted_at IS NULL
+    AND (
+      cl.owner_user_id = auth.uid()
+      OR ci.inquirer_user_id = auth.uid()
+    );
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION get_connection_inquiry_emails(UUID) FROM anon, PUBLIC;
+GRANT EXECUTE ON FUNCTION get_connection_inquiry_emails(UUID) TO authenticated;
+
+-- get_connection_listing_owner_contact: for the inquirer's "send inquiry"
+-- flow — we need the owner's email to notify them. The inquirer is allowed
+-- this lookup because they're about to engage with the owner via the platform.
+CREATE OR REPLACE FUNCTION get_connection_listing_owner_contact(p_listing_id UUID)
+RETURNS TABLE (
+  owner_user_id        UUID,
+  owner_email          TEXT,
+  owner_workspace_name TEXT,
+  listing_type         TEXT
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'not authenticated';
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    cl.owner_user_id,
+    owner_u.email::text,
+    owner_w.name::text,
+    cl.listing_type::text
+  FROM connection_listings cl
+  JOIN auth.users owner_u ON owner_u.id = cl.owner_user_id
+  JOIN workspaces owner_w ON owner_w.id = cl.workspace_id
+  WHERE cl.id = p_listing_id
+    AND cl.deleted_at IS NULL
+    AND cl.status = 'open';
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION get_connection_listing_owner_contact(UUID) FROM anon, PUBLIC;
+GRANT EXECUTE ON FUNCTION get_connection_listing_owner_contact(UUID) TO authenticated;
