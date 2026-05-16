@@ -133,6 +133,23 @@ iSAFE is the product's wedge. It gets a permanent visual identity:
 
 This encodes the differentiator visually without requiring users to read labels.
 
+### Connections Hub Listing Type Identity
+The Connections Hub introduces two listing types as the next strategic
+differentiator. Each gets a permanent visual identity parallel to iSAFE:
+
+- **Exit listing chip:** `#C73E9D` (chart palette #4 magenta) background at
+  15% opacity, text at full color. ALL CAPS `label-sm`, `0.05em` letter-spacing.
+  Signal: a transaction event — company changing hands.
+- **Partnership listing chip:** `#8A6FE8` (chart palette #5 lavender)
+  background at 15% opacity, text at full color. Same typography rules.
+  Signal: a relationship — company seeking people.
+- **Chip placement:** Adjacent to company name on browse cards and detail
+  page headers. Mirrors the instrument-chip pattern.
+
+Magenta and lavender are now reserved colors in the chart palette (alongside
+iSAFE green and instrument teal). Do not use them for chart segments that
+might appear adjacent to a listing chip on the same screen.
+
 ### Dark Mode Strategy
 Light mode reduces saturation by 10–15% on accent colors. Surface contrast ratios
 remain WCAG AA in both modes (verified against `on_surface`).
@@ -345,6 +362,38 @@ Light-mode equivalent of the dark mode's tonal step-up.
 - **Instrument badges (per §3.6):** iSAFE green, SAFE teal, Convertible amber,
   Ordinary neutral
 
+### Inquiry Status Chip (Connections Hub)
+Inquiry state on a listing detail page maps to chip semantics:
+
+| State      | Background     | Text       | Use                                    |
+|------------|----------------|------------|----------------------------------------|
+| `sent`     | `info` @ 15%   | `info`     | Inquirer is awaiting owner's decision  |
+| `accepted` | `success` @ 15%| `success`  | Owner accepted; contact info revealed  |
+| `declined` | `error` @ 15%  | `error`    | Owner declined; final state            |
+| `closed`   | `surface_bright` | `on_surface_variant` | Either party marked done    |
+
+The state chip lives inside the glass-card status panel on the detail page,
+not as a standalone element. See "Glass-card status panel" below.
+
+### Glass-card Status Panel (Connections Hub)
+Replaces the inquiry CTA on the listing detail page when an inquiry exists:
+
+- **Background:** `surface_container_high` @ 40% opacity
+- **Backdrop blur:** 24px (matches §7 glass refraction)
+- **Padding:** `md` vertical, `lg` horizontal
+- **Border-radius:** `lg`
+- **Contents per state:**
+  - `sent`: status chip + relative timestamp ("Sent 2 hours ago") + plain-language
+    next step ("You'll be notified when [owner name] responds")
+  - `accepted`: status chip + revealed contact block (email, phone) + primary
+    CTA "Open data room →" linking to the signed-token URL
+  - `declined`: status chip + plain-language closure ("They're not pursuing this
+    at the moment.")
+  - `closed`: status chip + timestamp ("Closed on [date]")
+
+Acceptance is the platform's value-realization moment. The contact reveal
+deserves visual weight — primary CTA button, generous spacing.
+
 ### Marketplace "Pulse" (data viz primitive)
 - **Line:** `tertiary` (#3CD7FF) at 2px stroke
 - **Area fill:** `primary_container` at 10% opacity
@@ -448,3 +497,6 @@ Light-mode equivalent of the dark mode's tonal step-up.
 | 2026-05-15 | Dual density modes (marketing vs data) added              | Cap table density would suffocate under marketing-spec whitespace |
 | 2026-05-15 | Chart palette of 8 colors specified                       | PRD requires donut + waterfall + time-series; no palette in original spec |
 | 2026-05-15 | Semantic colors specified (success/warning/error/info)    | PRD Compliance Timeline requires status colors; no semantic tokens in original spec |
+| 2026-05-16 | Listing type identity: magenta exits, lavender partnerships | Connections Hub adds two listing types as strategic differentiators; iSAFE-style permanent visual identity per /plan-design-review |
+| 2026-05-16 | Inquiry status chips map to semantic colors (info/success/error/surface_bright) | Connections Hub inquiry state machine; chip placement inside glass-card status panel |
+| 2026-05-16 | Glass-card status panel component for inquiry state on listing detail page | Replaces CTA when an inquiry exists; uses existing §7 glass refraction primitive |
