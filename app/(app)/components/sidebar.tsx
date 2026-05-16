@@ -12,10 +12,22 @@ type NavItem = { href: string; labelKey: string };
 type NavGroup = { labelKey: string; items: NavItem[] };
 
 const EXPLORE_LINK: NavItem = { href: "/explore", labelKey: "explore" };
-const LAUNCHPAD_LINK: NavItem = { href: "/dashboard", labelKey: "launchpad" };
+const MARKETPLACE_LINK: NavItem = { href: "/marketplace", labelKey: "marketplace_top" };
+const ROUND_LINK: NavItem = { href: "/rounds", labelKey: "rounds_top" };
 const MESSAGES_LINK: NavItem = { href: "/connections", labelKey: "messages" };
+const TALENTS_LINK: NavItem = {
+  href: "/connections?filter=partnership&role=talent",
+  labelKey: "talents",
+};
+const ADVISORS_LINK: NavItem = {
+  href: "/connections?filter=partnership&role=advisor",
+  labelKey: "advisors",
+};
 const SETTINGS_LINK: NavItem = { href: "/setup", labelKey: "settings" };
+const MY_PROFILE_LINK: NavItem = { href: "/company", labelKey: "my_profile" };
 
+// Per-workspace nav under "My Startup". Marketplace and Rounds are
+// intentionally NOT here — they are top-level cross-workspace surfaces.
 const NAV_GROUPS: NavGroup[] = [
   {
     labelKey: "groups.company",
@@ -34,11 +46,8 @@ const NAV_GROUPS: NavGroup[] = [
   {
     labelKey: "groups.investment",
     items: [
-      { href: "/rounds", labelKey: "items.rounds" },
       { href: "/term-sheets", labelKey: "items.term_sheets" },
       { href: "/investor-updates", labelKey: "items.investor_updates" },
-      { href: "/marketplace", labelKey: "items.marketplace" },
-      { href: "/connections", labelKey: "items.connections" },
     ],
   },
   {
@@ -66,9 +75,12 @@ const NAV_GROUPS: NavGroup[] = [
 ];
 
 function isActive(pathname: string, href: string): boolean {
-  if (href === "/dashboard") return pathname === "/dashboard";
-  if (href === "/explore") return pathname === "/explore" || pathname.startsWith("/explore/");
-  return pathname === href || pathname.startsWith(`${href}/`);
+  // Hrefs may include query strings (e.g. /connections?filter=partnership);
+  // usePathname() returns just the path, so strip the query before comparing.
+  const path = href.split("?")[0] ?? href;
+  if (path === "/dashboard") return pathname === "/dashboard";
+  if (path === "/explore") return pathname === "/explore" || pathname.startsWith("/explore/");
+  return pathname === path || pathname.startsWith(`${path}/`);
 }
 
 function groupHasActive(pathname: string, group: NavGroup): boolean {
@@ -100,10 +112,43 @@ function IconExplore() {
     </svg>
   );
 }
-function IconLaunchpad() {
+function IconMarketplace() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-      <path d="M3 13l3-3M13 3l-6 6M9 3h4v4M10 7l-3.5-1L4 9l3 .5L7.5 13l2.5-2.5L10 7z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" />
+      <path d="M2 5l1-2.5h10L14 5M2 5h12v2a2 2 0 0 1-4 0 2 2 0 0 1-4 0 2 2 0 0 1-4 0V5zM3.5 8.5V13.5h9V8.5" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function IconRound() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M5.5 8h5M8 5.5v5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+function IconTalents() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <circle cx="5.5" cy="6" r="2" stroke="currentColor" strokeWidth="1.4" />
+      <circle cx="11" cy="5" r="1.6" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M2 13c.5-2 1.7-3 3.5-3s3 1 3.5 3M9.5 13c.3-1.5 1.2-2.4 2.5-2.4 1.2 0 2.1.9 2.4 2.4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+function IconAdvisors() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path d="M8 1.5L9.7 5l3.8.4-2.9 2.6.9 3.7L8 9.9l-3.5 1.8.9-3.7L2.5 5.4 6.3 5 8 1.5z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="M5.5 13.5h5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+function IconProfile() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <circle cx="8" cy="5.5" r="2.5" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M2.5 13.5c.7-2.5 2.7-4 5.5-4s4.8 1.5 5.5 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
     </svg>
   );
 }
@@ -462,16 +507,14 @@ export function Sidebar({
           <span>{t(EXPLORE_LINK.labelKey)}</span>
         </Link>
 
-        {hasWorkspace && (
-          <Link
-            href={LAUNCHPAD_LINK.href}
-            onClick={onClose}
-            className={topLinkClasses(isActive(pathname, LAUNCHPAD_LINK.href))}
-          >
-            <IconLaunchpad />
-            <span>{t(LAUNCHPAD_LINK.labelKey)}</span>
-          </Link>
-        )}
+        <Link
+          href={MARKETPLACE_LINK.href}
+          onClick={onClose}
+          className={topLinkClasses(isActive(pathname, MARKETPLACE_LINK.href))}
+        >
+          <IconMarketplace />
+          <span>{t(MARKETPLACE_LINK.labelKey)}</span>
+        </Link>
 
         <div className="my-2 mx-1 h-px bg-(--color-outline-variant)/30" />
 
@@ -487,6 +530,17 @@ export function Sidebar({
 
         {hasWorkspace && (
           <Link
+            href={ROUND_LINK.href}
+            onClick={onClose}
+            className={topLinkClasses(isActive(pathname, ROUND_LINK.href))}
+          >
+            <IconRound />
+            <span>{t(ROUND_LINK.labelKey)}</span>
+          </Link>
+        )}
+
+        {hasWorkspace && (
+          <Link
             href={MESSAGES_LINK.href}
             onClick={onClose}
             className={topLinkClasses(isActive(pathname, MESSAGES_LINK.href))}
@@ -495,6 +549,29 @@ export function Sidebar({
             <span>{t(MESSAGES_LINK.labelKey)}</span>
           </Link>
         )}
+
+        {hasWorkspace && (
+          <Link
+            href={TALENTS_LINK.href}
+            onClick={onClose}
+            className={topLinkClasses(isActive(pathname, TALENTS_LINK.href))}
+          >
+            <IconTalents />
+            <span>{t(TALENTS_LINK.labelKey)}</span>
+          </Link>
+        )}
+
+        {hasWorkspace && (
+          <Link
+            href={ADVISORS_LINK.href}
+            onClick={onClose}
+            className={topLinkClasses(isActive(pathname, ADVISORS_LINK.href))}
+          >
+            <IconAdvisors />
+            <span>{t(ADVISORS_LINK.labelKey)}</span>
+          </Link>
+        )}
+
         <Link
           href={SETTINGS_LINK.href}
           onClick={onClose}
@@ -503,6 +580,17 @@ export function Sidebar({
           <IconSettings />
           <span>{t(SETTINGS_LINK.labelKey)}</span>
         </Link>
+
+        {hasWorkspace && (
+          <Link
+            href={MY_PROFILE_LINK.href}
+            onClick={onClose}
+            className={topLinkClasses(isActive(pathname, MY_PROFILE_LINK.href))}
+          >
+            <IconProfile />
+            <span>{t(MY_PROFILE_LINK.labelKey)}</span>
+          </Link>
+        )}
       </nav>
 
       <div className="shrink-0">
