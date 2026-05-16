@@ -1,0 +1,17 @@
+{
+  "eyebrow": "الملف الشخصي",
+  "title": "الملف الشخصي",
+  "member_since": "عضو منذ {{date}}",
+  "manage_in_settings": "إدارة من الإعدادات",
+  "section.workspaces.title": "مساحات العمل",
+  "section.workspaces.empty": "لم تنشئ أو تنضم إلى أي مساحة عمل بعد.",
+  "section.workspaces.create_first": "أنشئ أول مساحة عمل",
+  "section.workspaces.role.owner": "مالك",
+  "section.workspaces.role.member": "عضو",
+  "section.workspaces.view": "عرض ←",
+  "section.workspaces.stat.owner": "مملوكة",
+  "section.workspaces.stat.member": "منضم إليها",
+  "section.account.title": "هوية الحساب",
+  "section.account.body": "معرّف حسابك في VenturePath. شاركه مع الدعم عند الإبلاغ عن مشكلة.",
+  "section.account.user_id": "معرّف المستخدم · {{id}}"
+}

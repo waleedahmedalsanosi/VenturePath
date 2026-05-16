@@ -32,6 +32,9 @@ import enDataRoom from "./locales/en/data_room.json";
 import enUpdates from "./locales/en/updates.json";
 import enInvite from "./locales/en/invite.json";
 import enLanding from "./locales/en/landing.json";
+import enSettings from "./locales/en/settings.json";
+import enProfile from "./locales/en/profile.json";
+import enMessages from "./locales/en/messages.json";
 
 import arCommon from "./locales/ar/common.json";
 import arNav from "./locales/ar/nav.json";
@@ -61,13 +64,16 @@ import arDataRoom from "./locales/ar/data_room.json";
 import arUpdates from "./locales/ar/updates.json";
 import arInvite from "./locales/ar/invite.json";
 import arLanding from "./locales/ar/landing.json";
+import arSettings from "./locales/ar/settings.json";
+import arProfile from "./locales/ar/profile.json";
+import arMessages from "./locales/ar/messages.json";
 
 const NAMESPACES = [
   "common", "nav", "auth", "setup", "dashboard", "cap_table", "esop",
   "rounds", "term_sheets", "investor_updates", "marketplace", "connections",
   "governance", "compliance", "vault", "traction", "valuation", "dilution",
   "waterfall", "acquisition", "members", "audit", "company", "explore",
-  "data_room", "updates", "invite", "landing",
+  "data_room", "updates", "invite", "landing", "settings", "profile", "messages",
 ] as const;
 
 const resources = {
@@ -82,6 +88,7 @@ const resources = {
     acquisition: enAcquisition, members: enMembers, audit: enAudit,
     company: enCompany, explore: enExplore, data_room: enDataRoom,
     updates: enUpdates, invite: enInvite, landing: enLanding,
+    settings: enSettings, profile: enProfile, messages: enMessages,
   },
   ar: {
     common: arCommon, nav: arNav, auth: arAuth, setup: arSetup,
@@ -94,6 +101,7 @@ const resources = {
     acquisition: arAcquisition, members: arMembers, audit: arAudit,
     company: arCompany, explore: arExplore, data_room: arDataRoom,
     updates: arUpdates, invite: arInvite, landing: arLanding,
+    settings: arSettings, profile: arProfile, messages: arMessages,
   },
 };
 

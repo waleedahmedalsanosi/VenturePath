@@ -12,6 +12,7 @@
   "filter.exit": "خروج",
   "filter.partnership": "شراكة",
   "filter.aria_label": "تصفية الإدراجات",
+  "filter.clear": "إزالة التصفية",
   "count.open_one": "إدراج مفتوح واحد",
   "count.open_other": "{{count}} إدراجات مفتوحة",
   "count.filter_label": "إدراج(ات) {{filter}}",

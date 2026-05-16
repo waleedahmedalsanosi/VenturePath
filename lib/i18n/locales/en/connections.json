@@ -12,6 +12,7 @@
   "filter.exit": "Exit",
   "filter.partnership": "Partnership",
   "filter.aria_label": "Filter listings",
+  "filter.clear": "Clear filter",
   "count.open_one": "{{count}} open listing",
   "count.open_other": "{{count}} open listings",
   "count.filter_label": "{{filter}} listing(s)",

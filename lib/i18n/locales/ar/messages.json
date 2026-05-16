@@ -1,0 +1,21 @@
+{
+  "eyebrow": "صندوق الوارد",
+  "title": "الرسائل",
+  "subtitle": "الاستفسارات على قوائم الخروج والشراكات، بالإضافة إلى الاستفسارات التي أرسلتها إلى مساحات عمل أخرى.",
+  "filter.aria_label": "تصفية الرسائل",
+  "filter.all": "الكل",
+  "filter.incoming": "واردة",
+  "filter.outgoing": "صادرة",
+  "direction.incoming": "واردة",
+  "direction.outgoing": "صادرة",
+  "type.exit": "خروج",
+  "type.partnership": "شراكة",
+  "status.sent": "جديد",
+  "status.accepted": "مقبول",
+  "status.declined": "مرفوض",
+  "status.closed": "مغلق",
+  "unknown_counterparty": "طرف غير معروف",
+  "empty.title": "لا توجد رسائل بعد",
+  "empty.body": "عندما يستفسر شخص عن إحدى قوائمك — أو ترسل استفساراً إلى مساحة عمل أخرى — سيظهر الخيط هنا.",
+  "empty.cta": "تصفّح قوائم الاتصالات"
+}

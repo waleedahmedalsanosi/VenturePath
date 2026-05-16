@@ -1,0 +1,18 @@
+{
+  "eyebrow": "الحساب",
+  "title": "الإعدادات",
+  "subtitle": "أدر حسابك في VenturePath وتفضيلاتك ومساحات العمل.",
+  "section.account.title": "الحساب",
+  "section.account.email": "البريد الإلكتروني",
+  "section.account.member_since": "عضو منذ",
+  "section.preferences.title": "التفضيلات",
+  "section.preferences.language": "اللغة",
+  "section.preferences.language_hint": "بدّل بين الإنجليزية والعربية. يؤثر على اتجاه الواجهة.",
+  "section.preferences.theme": "المظهر",
+  "section.preferences.theme_hint": "ألوان فاتحة أو داكنة.",
+  "section.workspaces.title": "مساحات العمل",
+  "section.workspaces.body": "كل شركة ناشئة تملكها أو تنضم إليها لها مساحة عمل خاصة. بدّل بينها من القائمة الجانبية.",
+  "section.workspaces.new_startup": "+ شركة ناشئة جديدة",
+  "section.session.title": "الجلسة",
+  "section.session.body": "أنت مسجل الدخول على هذا الجهاز. سجّل الخروج لإنهاء الجلسة هنا."
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { useT } from "@/lib/i18n/useT";
@@ -14,17 +14,17 @@ type NavGroup = { labelKey: string; items: NavItem[] };
 const EXPLORE_LINK: NavItem = { href: "/explore", labelKey: "explore" };
 const MARKETPLACE_LINK: NavItem = { href: "/marketplace", labelKey: "marketplace_top" };
 const ROUND_LINK: NavItem = { href: "/rounds", labelKey: "rounds_top" };
-const MESSAGES_LINK: NavItem = { href: "/connections", labelKey: "messages" };
+const MESSAGES_LINK: NavItem = { href: "/messages", labelKey: "messages" };
 const TALENTS_LINK: NavItem = {
-  href: "/connections?filter=partnership&role=talent",
+  href: "/connections?seeking=senior_hire",
   labelKey: "talents",
 };
 const ADVISORS_LINK: NavItem = {
-  href: "/connections?filter=partnership&role=advisor",
+  href: "/connections?seeking=advisor",
   labelKey: "advisors",
 };
-const SETTINGS_LINK: NavItem = { href: "/setup", labelKey: "settings" };
-const MY_PROFILE_LINK: NavItem = { href: "/company", labelKey: "my_profile" };
+const SETTINGS_LINK: NavItem = { href: "/settings", labelKey: "settings" };
+const MY_PROFILE_LINK: NavItem = { href: "/profile", labelKey: "my_profile" };
 
 // Per-workspace nav under "My Startup". Marketplace and Rounds are
 // intentionally NOT here — they are top-level cross-workspace surfaces.
@@ -74,13 +74,31 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-function isActive(pathname: string, href: string): boolean {
-  // Hrefs may include query strings (e.g. /connections?filter=partnership);
-  // usePathname() returns just the path, so strip the query before comparing.
-  const path = href.split("?")[0] ?? href;
-  if (path === "/dashboard") return pathname === "/dashboard";
-  if (path === "/explore") return pathname === "/explore" || pathname.startsWith("/explore/");
-  return pathname === path || pathname.startsWith(`${path}/`);
+function isActive(
+  pathname: string,
+  href: string,
+  searchParams?: URLSearchParams,
+): boolean {
+  // Hrefs may include query strings (e.g. /connections?seeking=senior_hire).
+  // For path-only items we just compare pathnames; for query-bearing items
+  // (Talents vs Advisors, both at /connections) we also require the relevant
+  // query params to match so the active highlight picks the right one.
+  const [pathOnly, queryString] = href.split("?");
+  const path = pathOnly ?? href;
+  const pathMatches =
+    path === "/dashboard"
+      ? pathname === "/dashboard"
+      : path === "/explore"
+        ? pathname === "/explore" || pathname.startsWith("/explore/")
+        : pathname === path || pathname.startsWith(`${path}/`);
+  if (!pathMatches) return false;
+  if (!queryString) return true;
+  if (!searchParams) return false;
+  const expected = new URLSearchParams(queryString);
+  for (const [k, v] of expected.entries()) {
+    if (searchParams.get(k) !== v) return false;
+  }
+  return true;
 }
 
 function groupHasActive(pathname: string, group: NavGroup): boolean {
@@ -462,6 +480,7 @@ export function Sidebar({
   userEmail,
 }: SidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const t = useT("nav");
 
   return (
@@ -554,7 +573,9 @@ export function Sidebar({
           <Link
             href={TALENTS_LINK.href}
             onClick={onClose}
-            className={topLinkClasses(isActive(pathname, TALENTS_LINK.href))}
+            className={topLinkClasses(
+              isActive(pathname, TALENTS_LINK.href, searchParams ?? undefined),
+            )}
           >
             <IconTalents />
             <span>{t(TALENTS_LINK.labelKey)}</span>
@@ -565,7 +586,9 @@ export function Sidebar({
           <Link
             href={ADVISORS_LINK.href}
             onClick={onClose}
-            className={topLinkClasses(isActive(pathname, ADVISORS_LINK.href))}
+            className={topLinkClasses(
+              isActive(pathname, ADVISORS_LINK.href, searchParams ?? undefined),
+            )}
           >
             <IconAdvisors />
             <span>{t(ADVISORS_LINK.labelKey)}</span>

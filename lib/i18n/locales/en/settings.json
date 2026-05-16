@@ -1,0 +1,18 @@
+{
+  "eyebrow": "Account",
+  "title": "Settings",
+  "subtitle": "Manage your VenturePath account, preferences, and workspaces.",
+  "section.account.title": "Account",
+  "section.account.email": "Email",
+  "section.account.member_since": "Member since",
+  "section.preferences.title": "Preferences",
+  "section.preferences.language": "Language",
+  "section.preferences.language_hint": "Switch between English and Arabic. Affects RTL layout.",
+  "section.preferences.theme": "Theme",
+  "section.preferences.theme_hint": "Light or dark surface palette.",
+  "section.workspaces.title": "Workspaces",
+  "section.workspaces.body": "Each startup you own or join lives in its own workspace. Switch between them in the sidebar.",
+  "section.workspaces.new_startup": "+ New startup",
+  "section.session.title": "Session",
+  "section.session.body": "Signed in across this device. Sign out to end your session here."
+}

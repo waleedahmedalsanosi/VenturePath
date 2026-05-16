@@ -1,0 +1,17 @@
+{
+  "eyebrow": "Profile",
+  "title": "Profile",
+  "member_since": "Member since {{date}}",
+  "manage_in_settings": "Manage in settings",
+  "section.workspaces.title": "Workspaces",
+  "section.workspaces.empty": "You haven't created or joined a workspace yet.",
+  "section.workspaces.create_first": "Create your first workspace",
+  "section.workspaces.role.owner": "Owner",
+  "section.workspaces.role.member": "Member",
+  "section.workspaces.view": "View →",
+  "section.workspaces.stat.owner": "Owned",
+  "section.workspaces.stat.member": "Joined",
+  "section.account.title": "Account identity",
+  "section.account.body": "Your VenturePath account identifier. Share with support if reporting an issue.",
+  "section.account.user_id": "User ID · {{id}}"
+}

@@ -42,9 +42,11 @@ function TypeChip({ type, label }: { type: "exit" | "partnership"; label: string
 
 export function ConnectionsBrowse({
   filter,
+  seeking,
   listings,
 }: {
   filter: FilterType;
+  seeking?: string | null;
   listings: Listing[];
 }) {
   const t = useT("connections");
@@ -66,16 +68,32 @@ export function ConnectionsBrowse({
     return commit ? t("type_data.summary.partnership_with_commitment", { seek, commit }) : seek;
   }
 
+  const seekingLabel = seeking
+    ? (t(`type_data.seeking_map.${seeking}`) as unknown as string)
+    : null;
+
   return (
     <main className="mx-auto max-w-5xl px-6 py-10 space-y-8">
       <header>
         <p className="text-label-md uppercase text-(--color-on-surface-variant)">
           {t("eyebrow")}
         </p>
-        <h1 className="mt-1 text-display-sm font-semibold tracking-tight">{t("title")}</h1>
+        <h1 className="mt-1 text-display-sm font-semibold tracking-tight">
+          {seekingLabel ?? t("title")}
+        </h1>
         <p className="mt-2 text-body-md text-(--color-on-surface-variant)">
           {t("subtitle")}
         </p>
+        {seeking && (
+          <div className="mt-3">
+            <Link
+              href="/connections"
+              className="inline-flex items-center gap-1 text-body-sm text-(--color-primary) hover:underline"
+            >
+              ← {t("filter.clear", { defaultValue: "Clear filter" }) as unknown as string}
+            </Link>
+          </div>
+        )}
       </header>
 
       <FilterChips active={filter} />

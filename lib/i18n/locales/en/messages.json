@@ -1,0 +1,21 @@
+{
+  "eyebrow": "Inbox",
+  "title": "Messages",
+  "subtitle": "Inquiries on your exit and partnership listings, plus inquiries you sent to other workspaces.",
+  "filter.aria_label": "Filter messages",
+  "filter.all": "All",
+  "filter.incoming": "Incoming",
+  "filter.outgoing": "Outgoing",
+  "direction.incoming": "Incoming",
+  "direction.outgoing": "Outgoing",
+  "type.exit": "Exit",
+  "type.partnership": "Partnership",
+  "status.sent": "New",
+  "status.accepted": "Accepted",
+  "status.declined": "Declined",
+  "status.closed": "Closed",
+  "unknown_counterparty": "Unknown party",
+  "empty.title": "No messages yet",
+  "empty.body": "When someone inquires about one of your listings — or you reach out to another workspace — the thread will show up here.",
+  "empty.cta": "Browse connection listings"
+}
