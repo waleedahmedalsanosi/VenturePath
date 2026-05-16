@@ -193,7 +193,7 @@ export type Database = {
           workspace_id: string;
           actor_user_id: string;
           actor_email: string;
-          entity_type: "workspace" | "shareholder" | "document" | "compliance_obligation";
+          entity_type: "workspace" | "shareholder" | "document" | "compliance_obligation" | "share_listing" | "rofr_notification";
           entity_id: string | null;
           action: string;
           description: string;
@@ -205,7 +205,7 @@ export type Database = {
           workspace_id: string;
           actor_user_id: string;
           actor_email: string;
-          entity_type: "workspace" | "shareholder" | "document" | "compliance_obligation";
+          entity_type: "workspace" | "shareholder" | "document" | "compliance_obligation" | "share_listing" | "rofr_notification";
           entity_id?: string | null;
           action: string;
           description: string;
@@ -1134,6 +1134,105 @@ export type Database = {
         };
         Relationships: [];
       };
+      share_listings: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          shareholder_id: string;
+          seller_user_id: string;
+          shares_offered: number | string;
+          ask_price_sar: number | string;
+          notes: string | null;
+          status: "open" | "withdrawn" | "sold_off_platform";
+          listed_at: string;
+          expires_at: string | null;
+          closed_at: string | null;
+          closed_reason: string | null;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          shareholder_id: string;
+          seller_user_id: string;
+          shares_offered: number | string;
+          ask_price_sar: number | string;
+          notes?: string | null;
+          status?: "open" | "withdrawn" | "sold_off_platform";
+          listed_at?: string;
+          expires_at?: string | null;
+          closed_at?: string | null;
+          closed_reason?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          shareholder_id?: string;
+          seller_user_id?: string;
+          shares_offered?: number | string;
+          ask_price_sar?: number | string;
+          notes?: string | null;
+          status?: "open" | "withdrawn" | "sold_off_platform";
+          listed_at?: string;
+          expires_at?: string | null;
+          closed_at?: string | null;
+          closed_reason?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Relationships: [];
+      };
+      rofr_notifications: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          listing_id: string;
+          notified_shareholder_id: string;
+          notified_email: string | null;
+          window_expires_at: string;
+          response: "exercise" | "decline" | null;
+          responded_at: string | null;
+          responded_by_user_id: string | null;
+          email_sent_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          listing_id: string;
+          notified_shareholder_id: string;
+          notified_email?: string | null;
+          window_expires_at: string;
+          response?: "exercise" | "decline" | null;
+          responded_at?: string | null;
+          responded_by_user_id?: string | null;
+          email_sent_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          listing_id?: string;
+          notified_shareholder_id?: string;
+          notified_email?: string | null;
+          window_expires_at?: string;
+          response?: "exercise" | "decline" | null;
+          responded_at?: string | null;
+          responded_by_user_id?: string | null;
+          email_sent_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -1160,6 +1259,30 @@ export type Database = {
       };
       record_investor_update_view: {
         Args: { p_token: string; p_user_agent?: string | null };
+        Returns: void;
+      };
+      create_share_listing: {
+        Args: {
+          p_workspace_id: string;
+          p_shareholder_id: string;
+          p_shares_offered: number | string;
+          p_ask_price_sar: number | string;
+          p_notes: string | null;
+          p_expires_at: string | null;
+          p_rofr_window: string;
+        };
+        Returns: string;
+      };
+      withdraw_share_listing: {
+        Args: { p_listing_id: string; p_reason: string | null };
+        Returns: void;
+      };
+      mark_share_listing_sold_off_platform: {
+        Args: { p_listing_id: string; p_reason: string | null };
+        Returns: void;
+      };
+      record_rofr_response: {
+        Args: { p_notification_id: string; p_response: "exercise" | "decline" };
         Returns: void;
       };
     };

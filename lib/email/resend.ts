@@ -106,6 +106,98 @@ function escHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+// ── Marketplace listing notification ──────────────────────────────────────
+
+export interface ListingNotificationPayload {
+  to: string[];
+  companyName: string;
+  sellerName: string;
+  sharesOffered: string;
+  askPriceSar: string;
+  rofrWindowDays: number;
+  listingUrl: string;
+}
+
+function buildListingHtml(p: ListingNotificationPayload): string {
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f8f5ee;font-family:system-ui,-apple-system,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;">
+          <tr><td style="padding:4px 0;background:linear-gradient(135deg,#0a7e8c,#3cd7ff);"></td></tr>
+          <tr>
+            <td style="padding:32px 40px;">
+              <p style="margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:#4a5168;font-weight:600;">${escHtml(p.companyName)} · Secondary listing</p>
+              <h1 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#0d1322;line-height:1.3;">${escHtml(p.sellerName)} has listed shares for sale</h1>
+              <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#0d1322;">As an existing shareholder, you have a right of first refusal (ROFR) on this listing.</p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;background:#f8f5ee;border-radius:8px;">
+                <tr><td style="padding:16px;">
+                  <div style="font-size:11px;text-transform:uppercase;color:#4a5168;letter-spacing:0.06em;margin-bottom:4px;">Shares offered</div>
+                  <div style="font-size:18px;font-weight:700;color:#0d1322;font-variant-numeric:tabular-nums;margin-bottom:12px;">${escHtml(p.sharesOffered)}</div>
+                  <div style="font-size:11px;text-transform:uppercase;color:#4a5168;letter-spacing:0.06em;margin-bottom:4px;">Ask price</div>
+                  <div style="font-size:18px;font-weight:700;color:#0d1322;font-variant-numeric:tabular-nums;">SAR ${escHtml(p.askPriceSar)}</div>
+                </td></tr>
+              </table>
+              <p style="margin:0 0 24px;font-size:14px;color:#4a5168;">You have <strong>${p.rofrWindowDays} days</strong> to exercise or decline your ROFR. After that, the listing proceeds.</p>
+              <p style="margin:0 0 24px;font-size:13px;color:#8b92a8;font-style:italic;">VenturePath is a posted-ask bulletin board. Any sale closes off-platform through your lawyer and the company's board.</p>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr><td align="center">
+                  <a href="${escHtml(p.listingUrl)}" style="display:inline-block;background:#0a7e8c;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;">View listing →</a>
+                </td></tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:16px 40px;border-top:1px solid #efeae0;">
+              <p style="margin:0;font-size:12px;color:#8b92a8;">Sent via <a href="https://venturepath.co" style="color:#0a7e8c;text-decoration:none;">VenturePath</a> — Sharia-compliant cap table for KSA founders.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export async function sendListingNotificationEmails(
+  payload: ListingNotificationPayload,
+): Promise<{ sent: number; error?: string }> {
+  if (!resend) {
+    console.warn("[resend] RESEND_API_KEY not set — skipping marketplace email");
+    return { sent: 0, error: "Email not configured (RESEND_API_KEY missing)" };
+  }
+  if (payload.to.length === 0) return { sent: 0 };
+
+  const html = buildListingHtml(payload);
+  const subject = `${payload.companyName}: secondary share listing — ROFR window open`;
+
+  const batches: string[][] = [];
+  for (let i = 0; i < payload.to.length; i += 50) {
+    batches.push(payload.to.slice(i, i + 50));
+  }
+
+  let sent = 0;
+  for (const batch of batches) {
+    const { error } = await resend.emails.send({
+      from: FROM,
+      to: batch,
+      subject,
+      html,
+    });
+    if (error) {
+      console.error("[resend] listing email error:", error);
+      return { sent, error: (error as { message?: string }).message ?? "Send failed" };
+    }
+    sent += batch.length;
+  }
+
+  return { sent };
+}
+
 export async function sendInvestorUpdateEmails(
   payload: InvestorUpdateEmailPayload,
 ): Promise<{ sent: number; error?: string }> {

@@ -1,0 +1,76 @@
+name: db-tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/tests/**"
+      - ".github/workflows/db-tests.yml"
+
+jobs:
+  pgtap:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pgTAP
+        env:
+          PGPASSWORD: postgres
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-contrib
+          # pgTAP is shipped via PGXN; install via cpan / pgxnclient if needed.
+          # On postgres:16 service image, pgTAP can be installed from source.
+          sudo apt-get install -y build-essential libpq-dev postgresql-server-dev-16 cpanminus
+          sudo cpanm --notest TAP::Parser::SourceHandler::pgTAP
+          git clone --depth 1 https://github.com/theory/pgtap.git /tmp/pgtap
+          cd /tmp/pgtap && make && sudo make install
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Apply migrations
+        env:
+          PGPASSWORD: postgres
+        run: |
+          # Bootstrap minimal Supabase schemas the migrations depend on (auth.users,
+          # auth.uid()). In CI we use a real Postgres without supabase-stack, so we
+          # stub the auth schema.
+          psql -h localhost -U postgres -d postgres -c "CREATE SCHEMA IF NOT EXISTS auth;"
+          psql -h localhost -U postgres -d postgres -c "CREATE TABLE IF NOT EXISTS auth.users (id UUID PRIMARY KEY, email TEXT, encrypted_password TEXT, email_confirmed_at TIMESTAMPTZ, raw_app_meta_data JSONB, raw_user_meta_data JSONB, created_at TIMESTAMPTZ, updated_at TIMESTAMPTZ, aud TEXT, role TEXT);"
+          psql -h localhost -U postgres -d postgres -c "CREATE OR REPLACE FUNCTION auth.uid() RETURNS UUID LANGUAGE sql STABLE AS \$\$ SELECT NULLIF(current_setting('request.jwt.claims', true)::jsonb->>'sub','')::uuid \$\$;"
+          psql -h localhost -U postgres -d postgres -c "DO \$\$ BEGIN CREATE ROLE authenticated; EXCEPTION WHEN duplicate_object THEN NULL; END \$\$;"
+          psql -h localhost -U postgres -d postgres -c "DO \$\$ BEGIN CREATE ROLE anon; EXCEPTION WHEN duplicate_object THEN NULL; END \$\$;"
+          for migration in supabase/migrations/*.sql; do
+            echo "Applying $migration"
+            psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f "$migration"
+          done
+
+      - name: Install pgTAP extension
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d postgres -c "CREATE EXTENSION IF NOT EXISTS pgtap;"
+
+      - name: Run pgTAP suite
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/marketplace_rls.sql
