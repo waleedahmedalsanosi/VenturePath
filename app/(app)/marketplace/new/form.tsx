@@ -106,7 +106,7 @@ export function NewListingForm({
             required
             className="w-full rounded-lg ghost-border bg-(--color-surface) px-3 py-2 text-body-md tabular-nums"
           />
-          {selected && (
+          {selected && selected.pricePerShare !== "0" && (
             <p className="text-body-sm text-(--color-on-surface-variant)">
               Last priced round: {formatSar(selected.pricePerShare)}/sh
             </p>
