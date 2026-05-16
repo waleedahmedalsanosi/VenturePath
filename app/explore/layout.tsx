@@ -1,11 +1,13 @@
 import { AppShell } from "@/app/(app)/shell";
 import { LanguageToggle } from "@/app/(app)/components/language-toggle";
+import { NotificationsButton } from "@/app/(app)/components/notifications-button";
 import { ThemeToggle } from "@/app/(app)/components/theme-toggle";
+import { UserAvatarMenu } from "@/app/(app)/components/user-avatar-menu";
 import { WorkspaceSwitcher } from "@/app/(app)/components/workspace-switcher";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveWorkspace, listAccessibleWorkspaces } from "@/lib/workspace/active";
 
-import { GuestHeader, SignOutButton } from "./layout-client";
+import { GuestHeader } from "./layout-client";
 
 export default async function ExploreLayout({
   children,
@@ -34,13 +36,11 @@ export default async function ExploreLayout({
     );
 
     const headerRight = (
-      <div className="flex items-center gap-3 text-body-sm text-(--color-on-surface-variant)">
+      <div className="flex items-center gap-2">
         <LanguageToggle />
-        <span className="text-(--color-outline-variant)" aria-hidden>·</span>
         <ThemeToggle />
-        <span className="text-(--color-outline-variant)" aria-hidden>·</span>
-        <span className="font-mono hidden sm:inline">{user.email}</span>
-        <SignOutButton />
+        <NotificationsButton />
+        <UserAvatarMenu email={user.email ?? ""} />
       </div>
     );
 

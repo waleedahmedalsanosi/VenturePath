@@ -5,7 +5,9 @@ import { getActiveWorkspace, listAccessibleWorkspaces } from "@/lib/workspace/ac
 
 import { AppShell } from "./shell";
 import { LanguageToggle } from "./components/language-toggle";
+import { NotificationsButton } from "./components/notifications-button";
 import { ThemeToggle } from "./components/theme-toggle";
+import { UserAvatarMenu } from "./components/user-avatar-menu";
 import { WorkspaceSwitcher } from "./components/workspace-switcher";
 
 export default async function AppLayout({
@@ -34,20 +36,11 @@ export default async function AppLayout({
   );
 
   const headerRight = (
-    <div className="flex items-center gap-3 text-body-sm text-(--color-on-surface-variant)">
+    <div className="flex items-center gap-2">
       <LanguageToggle />
-      <span className="text-(--color-outline-variant)" aria-hidden>·</span>
       <ThemeToggle />
-      <span className="text-(--color-outline-variant)" aria-hidden>·</span>
-      <span className="font-mono hidden sm:inline">{user.email}</span>
-      <form action="/auth/sign-out" method="post">
-        <button
-          type="submit"
-          className="underline hover:text-(--color-on-surface)"
-        >
-          Sign out
-        </button>
-      </form>
+      <NotificationsButton />
+      <UserAvatarMenu email={user.email ?? ""} />
     </div>
   );
 

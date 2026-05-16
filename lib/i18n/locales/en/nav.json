@@ -35,5 +35,13 @@
   "theme.switch_to_dark": "Switch to dark mode",
   "theme.switch_to_light": "Switch to light mode",
   "theme.label.dark": "Dark",
-  "theme.label.light": "Light"
+  "theme.label.light": "Light",
+  "search.placeholder": "Search workspaces, companies, listings…",
+  "search.aria_label": "Global search",
+  "notifications.aria_label": "Notifications",
+  "notifications.empty": "You're all caught up.",
+  "notifications.title": "Notifications",
+  "account.aria_label": "Account menu",
+  "account.sign_out": "Sign out",
+  "account.tier.free": "FREE"
 }

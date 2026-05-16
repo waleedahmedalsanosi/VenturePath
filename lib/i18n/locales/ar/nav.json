@@ -35,5 +35,13 @@
   "theme.switch_to_dark": "التحويل إلى الوضع الداكن",
   "theme.switch_to_light": "التحويل إلى الوضع الفاتح",
   "theme.label.dark": "داكن",
-  "theme.label.light": "فاتح"
+  "theme.label.light": "فاتح",
+  "search.placeholder": "ابحث عن مساحات العمل والشركات والقوائم…",
+  "search.aria_label": "بحث عام",
+  "notifications.aria_label": "الإشعارات",
+  "notifications.empty": "لا توجد إشعارات جديدة.",
+  "notifications.title": "الإشعارات",
+  "account.aria_label": "قائمة الحساب",
+  "account.sign_out": "تسجيل الخروج",
+  "account.tier.free": "مجاني"
 }

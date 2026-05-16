@@ -4,20 +4,6 @@ import Link from "next/link";
 
 import { useT } from "@/lib/i18n/useT";
 
-export function SignOutButton() {
-  const t = useT("auth");
-  return (
-    <form action="/auth/sign-out" method="post">
-      <button
-        type="submit"
-        className="underline hover:text-(--color-on-surface)"
-      >
-        {t("sign_out.label")}
-      </button>
-    </form>
-  );
-}
-
 export function GuestHeader() {
   const tLanding = useT("landing");
   const tAuth = useT("auth");

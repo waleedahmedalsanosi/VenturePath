@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { SearchBar } from "./components/search-bar";
 import { Sidebar } from "./components/sidebar";
 
 function HamburgerIcon() {
@@ -55,22 +56,26 @@ export function AppShell({
       />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="px-4 py-3 shrink-0">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
+        <header className="px-4 md:px-6 py-3 shrink-0 border-b border-(--color-outline-variant)/30 bg-(--color-surface)/80 backdrop-blur-sm sticky top-0 z-30">
+          <div className="flex items-center gap-3">
             {/* Left: hamburger (always visible) + workspace switcher */}
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={toggleSidebar}
-                aria-label="Toggle navigation"
-                className="flex items-center justify-center w-9 h-9 rounded-lg bg-(--color-surface-container-high) text-(--color-on-surface) hover:bg-(--color-surface-bright) transition-colors shrink-0"
-              >
-                <HamburgerIcon />
-              </button>
-              {headerLeft}
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              aria-label="Toggle navigation"
+              className="flex items-center justify-center w-9 h-9 rounded-lg bg-(--color-surface-container-low) ghost-border text-(--color-on-surface-variant) hover:text-(--color-on-surface) hover:bg-(--color-surface-container-high) transition-colors shrink-0"
+            >
+              <HamburgerIcon />
+            </button>
+            <div className="shrink-0 hidden sm:flex">{headerLeft}</div>
+
+            {/* Center: search */}
+            <div className="flex-1 flex justify-center px-2">
+              <SearchBar />
             </div>
-            {/* Right: lang, theme, email, sign-out */}
-            {headerRight}
+
+            {/* Right: actions */}
+            <div className="shrink-0">{headerRight}</div>
           </div>
         </header>
         <div className="flex-1 min-h-0">{children}</div>
