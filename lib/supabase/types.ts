@@ -1186,7 +1186,22 @@ export type Database = {
           updated_at?: string;
           deleted_at?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "share_listings_shareholder_id_fkey";
+            columns: ["shareholder_id"];
+            isOneToOne: false;
+            referencedRelation: "shareholders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "share_listings_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       rofr_notifications: {
         Row: {
@@ -1231,7 +1246,22 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "rofr_notifications_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "share_listings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "rofr_notifications_notified_shareholder_id_fkey";
+            columns: ["notified_shareholder_id"];
+            isOneToOne: false;
+            referencedRelation: "shareholders";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: {

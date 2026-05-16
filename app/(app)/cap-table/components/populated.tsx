@@ -141,7 +141,11 @@ export function CapTablePopulated({
                       {fmtPct(ownership_pct)}
                     </td>
                     <td className="px-4 py-3">
-                      <RowActions id={row.id} name={row.name} />
+                      <RowActions
+                        id={row.id}
+                        name={row.name}
+                        canList={row.instrument_type === "ordinary" && shares !== null && new Dec(shares).gt(0)}
+                      />
                     </td>
                   </tr>
                 );

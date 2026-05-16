@@ -5,13 +5,25 @@ import { useState, useTransition } from "react";
 
 import { deleteShareholder } from "../actions";
 
-export function RowActions({ id, name }: { id: string; name: string }) {
+export function RowActions({
+  id,
+  name,
+  canList = false,
+}: {
+  id: string;
+  name: string;
+  canList?: boolean;
+}) {
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [pending, startTransition] = useTransition();
 
   function onEdit() {
     router.push(`/cap-table/${id}/edit`);
+  }
+
+  function onList() {
+    router.push(`/marketplace/new?shareholder=${id}`);
   }
 
   function onDelete() {
@@ -59,6 +71,15 @@ export function RowActions({ id, name }: { id: string; name: string }) {
       >
         Edit
       </button>
+      {canList && (
+        <button
+          type="button"
+          onClick={onList}
+          className="text-body-sm text-(--color-on-surface-variant) hover:text-(--color-primary)"
+        >
+          List for sale
+        </button>
+      )}
       <button
         type="button"
         onClick={() => setConfirming(true)}

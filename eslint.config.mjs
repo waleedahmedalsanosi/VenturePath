@@ -13,6 +13,36 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  // Marketplace money discipline (eng review CQ3 lint gate):
+  // Block construction of `new Number(...)` and parseFloat/parseInt on
+  // identifiers ending in `_sar` or named `askPrice*`/`pricePerShare`/
+  // `sharesOffered`. Force Dec usage end-to-end on money fields.
+  {
+    files: ["app/(app)/marketplace/**/*.{ts,tsx}", "lib/marketplace/**/*.ts"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "CallExpression[callee.name='parseFloat'][arguments.0.type='Identifier'][arguments.0.name=/.*[Ss]ar$|^askPrice|^pricePerShare|^sharesOffered/]",
+          message:
+            "Money fields must stay as strings and use Dec for math. parseFloat loses precision.",
+        },
+        {
+          selector:
+            "CallExpression[callee.name='parseInt'][arguments.0.type='Identifier'][arguments.0.name=/.*[Ss]ar$|^askPrice|^pricePerShare|^sharesOffered/]",
+          message:
+            "Money fields must stay as strings and use Dec for math. parseInt loses precision.",
+        },
+        {
+          selector:
+            "NewExpression[callee.name='Number'][arguments.0.type='Identifier'][arguments.0.name=/.*[Ss]ar$|^askPrice|^pricePerShare|^sharesOffered/]",
+          message:
+            "Money fields must stay as strings and use Dec for math. `new Number(x)` is unsafe.",
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;
