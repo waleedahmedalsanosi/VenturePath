@@ -20,11 +20,14 @@ export type BrowseRow = {
 export function MarketplaceBrowse({
   secondaries,
   exits,
+  privateListingId,
 }: {
   secondaries: BrowseRow[];
   exits: BrowseRow[];
+  privateListingId?: string | null;
 }) {
   const t = useT("marketplace");
+  const bothEmpty = secondaries.length === 0 && exits.length === 0;
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10 space-y-10">
@@ -39,6 +42,23 @@ export function MarketplaceBrowse({
           {t("browse.subtitle")}
         </p>
       </header>
+
+      {bothEmpty && (
+        <div className="rounded-xl ghost-border p-10 text-center space-y-2">
+          <p className="text-body-lg font-semibold">{t("browse.empty.title_v2")}</p>
+          <p className="text-body-sm text-(--color-on-surface-variant) max-w-md mx-auto">
+            {t("browse.empty.body_v2")}
+          </p>
+          {privateListingId && (
+            <Link
+              href={`/marketplace/${privateListingId}`}
+              className="inline-block mt-3 rounded-lg ghost-border px-4 py-2 text-label-sm hover:bg-(--color-surface-container-high) transition-colors"
+            >
+              {t("browse.empty.cta_with_listing")}
+            </Link>
+          )}
+        </div>
+      )}
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">

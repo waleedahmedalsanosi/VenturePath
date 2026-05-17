@@ -44,7 +44,7 @@ export default async function MarketplacePage({
   }
 
   // Browse tab: cross-workspace public secondary listings + exit listings.
-  const [{ data: secondaryRows }, { data: exitRows }] = await Promise.all([
+  const [{ data: secondaryRows }, { data: exitRows }, { data: privateListingRow }] = await Promise.all([
     supabase
       .from("share_listings")
       .select(
@@ -63,7 +63,18 @@ export default async function MarketplacePage({
       .is("deleted_at", null)
       .order("listed_at", { ascending: false })
       .limit(50),
+    // Contextual CTA: check if the current user has an open private listing in their workspace.
+    supabase
+      .from("share_listings")
+      .select("id")
+      .eq("workspace_id", workspace.id)
+      .eq("status", "open")
+      .eq("is_public", false)
+      .is("deleted_at", null)
+      .limit(1)
+      .maybeSingle(),
   ]);
+  const privateListingId = privateListingRow?.id ?? null;
 
   const secondaries: BrowseRow[] = ((secondaryRows ?? []) as unknown as Array<{
     id: string;
@@ -107,7 +118,7 @@ export default async function MarketplacePage({
   return (
     <>
       <MarketplaceTabs active={tab} />
-      <MarketplaceBrowse secondaries={secondaries} exits={exits} />
+      <MarketplaceBrowse secondaries={secondaries} exits={exits} privateListingId={privateListingId} />
     </>
   );
 }

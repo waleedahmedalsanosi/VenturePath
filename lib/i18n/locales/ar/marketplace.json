@@ -56,5 +56,11 @@
   "browse.empty.secondaries": "لا توجد قوائم ثانوية عامة بعد. يمكن للمساهمين تفعيل قوائمهم للظهور عبر مساحات العمل.",
   "browse.empty.exits": "لا توجد شركات أعلنت عن رغبتها في الخروج بعد.",
   "browse.unknown_workspace": "شركة غير معروفة",
-  "browse.secondary.detail": "{{shareholder}} · أُدرج {{date}}"
+  "browse.secondary.detail": "{{shareholder}} · أُدرج {{date}}",
+  "browse.empty.title_v2": "لا توجد قوائم عامة بعد",
+  "browse.empty.body_v2": "يمكن للمساهمين جعل قوائمهم قابلة للاكتشاف من السوق.",
+  "browse.empty.cta_with_listing": "لديك إدراج. اجعله قابلاً للاكتشاف →",
+  "visibility.toggle.label": "اجعل هذا الإدراج مرئياً لجميع أعضاء VenturePath",
+  "visibility.toggle.sublabel": "سيظهر إدراجك جنباً إلى جنب مع قوائم الخروج في تبويب التصفّح في السوق.",
+  "visibility.toggle.rofr_locked": "تنتهي نافذة حق الأولوية في {{date}}. يمكنك جعل هذا الإدراج عاماً بعد ذلك."
 }

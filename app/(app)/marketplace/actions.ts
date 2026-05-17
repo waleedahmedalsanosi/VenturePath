@@ -207,6 +207,73 @@ export async function recordRofrResponse(formData: FormData): Promise<ActionResu
   return { ok: true };
 }
 
+// ── Visibility toggle ────────────────────────────────────────────────────────
+
+export async function setListingVisibility(
+  listingId: string,
+  isPublic: boolean,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const workspace = await getActiveWorkspace();
+  if (!workspace) return { ok: false, error: "No workspace found." };
+
+  // Ownership check: listing must belong to the caller's workspace.
+  const { data: listing } = await supabase
+    .from("share_listings")
+    .select("is_public, workspace_id")
+    .eq("id", listingId)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!listing) return { ok: false, error: "Listing not found." };
+  if (listing.workspace_id !== workspace.id)
+    return { ok: false, error: "Not your listing." };
+
+  const from: boolean = listing.is_public ?? false;
+
+  // ROFR gate: cannot go public while a ROFR window is still open.
+  if (isPublic) {
+    const { data: pending } = await supabase
+      .from("rofr_notifications")
+      .select("window_expires_at")
+      .eq("listing_id", listingId)
+      .is("response", null)
+      .gt("window_expires_at", new Date().toISOString())
+      .limit(1)
+      .maybeSingle();
+    if (pending) {
+      return {
+        ok: false,
+        error: `ROFR window is still open until ${new Date(pending.window_expires_at).toLocaleDateString()}`,
+      };
+    }
+  }
+
+  const { error } = await supabase
+    .from("share_listings")
+    .update({ is_public: isPublic, updated_at: new Date().toISOString() })
+    .eq("id", listingId);
+  if (error) return { ok: false, error: error.message };
+
+  await logAudit({
+    workspaceId: workspace.id,
+    entityType: "share_listing",
+    entityId: listingId,
+    action: "visibility_changed",
+    description: `${isPublic ? "Made discoverable" : "Made private"}: share listing`,
+    payload: { from, to: isPublic },
+  });
+
+  revalidatePath("/marketplace");
+  revalidatePath(`/marketplace/${listingId}`);
+  revalidatePath("/explore");
+  return { ok: true };
+}
+
 // ── Internal: ROFR email fan-out ─────────────────────────────────────────────
 
 async function notifyRofrShareholders(

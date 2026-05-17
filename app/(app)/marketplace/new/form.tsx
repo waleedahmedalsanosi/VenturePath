@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { formatSar, formatShares } from "@/lib/marketplace/money";
+import { useT } from "@/lib/i18n/useT";
 
 import { createListing } from "../actions";
 
@@ -21,6 +22,7 @@ export function NewListingForm({
   shareholders: Shareholder[];
   preselectedId: string | null;
 }) {
+  const t = useT("marketplace");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [selectedId, setSelectedId] = useState<string>(
@@ -152,11 +154,10 @@ export function NewListingForm({
           />
           <span>
             <span className="text-label-md font-medium block">
-              Show this listing on the public marketplace
+              {t("visibility.toggle.label")}
             </span>
             <span className="text-body-sm text-(--color-on-surface-variant) block mt-1">
-              When on, any signed-in VenturePath user can see this listing on /explore.
-              When off (default), only members of your workspace can see it.
+              {t("visibility.toggle.sublabel")}
             </span>
           </span>
         </label>

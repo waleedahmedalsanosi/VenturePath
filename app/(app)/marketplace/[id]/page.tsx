@@ -6,6 +6,7 @@ import { formatSar, formatShares, pricePerShare } from "@/lib/marketplace/money"
 import { getActiveWorkspace } from "@/lib/workspace/active";
 
 import { ListingActions } from "./listing-actions";
+import { ListingVisibilityToggle } from "./visibility-toggle";
 import { RofrRowActions } from "./rofr-row-actions";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +40,7 @@ export default async function ListingDetailPage({
   const { data: listing } = await supabase
     .from("share_listings")
     .select(
-      "id, workspace_id, shareholder_id, seller_user_id, shares_offered, ask_price_sar, notes, status, listed_at, expires_at, closed_at, closed_reason, shareholders(name)",
+      "id, workspace_id, shareholder_id, seller_user_id, shares_offered, ask_price_sar, notes, status, is_public, listed_at, expires_at, closed_at, closed_reason, shareholders(name)",
     )
     .eq("id", id)
     .eq("workspace_id", workspace.id)
@@ -59,6 +60,12 @@ export default async function ListingDetailPage({
     .order("created_at");
 
   const rofrRows = (notifs ?? []) as unknown as Notif[];
+
+  // ROFR lock: latest unresponded window still open → disable visibility toggle.
+  const pendingRofr = rofrRows
+    .filter((r) => r.response === null && new Date(r.window_expires_at) > new Date())
+    .sort((a, b) => new Date(b.window_expires_at).getTime() - new Date(a.window_expires_at).getTime());
+  const rofrLockedUntil = pendingRofr[0]?.window_expires_at ?? null;
 
   const {
     data: { user },
@@ -164,6 +171,14 @@ export default async function ListingDetailPage({
           </table>
         )}
       </section>
+
+      {(isSeller || isOwner) && listing.status === "open" && (
+        <ListingVisibilityToggle
+          listingId={listing.id}
+          isPublic={(listing as unknown as { is_public: boolean }).is_public ?? false}
+          rofrLockedUntil={rofrLockedUntil}
+        />
+      )}
 
       {isSeller && listing.status === "open" && (
         <section className="rounded-xl ghost-border p-5 space-y-3">

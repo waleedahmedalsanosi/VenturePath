@@ -56,5 +56,11 @@
   "browse.empty.secondaries": "No public secondary listings yet. Shareholders can opt their listings in for cross-workspace discovery.",
   "browse.empty.exits": "No companies have listed an exit interest yet.",
   "browse.unknown_workspace": "Unknown company",
-  "browse.secondary.detail": "{{shareholder}} · Listed {{date}}"
+  "browse.secondary.detail": "{{shareholder}} · Listed {{date}}",
+  "browse.empty.title_v2": "No public listings yet",
+  "browse.empty.body_v2": "Shareholders can make their listings discoverable from the Marketplace.",
+  "browse.empty.cta_with_listing": "You have a listing. Make it discoverable →",
+  "visibility.toggle.label": "Make this listing visible to all VenturePath members",
+  "visibility.toggle.sublabel": "Your listing will appear alongside exit listings in the Marketplace Browse tab.",
+  "visibility.toggle.rofr_locked": "ROFR window closes on {{date}}. You can make this listing public after that."
 }
