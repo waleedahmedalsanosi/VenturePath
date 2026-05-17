@@ -1340,6 +1340,60 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["connection_inquiries"]["Insert"]>;
         Relationships: [];
       };
+      account_notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          type:
+            | "inquiry_received"
+            | "inquiry_accepted"
+            | "inquiry_declined"
+            | "rofr_notified"
+            | "investor_update_opened"
+            | "compliance_overdue"
+            | "round_visibility_changed";
+          title: string;
+          url: string;
+          is_read: boolean;
+          entity_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type:
+            | "inquiry_received"
+            | "inquiry_accepted"
+            | "inquiry_declined"
+            | "rofr_notified"
+            | "investor_update_opened"
+            | "compliance_overdue"
+            | "round_visibility_changed";
+          title: string;
+          url: string;
+          is_read?: boolean;
+          entity_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          type?:
+            | "inquiry_received"
+            | "inquiry_accepted"
+            | "inquiry_declined"
+            | "rofr_notified"
+            | "investor_update_opened"
+            | "compliance_overdue"
+            | "round_visibility_changed";
+          title?: string;
+          url?: string;
+          is_read?: boolean;
+          entity_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -1518,6 +1572,10 @@ export type Database = {
     };
   };
 };
+
+// Convenience alias for consumers (notification bell, API route, etc.)
+export type AccountNotification =
+  Database["public"]["Tables"]["account_notifications"]["Row"];
 
 export const Constants = {
   public: {
