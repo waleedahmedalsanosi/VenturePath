@@ -1479,6 +1479,8 @@ export type Database = {
           avatar_url: string | null;
           linkedin_url: string | null;
           location: string | null;
+          date_format: "iso" | "us" | "eu";
+          timezone: string;
           created_at: string;
           updated_at: string;
         };
@@ -1489,6 +1491,8 @@ export type Database = {
           avatar_url?: string | null;
           linkedin_url?: string | null;
           location?: string | null;
+          date_format?: "iso" | "us" | "eu";
+          timezone?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -1499,7 +1503,81 @@ export type Database = {
           avatar_url?: string | null;
           linkedin_url?: string | null;
           location?: string | null;
+          date_format?: "iso" | "us" | "eu";
+          timezone?: string;
           created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      account_deletion_requests: {
+        Row: {
+          user_id: string;
+          requested_at: string;
+          reason: string | null;
+          status: "pending" | "processed" | "cancelled";
+          processed_at: string | null;
+          processed_by: string | null;
+        };
+        Insert: {
+          user_id: string;
+          requested_at?: string;
+          reason?: string | null;
+          status?: "pending" | "processed" | "cancelled";
+          processed_at?: string | null;
+          processed_by?: string | null;
+        };
+        Update: {
+          user_id?: string;
+          requested_at?: string;
+          reason?: string | null;
+          status?: "pending" | "processed" | "cancelled";
+          processed_at?: string | null;
+          processed_by?: string | null;
+        };
+        Relationships: [];
+      };
+      user_notification_preferences: {
+        Row: {
+          user_id: string;
+          notification_type:
+            | "inquiry_received"
+            | "inquiry_accepted"
+            | "inquiry_declined"
+            | "rofr_notified"
+            | "investor_update_opened"
+            | "compliance_overdue"
+            | "round_visibility_changed";
+          email_enabled: boolean;
+          inapp_enabled: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          notification_type:
+            | "inquiry_received"
+            | "inquiry_accepted"
+            | "inquiry_declined"
+            | "rofr_notified"
+            | "investor_update_opened"
+            | "compliance_overdue"
+            | "round_visibility_changed";
+          email_enabled?: boolean;
+          inapp_enabled?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          notification_type?:
+            | "inquiry_received"
+            | "inquiry_accepted"
+            | "inquiry_declined"
+            | "rofr_notified"
+            | "investor_update_opened"
+            | "compliance_overdue"
+            | "round_visibility_changed";
+          email_enabled?: boolean;
+          inapp_enabled?: boolean;
           updated_at?: string;
         };
         Relationships: [];
