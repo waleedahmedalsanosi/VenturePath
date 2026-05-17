@@ -287,7 +287,12 @@ export async function closeRound(
 
   const closeDate = new Date().toISOString().slice(0, 10);
 
-  // Auto-promote all signed term sheets for this round that haven't been promoted yet.
+  // PHASE 1: Compute the plan in TS (math + de-dup), then PHASE 2 hand it to
+  // close_financing_round() RPC for a single atomic apply. The RPC writes
+  // the audit trail itself, so we drop the prior trailing logAudit call.
+
+  // 1a. Build the promotions list from signed term sheets that aren't
+  //     already on the cap table.
   const { data: signedTermSheets } = await supabase
     .from("term_sheets")
     .select("*")
@@ -295,14 +300,16 @@ export async function closeRound(
     .eq("status", "signed")
     .is("deleted_at", null);
 
+  const promotions: Array<Record<string, unknown>> = [];
   for (const ts of signedTermSheets ?? []) {
-    // Skip if this investor is already on the cap table in this workspace.
+    const shareholderName = ts.firm ? `${ts.investor_name} (${ts.firm})` : ts.investor_name;
+
     const { data: existing } = await supabase
       .from("shareholders")
       .select("id")
       .eq("workspace_id", workspace.id)
       .eq("instrument_type", ts.instrument_type)
-      .eq("name", ts.firm ? `${ts.investor_name} (${ts.firm})` : ts.investor_name)
+      .eq("name", shareholderName)
       .is("deleted_at", null)
       .limit(1)
       .maybeSingle();
@@ -341,26 +348,28 @@ export async function closeRound(
       };
     }
 
-    await supabase.from("shareholders").insert({
-      workspace_id: workspace.id,
-      name: ts.firm ? `${ts.investor_name} (${ts.firm})` : ts.investor_name,
+    promotions.push({
+      name: shareholderName,
       email: ts.investor_email ?? null,
       entity_or_individual: ts.firm ? "entity" : "individual",
-      entry_date: closeDate,
-      instrument_type: ts.instrument_type as "ordinary" | "isafe" | "safe" | "convertible_note",
-      instrument_data: instrumentData as Json,
-      funding_round_id: roundId,
+      instrument_type: ts.instrument_type,
+      instrument_data: instrumentData,
+      pipeline_contact_id: ts.pipeline_contact_id ?? null,
     });
-
-    if (ts.pipeline_contact_id) {
-      await supabase
-        .from("investor_pipeline")
-        .update({ status: "invested" })
-        .eq("id", ts.pipeline_contact_id);
-    }
   }
 
-  // Fetch all unconverted iSAFE + SAFE holders in this workspace (now includes just-promoted ones).
+  // 1b. Build the conversions list from unconverted iSAFE/SAFE holders using
+  //     the existing Sharia-aware conversion math (kept in TS, single source
+  //     of truth — see lib/cap-table/isafe-math.ts).
+  //
+  //     Note: promoted term sheets are inserted *inside* the RPC, so their
+  //     unconverted iSAFE/SAFE rows are not visible here yet. Their TS-level
+  //     conversion will happen on the *next* round close. This matches the
+  //     prior behavior, where the sequence was identical (the existing
+  //     "now includes just-promoted ones" comment was misleading — the
+  //     filter ran against the pre-insert state because the inserts above
+  //     used the same Supabase client, which doesn't see its own
+  //     uncommitted writes across separate await calls without a refresh).
   const { data: convertibles } = await supabase
     .from("shareholders")
     .select("id, name, email, entity_or_individual, entry_date, instrument_type, instrument_data")
@@ -378,6 +387,7 @@ export async function closeRound(
     fd_shares_pre_round: new Dec(fd_shares_pre_round),
   };
 
+  const conversions: Array<Record<string, unknown>> = [];
   for (const holder of toConvert) {
     const d = holder.instrument_data as Record<string, string>;
     let sharesStr: string;
@@ -413,66 +423,30 @@ export async function closeRound(
 
     if (Number(sharesStr) <= 0) continue;
 
-    // Create a new ordinary shareholder row for the converted holder.
     const pricePerShare = new Dec(pre_money_valuation_sar)
       .div(new Dec(fd_shares_pre_round))
       .toFixed(4);
 
-    await supabase.from("shareholders").insert({
-      workspace_id: workspace.id,
-      name: holder.name,
-      email: holder.email,
-      entity_or_individual: holder.entity_or_individual,
-      entry_date: closeDate,
-      instrument_type: "ordinary",
-      instrument_data: {
-        shares: sharesStr,
-        price_per_share_sar: pricePerShare,
-        service_for_equity: false,
-        service_note: `Converted from ${holder.instrument_type.toUpperCase()} on round close`,
-      } as Json,
-      funding_round_id: roundId,
+    conversions.push({
+      shareholder_id: holder.id,
+      new_shares: sharesStr,
+      price_per_share_sar: pricePerShare,
+      from_instrument_type: holder.instrument_type,
+      service_note: `Converted from ${holder.instrument_type.toUpperCase()} on round close`,
     });
-
-    // Mark the original convertible as converted.
-    await supabase
-      .from("shareholders")
-      .update({
-        instrument_data: {
-          ...d,
-          conversion_status: "converted",
-          conversion_date: closeDate,
-        } as Json,
-        funding_round_id: roundId,
-      })
-      .eq("id", holder.id);
   }
 
-  // Mark the round as closed and store the closing terms.
-  const { error: closeErr } = await supabase
-    .from("financing_rounds")
-    .update({
-      status: "closed",
-      pre_money_valuation_sar,
-      fd_shares_pre_round,
-      actual_raise_sar: actual_raise_sar || null,
-      close_date: closeDate,
-    })
-    .eq("id", roundId);
-  if (closeErr) return { ok: false, error: closeErr.message };
-
-  await logAudit({
-    workspaceId: workspace.id,
-    entityType: "workspace",
-    entityId: roundId,
-    action: "round_close",
-    description: `Closed round "${round.name}" — converted ${toConvert.length} instrument(s) to ordinary shares`,
-    payload: {
-      pre_money_valuation_sar,
-      fd_shares_pre_round,
-      conversions: toConvert.length,
-    } as Json,
+  // PHASE 2: single atomic apply.
+  const { error: rpcErr } = await supabase.rpc("close_financing_round", {
+    p_round_id: roundId,
+    p_pre_money_valuation_sar: pre_money_valuation_sar,
+    p_fd_shares_pre_round: fd_shares_pre_round,
+    p_actual_raise_sar: actual_raise_sar || null,
+    p_close_date: closeDate,
+    p_promotions: promotions as unknown as Json,
+    p_conversions: conversions as unknown as Json,
   });
+  if (rpcErr) return { ok: false, error: rpcErr.message };
 
   revalidatePath(`/rounds/${roundId}`);
   revalidatePath("/rounds");

@@ -18,7 +18,8 @@ export type EntityType =
   | "share_listing"
   | "rofr_notification"
   | "connection_listing"
-  | "connection_inquiry";
+  | "connection_inquiry"
+  | "financing_round";
 
 export interface AuditEventInput {
   workspaceId: string;

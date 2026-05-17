@@ -193,7 +193,7 @@ export type Database = {
           workspace_id: string;
           actor_user_id: string;
           actor_email: string;
-          entity_type: "workspace" | "shareholder" | "document" | "compliance_obligation" | "share_listing" | "rofr_notification" | "connection_listing" | "connection_inquiry";
+          entity_type: "workspace" | "shareholder" | "document" | "compliance_obligation" | "share_listing" | "rofr_notification" | "connection_listing" | "connection_inquiry" | "financing_round";
           entity_id: string | null;
           action: string;
           description: string;
@@ -205,7 +205,7 @@ export type Database = {
           workspace_id: string;
           actor_user_id: string;
           actor_email: string;
-          entity_type: "workspace" | "shareholder" | "document" | "compliance_obligation" | "share_listing" | "rofr_notification" | "connection_listing" | "connection_inquiry";
+          entity_type: "workspace" | "shareholder" | "document" | "compliance_obligation" | "share_listing" | "rofr_notification" | "connection_listing" | "connection_inquiry" | "financing_round";
           entity_id?: string | null;
           action: string;
           description: string;
@@ -1455,6 +1455,23 @@ export type Database = {
           owner_workspace_name: string;
           listing_type: string;
         }[];
+      };
+      close_financing_round: {
+        Args: {
+          p_round_id: string;
+          p_pre_money_valuation_sar: string | number;
+          p_fd_shares_pre_round: string | number;
+          p_actual_raise_sar: string | number | null;
+          p_close_date: string;
+          p_promotions: Json;
+          p_conversions: Json;
+        };
+        Returns: {
+          success: boolean;
+          round_id: string;
+          promoted_count: number;
+          converted_count: number;
+        };
       };
     };
     Enums: {
