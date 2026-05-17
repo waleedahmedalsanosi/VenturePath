@@ -380,6 +380,8 @@ function MyStartups({
   useEffect(() => {
     try {
       const raw = localStorage.getItem(SIDEBAR_MYSTARTUPS_OPEN_KEY);
+      // localStorage hydration on mount — see NestedNavGroups comment.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (raw !== null) setOpen(raw === "true");
     } catch {
       // ignore
