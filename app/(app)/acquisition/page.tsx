@@ -4,8 +4,16 @@ import { Dec } from "@/lib/cap-table/decimal";
 import { vestedFraction } from "@/lib/esop/vesting";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveWorkspace } from "@/lib/workspace/active";
+import type { Database } from "@/lib/supabase/types";
 
 import { AcquisitionModeler, type AcqSeed } from "./modeler";
+
+type AcquisitionModel = Database["public"]["Tables"]["acquisition_models"]["Row"];
+type AcquisitionModelResult = Database["public"]["Tables"]["acquisition_model_results"]["Row"];
+
+export interface SavedModel extends AcquisitionModel {
+  results: AcquisitionModelResult[];
+}
 
 export default async function AcquisitionPage() {
   const supabase = await createClient();
@@ -17,7 +25,13 @@ export default async function AcquisitionPage() {
   const workspace = await getActiveWorkspace();
   if (!workspace) redirect("/setup");
 
-  const [{ data: shareholders }, { data: pool }, { data: grants }] = await Promise.all([
+  const [
+    { data: shareholders },
+    { data: pool },
+    { data: grants },
+    { data: savedModels },
+    { data: exitListings },
+  ] = await Promise.all([
     supabase
       .from("shareholders")
       .select("*")
@@ -33,6 +47,19 @@ export default async function AcquisitionPage() {
       .from("esop_grants")
       .select("*")
       .eq("workspace_id", workspace.id)
+      .is("deleted_at", null),
+    supabase
+      .from("acquisition_models")
+      .select("*, acquisition_model_results(*)")
+      .eq("workspace_id", workspace.id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("connection_listings")
+      .select("id, listing_type, public_summary")
+      .eq("workspace_id", workspace.id)
+      .eq("listing_type", "exit")
+      .eq("status", "open")
       .is("deleted_at", null),
   ]);
 
@@ -72,6 +99,19 @@ export default async function AcquisitionPage() {
     esopVested = vested.toFixed(0);
   }
 
+  // Reshape saved models to include results
+  const models: SavedModel[] = (savedModels ?? []).map((m) => {
+    const { acquisition_model_results: results, ...rest } = m as AcquisitionModel & {
+      acquisition_model_results: AcquisitionModelResult[];
+    };
+    return { ...rest, results: results ?? [] };
+  });
+
+  const openExitListings = (exitListings ?? []).map((l) => ({
+    id: l.id,
+    label: l.public_summary ?? "Exit listing",
+  }));
+
   return (
     <main className="mx-auto max-w-5xl px-6 py-10 space-y-8">
       <header>
@@ -93,6 +133,9 @@ export default async function AcquisitionPage() {
         esopAllocated={esopAllocated}
         esopVested={esopVested}
         esopStrikeRef={pool?.strike_price_reference_sar != null ? String(pool.strike_price_reference_sar) : null}
+        savedModels={models}
+        openExitListings={openExitListings}
+        workspaceId={workspace.id}
       />
 
       <div className="rounded-md bg-(--color-warning)/10 px-4 py-3 text-body-sm text-(--color-warning)">

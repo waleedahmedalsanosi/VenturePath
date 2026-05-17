@@ -1,1 +1,36 @@
-{}
+{
+  "eyebrow": "M&A Modeler",
+  "title": "Exit Hub",
+  "subtitle": "Model how an acquisition distributes proceeds across shareholders, preference stack, and ESOP pool.",
+
+  "model": {
+    "new": "+ New scenario",
+    "name_label": "Scenario name",
+    "price_label": "Acquisition price (SAR)",
+    "debt_label": "Non-convertible debt (SAR)",
+    "attach_listing_label": "Attach to exit listing",
+    "attach_listing_none": "None",
+    "submit": "Compute & Save",
+    "submitting": "Computing…",
+    "list": {
+      "empty": "No saved scenarios yet. Compute a model to save it.",
+      "used_of_max": "{{count}}/5 scenarios used"
+    },
+    "archive": "Archive",
+    "archive_confirm": "Archive this scenario?"
+  },
+
+  "results": {
+    "col": {
+      "shareholder": "Shareholder",
+      "shares": "Shares",
+      "payout": "Payout (SAR)",
+      "multiple": "Multiple"
+    },
+    "empty": "No results yet. Compute a model above."
+  },
+
+  "error": {
+    "limit_reached": "You have reached the 5-scenario limit. Archive a scenario to create a new one."
+  }
+}

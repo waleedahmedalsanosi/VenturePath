@@ -16,6 +16,94 @@ export type Database = {
   };
   public: {
     Tables: {
+      acquisition_models: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          label: string;
+          acquisition_price_sar: number;
+          debt_sar: number;
+          net_proceeds_sar: number;
+          connection_listing_id: string | null;
+          created_by: string;
+          created_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          label?: string;
+          acquisition_price_sar: number;
+          debt_sar?: number;
+          net_proceeds_sar: number;
+          connection_listing_id?: string | null;
+          created_by: string;
+          created_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          label?: string;
+          acquisition_price_sar?: number;
+          debt_sar?: number;
+          net_proceeds_sar?: number;
+          connection_listing_id?: string | null;
+          created_by?: string;
+          created_at?: string;
+          deleted_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "acquisition_models_workspace_id_fkey";
+            columns: ["workspace_id"];
+            isOneToOne: false;
+            referencedRelation: "workspaces";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      acquisition_model_results: {
+        Row: {
+          id: string;
+          model_id: string;
+          shareholder_id: string;
+          shareholder_name: string;
+          shares: number;
+          payout_sar: number;
+          multiple_x: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          model_id: string;
+          shareholder_id: string;
+          shareholder_name: string;
+          shares: number;
+          payout_sar: number;
+          multiple_x?: number | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          model_id?: string;
+          shareholder_id?: string;
+          shareholder_name?: string;
+          shares?: number;
+          payout_sar?: number;
+          multiple_x?: number | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "acquisition_model_results_model_id_fkey";
+            columns: ["model_id"];
+            isOneToOne: false;
+            referencedRelation: "acquisition_models";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       financing_rounds: {
         Row: {
           id: string;
@@ -1581,6 +1669,32 @@ export type Database = {
       search_platform: {
         Args: { p_query: string };
         Returns: Json;
+      };
+      compute_acquisition_model: {
+        Args: {
+          p_workspace_id: string;
+          p_acquisition_price_sar: number;
+          p_debt_sar?: number;
+          p_label?: string;
+          p_connection_listing_id?: string | null;
+        };
+        Returns: {
+          model_id: string;
+          label: string;
+          acquisition_price_sar: number;
+          net_proceeds_sar: number;
+          results: {
+            shareholder_id: string;
+            shareholder_name: string;
+            shares: number;
+            payout_sar: number;
+            multiple_x: number | null;
+          }[];
+        };
+      };
+      archive_acquisition_model: {
+        Args: { p_model_id: string };
+        Returns: void;
       };
     };
     Enums: {
