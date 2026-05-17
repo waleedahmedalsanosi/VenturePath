@@ -1527,6 +1527,10 @@ export type Database = {
           converted_count: number;
         };
       };
+      search_platform: {
+        Args: { p_query: string };
+        Returns: Json;
+      };
     };
     Enums: {
       compliance_category: "tax" | "commercial" | "regulatory" | "administrative";
@@ -1576,6 +1580,16 @@ export type Database = {
 // Convenience alias for consumers (notification bell, API route, etc.)
 export type AccountNotification =
   Database["public"]["Tables"]["account_notifications"]["Row"];
+
+// ── Search ─────────────────────────────────────────────────────────────────
+export interface SearchResult {
+  entity_type: "workspace" | "connection_listing" | "financing_round";
+  entity_id: string;
+  title: string;
+  subtitle: string | null;
+  url: string;
+  rank: number;
+}
 
 export const Constants = {
   public: {
