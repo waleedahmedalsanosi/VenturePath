@@ -1,36 +1,114 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VenturePath
 
-## Getting Started
+**Sharia-compliant operating system for KSA founders.** Cap table,
+fundraising, secondary trading, whole-company exits, and founder
+partnerships — in one bilingual (EN/AR) platform anchored to verified
+cap-table data.
 
-First, run the development server:
+- **Live:** https://venture-path.vercel.app/
+- **Status:** v0.3.0.0 (2026-05-17). Five hubs shipped; v1.3 P0s
+  flagged in `TODOS.md`.
+
+## Documentation
+
+- **Product:**
+  - `docs/prd-venturepath.md` — product-wide PRD organised by hub
+    (Startup / Investment / Trading / Exit / Partnership).
+  - `docs/prd-connections-hub.md` — deep-dive on Exit + Partnership
+    Hubs (data model, RLS, inquiry handshake).
+- **Engineering:**
+  - `DESIGN.md` — Kinetic Sovereign design system (papyrus + teal
+    gradient, bilingual EN/AR + RTL).
+  - `CHANGELOG.md` — versioned release history (4-digit MAJOR.MINOR.PATCH.MICRO).
+  - `TODOS.md` — open work + external blockers + closed-item log.
+
+## Tech stack
+
+- Next.js 16 (App Router, Turbopack), React 19, TypeScript 5
+- Supabase (Postgres 17, Auth, RLS, Edge Functions)
+- Tailwind CSS 4 (logical properties for RTL)
+- react-i18next (28 namespaces; EN + AR)
+- Resend for transactional email
+- Vercel for hosting; production branch
+  `claude/activate-bypass-permissions-0sjk1`
+
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Required in `.env.local`:
 
-## Learn More
+```
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+RESEND_API_KEY=...
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Common commands
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run dev          # Next dev server with Turbopack
+npm run build        # Production build
+npm test             # vitest run (157 tests as of v0.3.0.0)
+npx tsc --noEmit     # Type check
+npx eslint app lib   # Lint
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Supabase migrations
 
-## Deploy on Vercel
+Migrations live in `supabase/migrations/` and apply via the Supabase
+MCP or `supabase db push`. Names are timestamped (`YYYYMMDDhhmmss_*.sql`)
+and apply in chronological order. As of v0.3.0.0:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+20260515*  Initial schema (workspaces, cap table, ESOP, compliance, vault, etc.)
+20260516*  Connections Hub (exit + partnership listings, inquiry handshake)
+20260517*  close_financing_round RPC
+20260518*  account_notifications + triggers
+20260519*  full_text_search, investor_update_recipients,
+           transfer_agent_cap_table_sync, acquisition_models,
+           seeking_type column promotion
+20260520*  user_profiles, settings infra, inquiry_messages
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Tests
+
+pgTAP suites under `supabase/tests/` exercise the RPC families. They
+run against a local Supabase with pgTAP installed via
+`supabase test db`. Live-DB verification is done via BEGIN/ROLLBACK
+plain-SQL harnesses through the Supabase MCP — counts logged in the
+relevant CHANGELOG entries.
+
+## Hub map (where to find things in the code)
+
+| Hub | Sidebar entry | Routes |
+|---|---|---|
+| Startup | "My Startup" (expandable) | `/dashboard`, `/company`, `/members`, `/governance`, `/compliance`, `/vault`, `/traction`, `/audit`, `/setup` |
+| Investment | "Round" | `/cap-table`, `/esop`, `/rounds`, `/term-sheets`, `/investor-updates`, `/valuation`, `/dilution`, `/waterfall` |
+| Trading | "Marketplace" | `/marketplace` (Browse + Mine tabs) |
+| Exit | "Marketplace" Browse tab; `/connections?filter=exit` | `/connections`, `/connections/[id]`, `/acquisition` |
+| Partnership | "Talents", "Advisors" | `/connections?seeking=…`, `/connections/[id]` |
+| Platform | "Explore", "Messages", "Settings", "My profile" | `/explore`, `/messages`, `/messages/[id]`, `/settings`, `/profile`, `/profile/edit`, `/sign-in`, `/sign-up` |
+
+Full hub-by-hub feature/requirement/user-story breakdown is in
+`docs/prd-venturepath.md`.
+
+## Deployment
+
+The production branch is `claude/activate-bypass-permissions-0sjk1`
+(not `main` — Vercel is configured to deploy from this branch). Pushes
+to it auto-deploy.
+
+## Contributing
+
+This is a private repo for now. External contributions aren't
+solicited; if you're inside the project, see `TODOS.md` for what's open
+and `docs/prd-venturepath.md` §8.2 for v1.3 candidates.

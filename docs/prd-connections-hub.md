@@ -1,22 +1,33 @@
 # PRD: Connections Hub
 
-**Version:** 1.1
-**Status:** Shipped (v0.2.0.0, 2026-05-16; v1.1 navigation + inbox updates 2026-05-16)
+**Version:** 1.2
+**Status:** Shipped (v0.2.0.0, 2026-05-16; v1.1 navigation + inbox updates 2026-05-16; v1.2 thread view + seeking column + equity gating 2026-05-17)
 **Owner:** Waleed Alsanosi
 **Repo:** waleedahmedalsanosi/VenturePath
 **Related artifacts:**
 - Design doc: `~/.gstack/projects/waleedahmedalsanosi-VenturePath/root-claude_activate-bypass-permissions-0sjk1-design-20260516-081800.md`
 - Design system updates: `DESIGN.md` §3.6, §8, §12
-- Migrations: `supabase/migrations/20260516000004_connections_hub.sql` through `20260516000007_share_listings_is_public.sql`
+- Migrations: `supabase/migrations/20260516000004_connections_hub.sql` through `20260520300000_inquiry_messages.sql`
 - PR: https://github.com/waleedahmedalsanosi/VenturePath/pull/1
 
 ### Changelog
 
+- **v1.2 (2026-05-17):** Closed three v1.1 deferred items + added one
+  brand-new surface. (a) `seeking_type` promoted to a first-class indexed
+  column on `connection_listings` (Talents/Advisors filter now uses a
+  real index, not a JSONB sequential scan); (b) a reply-capable thread
+  view shipped at `/messages/[inquiryId]` so `/messages` is no longer
+  read-only; (c) equity-terms gating on partnership listings — the
+  `equity_expectations` line is hidden behind a "Request equity terms"
+  card unless the viewer is the owner or has an accepted inquiry;
+  (d) context-aware eyebrow + subtitle per `/connections?seeking=`
+  variant so Talents and Advisors no longer share the generic
+  "INVESTMENT" eyebrow. See §19 for the full delta and the supersedes
+  notes on §18.5's deferral list.
 - **v1.1 (2026-05-16):** Surface restructure to match the redesigned
-  shell. The Connections Hub data model and RPCs are unchanged; what
-  shipped is a new top-level navigation, a dedicated inquiry inbox, and
-  role-scoped partnership entry points. See §18 for the full delta and
-  the supersedes notes on Decisions #10 and #13.
+  shell. New top-level navigation, dedicated `/messages` inquiry inbox,
+  role-scoped partnership entry points. See §18 and supersedes notes
+  on Decisions #10 and #13.
 
 ---
 
@@ -523,6 +534,153 @@ The following items were considered for v1.1 but explicitly deferred:
   `financing_rounds.is_public`.** The redesigned Marketplace and Round
   browse tabs already query these columns, but there is no UI yet for a
   shareholder/founder to flip the flag from inside the app — current
-  default is `false`, opt-in by SQL. This is a separate Publish PRD
+  default is `false`, opt-in by SQL. ~~This is a separate Publish PRD
   (P0 for round/listing publishers, currently blocking discoverability
-  on a fresh workspace).
+  on a fresh workspace).~~ **Shipped in v1.2 (see §19.4).**
+
+## 19. v1.2 Updates (2026-05-17)
+
+v1.2 closes the three deferral items from §18.5 and adds a fourth
+surface that the v1.1 audit flagged: equity-terms gating. None of the
+v1.0/v1.1 invariants change. The schema gains one column, one new table,
+and zero RPC signature changes.
+
+### 19.1 `seeking_type` promoted to first-class indexed column (REQ-PART-01)
+
+Closes the §18.5 deferral on `partnership_role`.
+
+- Migration `20260519400000_seeking_type_column.sql`:
+  - `ALTER TABLE connection_listings ADD COLUMN seeking_type TEXT` with
+    CHECK `IN ('co_founder', 'advisor', 'senior_hire', 'business_partner')`.
+  - `UPDATE` backfill from `type_data->>'seeking_type'` for existing
+    partnership rows.
+  - Partial index `connection_listings_seeking_type_idx (seeking_type,
+    status, listed_at DESC) WHERE deleted_at IS NULL AND listing_type
+    = 'partnership' AND seeking_type IS NOT NULL`.
+- `create_connection_listing` RPC redeployed: when `listing_type =
+  'partnership'`, validates and writes the column alongside the JSONB.
+- `app/(app)/connections/page.tsx` browse query swapped from
+  `eq("type_data->>seeking_type", $)` to `eq("seeking_type", $)`.
+- Backfill parity verified live: 6/6 partnership rows backfilled, all
+  values within the allowed enum.
+
+**Trade-off:** the JSONB `type_data` still carries `seeking_type` for
+backward compatibility. v1.3 may strip it from JSONB after a deprecation
+window.
+
+### 19.2 Reply-capable thread view at `/messages/[inquiryId]` (audit item #7)
+
+Closes the §18.5 deferral on action capabilities in `/messages` AND
+addresses audit item #7 (no reply / compose).
+
+- Migration `20260520300000_inquiry_messages.sql` adds the
+  `connection_inquiry_messages` table:
+  - `id`, `inquiry_id` (CASCADE), `sender_user_id`, `body` (1-2000 chars),
+    `created_at`, `deleted_at`.
+  - Index `(inquiry_id, created_at)`.
+  - RLS read: either party of the underlying inquiry (mirrors
+    `connection_inquiries` SELECT policy).
+  - RLS write: either party, AND only when inquiry status is `'sent'`
+    or `'accepted'`. Closed/declined inquiries are read-only.
+- New route `/messages/[inquiryId]/page.tsx` (server) +
+  `thread-view.tsx` (client): inquiry metadata header, message bubbles
+  styled per sender, reply textarea (max 2000 chars with counter),
+  disabled state for closed/declined with a hint.
+- `/messages` inbox row click target changed from
+  `/connections/[listingId]` to `/messages/[inquiryId]`. A secondary
+  "View listing →" link inside each row preserves the old action path.
+- `/connections/[id]` inquiry detail panel gains a "View thread →" link
+  per inquiry. The two surfaces are now complementary: `/messages/[id]`
+  is the conversation surface; `/connections/[id]` is the action
+  surface (accept / decline / close).
+
+**Supersedes Decision #10 again:** v1.1 had already softened
+Decision #10 by adding the `/messages` routing inbox. v1.2 completes
+the move — the inbox is now a real reply surface, not just a router.
+
+**Out of scope (v1.3):** notification trigger on new inquiry message
+(no row in `account_notifications` yet when a reply lands). This is a
+single trigger function away.
+
+### 19.3 Context-aware eyebrow + subtitle per seeking variant (audit item #12)
+
+`/connections?seeking=…` previously rendered "INVESTMENT" eyebrow with
+a generic subtitle on every variant. v1.2 swaps both per `seeking`:
+
+| Seeking value | Eyebrow | Subtitle |
+|---|---|---|
+| (none) | "Connections" | (existing subtitle) |
+| `senior_hire` | "Talents" | "Senior hires open to joining KSA startups." |
+| `advisor` | "Advisors" | "Industry experts available for advisory engagements." |
+| `co_founder` | "Co-founders" | "Founders open to joining a co-founder team." |
+| `business_partner` | "Business partners" | "Operators open to commercial partnerships." |
+
+New i18n keys: `connections.header.eyebrow.*` and
+`connections.header.subtitle.*` in EN + AR.
+
+### 19.4 Publish flow for `share_listings.is_public` and `financing_rounds.is_public`
+
+Closes the §18.5 final deferral. Documented in detail in the
+product-wide PRD §13.2 (REQ-INV-02) and §13.3 (REQ-TRADE-01). The
+Connections Hub doesn't own these columns but its `/marketplace` and
+`/rounds` browse tabs depend on them being flippable from the UI.
+
+### 19.5 Equity-terms gating on partnership listings (audit item #10)
+
+The audit flagged that partnership listings broadcast
+`equity_expectations` (e.g. "0.25-0.5% advisor equity, 2y vest") to every
+signed-in user — leaking sensitive negotiating terms across all
+workspaces.
+
+v1.2 ships UI-level gating:
+
+- `app/(app)/connections/[id]/equity-gate.tsx`: lock-icon card that
+  replaces the inline equity_expectations text on the listing detail
+  page when `canSeeEquityTerms === false`.
+- **Authorisation rule:** `canSeeEquityTerms = isOwner ||
+  (myInquiry?.status === 'accepted')`. Listing owner always sees.
+  Viewers with no inquiry / pending / declined: gated. Accepted: full
+  view.
+- The gate card has a "Request equity terms" button that fires the
+  existing `send_connection_inquiry` RPC — same flow as any other
+  inquiry, no new RPC needed.
+- A `gating_hint` paragraph on the partnership listing creation form
+  tells listers the field is gated by default.
+- New i18n keys: `connections.gated_title`, `gated_body`, `gated_button`,
+  `gated_pending`, `card.equity_gated`, `gating_hint` in EN + AR.
+
+**Known limitation, deferred to v1.3:** gating is UI-only. The
+`type_data` JSONB column is still cross-workspace-readable at the DB
+level, so a determined inquirer can query the column directly and see
+the field. The proper fix is to split `type_data` into
+`type_data_public` (RLS allows cross-workspace read) and
+`type_data_private` (RLS restricts to owner + accepted-inquiry
+inquirer). The v1.2 UI gate buys time; the v1.3 schema split closes
+the loophole properly.
+
+### 19.6 Updated decisions ledger
+
+| Decision | Status |
+|---|---|
+| #10 — inquiries on listing detail only | **Superseded twice:** v1.1 added `/messages` as routing inbox; v1.2 made it a reply surface via `/messages/[inquiryId]`. The listing-detail action panel is preserved. |
+| #6 — bidirectional exit collision | Unchanged. |
+| #7 — exit + partnership cannot coexist | Unchanged. |
+| #2 — named listings only in v1 | Unchanged. Equity-terms gating (§19.5) is a separate axis from name visibility. |
+| #5 — magenta exits / lavender partnerships | Unchanged. |
+
+### 19.7 Test coverage delta in v1.2
+
+- Inquiry messages: 3/3 BEGIN/ROLLBACK smoke cases (both-parties read,
+  closed-inquiry write rejection, cross-party write rejection).
+- Seeking column: backfill parity verified (6/6 partnership rows).
+- Equity gate: UI-only — covered by existing /connections snapshot
+  tests; no new RPC, no new SQL test.
+
+### 19.8 What v1.2 did NOT change in the Connections Hub
+
+- The 12 decisions in §6 (other than #10 which was already softened in
+  v1.1).
+- The 3 collision rules in §5.3.
+- The cross-workspace RLS in §5.4.
+- The inquiry handshake state machine in §5.2.
+- Pricing / monetisation (still pre-revenue by design).
