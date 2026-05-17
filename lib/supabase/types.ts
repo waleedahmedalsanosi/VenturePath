@@ -1480,8 +1480,18 @@ export type Database = {
         Returns: void;
       };
       mark_share_listing_sold_off_platform: {
-        Args: { p_listing_id: string; p_reason: string | null };
-        Returns: void;
+        Args: {
+          p_listing_id: string;
+          p_buyer_name?: string | null;
+          p_buyer_email?: string | null;
+          p_sale_price_sar?: string | number | null;
+        };
+        Returns: {
+          success: boolean;
+          listing_id: string;
+          cap_table_updated: boolean;
+          new_shareholder_id: string | null;
+        };
       };
       record_rofr_response: {
         Args: { p_notification_id: string; p_response: "exercise" | "decline" };

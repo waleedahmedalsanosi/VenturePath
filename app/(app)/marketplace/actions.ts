@@ -131,7 +131,12 @@ export async function withdrawListing(formData: FormData): Promise<ActionResult>
 
 // ── Mark sold off-platform ───────────────────────────────────────────────────
 
-export async function markSoldOffPlatform(formData: FormData): Promise<ActionResult> {
+export interface MarkSoldResult extends ActionResult {
+  capTableUpdated?: boolean;
+  newShareholderId?: string | null;
+}
+
+export async function markSoldOffPlatform(formData: FormData): Promise<MarkSoldResult> {
   const supabase = await createClient();
   const workspace = await getActiveWorkspace();
   if (!workspace) return { ok: false, error: "No workspace found." };
@@ -139,28 +144,63 @@ export async function markSoldOffPlatform(formData: FormData): Promise<ActionRes
   const parsed = MarkSoldSchema.safeParse({
     listing_id: formData.get("listing_id"),
     reason: formData.get("reason") ?? "",
+    buyer_name: formData.get("buyer_name") ?? "",
+    buyer_email: formData.get("buyer_email") ?? "",
+    sale_price_sar: formData.get("sale_price_sar") ?? "",
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
-  const { error } = await supabase.rpc("mark_share_listing_sold_off_platform", {
-    p_listing_id: parsed.data.listing_id,
-    p_reason: parsed.data.reason || null,
-  });
+  const { buyer_name, buyer_email, sale_price_sar } = parsed.data;
+
+  // Only pass buyer params when both name and email are provided.
+  const hasBuyer = Boolean(buyer_name && buyer_email);
+
+  const { data: rpcResult, error } = await supabase.rpc(
+    "mark_share_listing_sold_off_platform",
+    {
+      p_listing_id: parsed.data.listing_id,
+      p_buyer_name: hasBuyer ? (buyer_name ?? null) : null,
+      p_buyer_email: hasBuyer ? (buyer_email ?? null) : null,
+      p_sale_price_sar: hasBuyer && sale_price_sar ? Number(sale_price_sar) : null,
+    },
+  );
   if (error) return { ok: false, error: error.message };
+
+  const result = rpcResult as {
+    success: boolean;
+    listing_id: string;
+    cap_table_updated: boolean;
+    new_shareholder_id: string | null;
+  } | null;
 
   await logAudit({
     workspaceId: workspace.id,
     entityType: "share_listing",
     entityId: parsed.data.listing_id,
     action: "share_listing.sold_off_platform",
-    description: parsed.data.reason || "Closed off-platform via lawyer/SPA",
+    description: result?.cap_table_updated
+      ? `Closed off-platform — cap table updated, buyer: ${buyer_name}`
+      : parsed.data.reason || "Closed off-platform via lawyer/SPA",
+    payload: result?.cap_table_updated
+      ? {
+          cap_table_updated: true,
+          new_shareholder_id: result.new_shareholder_id,
+          buyer_name,
+          buyer_email,
+        }
+      : undefined,
   });
 
   revalidatePath("/marketplace");
   revalidatePath(`/marketplace/${parsed.data.listing_id}`);
-  return { ok: true };
+  revalidatePath("/cap-table");
+  return {
+    ok: true,
+    capTableUpdated: result?.cap_table_updated ?? false,
+    newShareholderId: result?.new_shareholder_id ?? null,
+  };
 }
 
 // ── ROFR response ────────────────────────────────────────────────────────────

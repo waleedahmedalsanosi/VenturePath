@@ -30,6 +30,20 @@ export const WithdrawListingSchema = z.object({
 export const MarkSoldSchema = z.object({
   listing_id: z.uuid(),
   reason: z.string().max(500).optional().or(z.literal("")),
+  buyer_name: z.string().max(200).optional().or(z.literal("")),
+  buyer_email: z.string().email("must be a valid email").optional().or(z.literal("")),
+  sale_price_sar: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .refine((s) => {
+      if (!s) return true;
+      try {
+        return new Dec(s).gt(0);
+      } catch {
+        return false;
+      }
+    }, "must be a positive number"),
 });
 
 export const RecordRofrSchema = z.object({
