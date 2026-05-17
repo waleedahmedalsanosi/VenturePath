@@ -12,10 +12,14 @@ cap-table data.
 ## Documentation
 
 - **Product:**
-  - `docs/prd-venturepath.md` — product-wide PRD organised by hub
-    (Startup / Investment / Trading / Exit / Partnership).
+  - `docs/prd-venturepath.md` — formal PRD: document control, vision, KPIs,
+    personas, user stories (US-S*/US-I*/US-T*/US-E*/US-P*/US-X* with priority),
+    NFRs, risks, dependencies, release plan.
+  - `docs/prd-venturepath-deep-dive.md` — hub-by-hub architecture + v1.2
+    cross-workspace activation delta (features / requirements / user stories
+    per shipped item).
   - `docs/prd-connections-hub.md` — deep-dive on Exit + Partnership
-    Hubs (data model, RLS, inquiry handshake).
+    Hubs (data model, RLS, inquiry handshake, design decisions).
 - **Engineering:**
   - `DESIGN.md` — Kinetic Sovereign design system (papyrus + teal
     gradient, bilingual EN/AR + RTL).

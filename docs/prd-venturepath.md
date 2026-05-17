@@ -1,1234 +1,484 @@
-# PRD: VenturePath
+# VenturePath — Product Requirement Document (PRD)
 
-**Version:** 1.2 (product-wide)
-**Status:** v0.2.0.0 shipped; v1.1 surface restructure shipped 2026-05-16; v1.2 cross-workspace activation + UX hardening shipped 2026-05-17
-**Owner:** Waleed Alsanosi
-**Repo:** waleedahmedalsanosi/VenturePath
-**Audience:** Product team — for hub-level scope and release sequencing.
-**Companion docs:**
-- `docs/prd-connections-hub.md` — deep-dive on the Exit + Partnership Hubs (data model, RLS, inquiry handshake)
-- `DESIGN.md` — Kinetic Sovereign design system (papyrus + teal gradient, bilingual EN/AR + RTL)
-- `CHANGELOG.md` — versioned release history
-- `TODOS.md` — external blockers and deferred work
+## 1. Document Control
 
-### Changelog
-
-- **v1.2 (2026-05-17):** Cross-workspace activation pass. Every hub's
-  cross-workspace discovery surface is now operational end-to-end: `is_public`
-  toggles closed the publish gap on rounds and share listings; a real
-  `account_notifications` aggregation lights up the header bell;
-  full-text search wires the ⌘K command bar; per-recipient open tracking
-  closes the investor-update loop. Plus a 6-batch UX hardening pass on
-  sidebar reliability, profile completeness, account-settings depth, shared
-  UI hygiene, dilution validation, threaded messaging, and equity-terms
-  gating. See §13 for the full delta and §8.1 for the updated release ledger.
-- **v1.1 (2026-05-16):** Surface restructure. Hubs surfaced as top-level
-  sidebar entries; `/messages` inbox, `/settings`, `/profile` added; split-
-  layout auth pages.
-- **v1.0 (2026-05-16):** Initial product-wide PRD organising the codebase
-  into five hubs + platform layer.
+| Field | Details |
+| :--- | :--- |
+| **Product Name** | VenturePath — Sharia-compliant operating system for KSA founders |
+| **Product Manager (PM)** | Waleed Alsanosi |
+| **Lead Designer (UX/UI)** | Waleed Alsanosi (Kinetic Sovereign design system — see `DESIGN.md`) |
+| **Tech Lead / Architect** | Waleed Alsanosi |
+| **Status** | Approved — v0.3.0.0 shipped 2026-05-17; v1.3 backlog open |
+| **Target Release Date** | Live in production at https://venture-path.vercel.app/ . v1.3 target: 2026-Q3 |
+| **Repo / Branch** | `waleedahmedalsanosi/VenturePath` · production branch `claude/activate-bypass-permissions-0sjk1` |
+| **Companion docs** | `docs/prd-venturepath-deep-dive.md` (architecture + hub-level deep dive) · `docs/prd-connections-hub.md` (Exit + Partnership Hubs schema + RLS) · `DESIGN.md` · `CHANGELOG.md` · `TODOS.md` |
 
 ---
 
-## 1. Executive Summary
-
-**VenturePath is the Sharia-compliant operating system for KSA founders.**
-Cap table, fundraising, secondary trading, whole-company exits, and founder
-partnerships — all in one bilingual (EN/AR) platform anchored to verified
-cap-table data. No fund movement on platform; every transaction closes
-off-platform under existing KSA legal frameworks.
-
-The product is organised into **five hubs** that map to the lifecycle of a
-KSA startup. Each hub is independently usable and independently shippable.
-The hub split is not a UI label — it is the unit of product scope, sales
-positioning, and release sequencing.
-
-| Hub | One-line | Status |
-|---|---|---|
-| **Startup Hub** | The workspace itself: company identity, team, governance, compliance, traction, vault. | Shipped (v0.1.0); user profile (display name + bio + avatar) added v1.2 |
-| **Investment Hub** | End-to-end fundraising: cap table, instruments, rounds, term sheets, investor updates, modelling. | Shipped (v0.1.0); atomic round-close RPC + publish toggle + dilution validation + per-recipient open tracking + M&A modeler added v1.2 |
-| **Trading Hub** | Secondary share marketplace: existing shareholders posting their equity for sale. | Shipped (v0.1.0); cross-workspace browse v1.1; publish toggle + transfer-agent cap-table sync added v1.2 |
-| **Exit Hub** | Whole-company exits: founders listing their company for sale, acquisition, or merger. | Shipped (v0.2.0.0); cross-workspace browse v1.1; M&A modeler + acquisition-model history added v1.2 |
-| **Partnership Hub** | Founder partnerships: co-founders, advisors, senior hires, business partners. | Shipped (v0.2.0.0); Talents/Advisors role filter v1.1; equity-terms gating + first-class seeking_type column added v1.2 |
-
-Plus a **Platform Layer** (auth, i18n, multi-workspace, messages inbox,
-discovery, data room) that every hub relies on.
-
-## 2. Vision and Problem
-
-### 2.1 Vision
-
-> Every KSA founder running on the same operating system — bilingual,
-> Sharia-compliant, KSA-first — from incorporation through exit.
-
-### 2.2 The four problems we solve
-
-1. **Cap-table chaos.** Founders manage equity in Excel until it breaks.
-   No Sharia-compliant tooling exists; importing US-bolted products like
-   Carta requires converting iSAFE/SAFE Sharia logic to product features
-   they don't have.
-2. **Fundraising fragmentation.** Round-running is spread across Excel,
-   email, Drive, and WhatsApp. No structured pipeline, no auto-conversion
-   of iSAFEs on close, no consistent investor-update voice.
-3. **Trapped equity.** Shareholders who want to sell part of their equity
-   have no posted-ask bulletin board with built-in ROFR — they negotiate
-   over WhatsApp or use brokers.
-4. **Broken founder marketplaces.** Two parallel problems with the same
-   structural fix: founders wanting to exit, and founders wanting
-   co-founders/advisors/hires/partners. Both currently live in LinkedIn DMs,
-   Telegram founder groups, or paid brokers — slow, opaque, noisy.
-
-### 2.3 Why VenturePath wins
-
-- **Sharia-compliant by design.** iSAFE is the wedge — convertible
-  instrument built for Sharia compliance and KSA market reality.
-- **KSA-first, not US-bolted.** SAR-native, ZATCA-aware, Hijri-friendly,
-  bilingual EN/AR with full RTL, Cairo + Inter typography throughout.
-- **Verified-data moat.** Every listing is anchored to a verified cap
-  table and audited financials on platform. AngelList and Acquire.com
-  have anonymous profiles; we have cap-table receipts.
-- **Off-platform closing.** No fund custody, no settlement risk. Aligned
-  with CMA broker-dealer reality and Sharia jurisprudence.
-- **Bilingual all the way down.** Not just translated UI — every page
-  works in RTL with logical properties; every email template has Arabic
-  variants; every chart and figure handles Arabic numerals.
-
-## 3. Target Users and Personas
-
-| Persona | Primary hub(s) | Wedge action |
-|---|---|---|
-| **Founder, pre-seed/seed** | Startup, Investment | Set up cap table, run a round, send investor updates. |
-| **Founder, late-stage** | Investment, Exit, Trading | Model dilution / waterfall; list for exit; let early shareholders post secondary asks. |
-| **Founder, partnership-seeking** | Partnership | Find co-founder / advisor / senior hire / business partner. |
-| **Operator (senior hire, advisor)** | Partnership | Browse partnership listings, send inquiry, accept equity grant. |
-| **Existing shareholder (employee, angel)** | Trading | Post secondary ask; respond to ROFR notifications. |
-| **Acquirer / strategic** | Exit | Browse companies open to exit; send inquiry; gain scoped data-room access. |
-| **Investor (LP-backed VC, angel, family office)** | Investment, Trading, Exit | Browse open rounds, secondary listings, exit listings; assess via verified data. |
-
-The exit-buyer and partnership-inquirer personas were not pre-validated
-with named individuals at launch — both rely on the seller-side personas
-(Samir, Saif) being correct first.
-
-## 4. Product Principles (non-negotiable)
-
-These are the lines we don't cross. Any feature proposal that violates one
-needs explicit founder approval, not just a PM signoff.
-
-1. **No fund movement on platform.** VenturePath is a bulletin board /
-   structured-data layer; closing happens off-platform with lawyers and
-   regulators. This is both a Sharia choice and a CMA choice.
-2. **Sharia-compliant by default.** iSAFE green identity is permanent.
-   New instruments require Sharia advisor (Turky) sign-off before ship.
-3. **Bilingual EN/AR + full RTL.** No English-only surface ever ships to
-   production. Arabic font is Cairo; logical properties (`start`/`end`,
-   `ps-`/`pe-`) not physical (`left`/`right`).
-4. **Verified data wins.** A listing without a backing cap table is
-   inferior to one with. Public profiles, exit listings, partnership
-   listings, secondary listings — all anchored to workspace identity.
-5. **Opt-in cross-workspace visibility.** Workspace data is private by
-   default. Cross-workspace discovery requires the seller/founder to
-   explicitly flip `is_public=true` per row. This is the Sharia-aligned
-   default (avoid `gharar`/uncertainty in implicit disclosure).
-6. **Off-platform contact reveal.** Cross-workspace contact details are
-   exchanged via email after a structured handshake, not via on-platform
-   DMs. Workspace boundary is preserved.
-7. **Tamper-proof audit trail.** Every state transition on a regulated
-   entity (cap-table mutation, listing accept/withdraw, round close)
-   writes to `audit_events`, which is immutable at the DB trigger level.
-
-## 5. Product Architecture: The Five Hubs
-
-### 5.1 Mental model
-
-```
-            ┌──────────────────────────────────────────────────┐
-            │              PLATFORM LAYER                      │
-            │  Auth · i18n EN/AR · Multi-workspace · Messages  │
-            │  Discovery (/explore) · Data Room tokens · Audit │
-            └──────────────────────────────────────────────────┘
-                                  ▲
-       ┌─────────┬────────────────┼────────────────┬─────────┐
-       │         │                │                │         │
-  ┌────────┐ ┌─────────┐ ┌────────────┐ ┌────────┐ ┌────────────┐
-  │ Startup│ │Investmnt│ │  Trading   │ │  Exit  │ │Partnership │
-  │   Hub  │ │   Hub   │ │    Hub     │ │  Hub   │ │    Hub     │
-  │        │ │         │ │ (Secondary)│ │ (Whole)│ │ (Human)    │
-  └────────┘ └─────────┘ └────────────┘ └────────┘ └────────────┘
-```
-
-Each hub is an entry point in the sidebar and owns one or more app routes.
-Hubs share the platform layer; they do not depend on each other (with one
-exception: the Exit Hub blocks Trading Hub posts in the same workspace —
-see §5.4).
-
-### 5.2 Hub-to-route map
-
-| Hub | Sidebar entry | Primary routes |
-|---|---|---|
-| **Startup Hub** | "My Startup" (expandable) | `/dashboard`, `/company`, `/members`, `/governance`, `/compliance`, `/vault`, `/traction`, `/audit`, `/setup` |
-| **Investment Hub** | "Round" (top-level) | `/cap-table`, `/esop`, `/rounds`, `/term-sheets`, `/investor-updates`, `/valuation`, `/dilution`, `/waterfall` |
-| **Trading Hub** | "Marketplace" (top-level) | `/marketplace` (Browse + Mine tabs) |
-| **Exit Hub** | "Marketplace" Browse tab; `/connections?filter=exit` | `/connections`, `/connections/[id]`, `/acquisition` (M&A modelling) |
-| **Partnership Hub** | "Talents", "Advisors" (top-level) | `/connections?seeking=…`, `/connections/[id]` |
-| **Platform** | "Explore", "Messages", "Settings", "My profile" | `/explore`, `/messages`, `/settings`, `/profile`, `/sign-in`, `/sign-up` |
-
-### 5.3 What lives where
-
-The split is opinionated. When in doubt:
-- **Startup Hub** is about *being* a company (identity, governance, ops).
-- **Investment Hub** is about *raising capital* (equity instruments, rounds).
-- **Trading Hub** is about *individual shareholders moving equity* between
-  themselves (secondary).
-- **Exit Hub** is about *the company moving as a whole* (acquisition, sale).
-- **Partnership Hub** is about *humans joining the company* (co-founder,
-  advisor, senior hire, business partner).
-
-### 5.4 Cross-hub invariants
-
-A few rules enforced at the database level that span hubs:
-
-| Invariant | Hubs touched | Enforced in |
-|---|---|---|
-| A workspace cannot have an open Exit listing AND open secondary share listings simultaneously | Trading + Exit | `create_share_listing` RPC; `create_connection_listing` RPC |
-| A workspace cannot have an open Exit listing AND an open Partnership listing | Exit + Partnership | `create_connection_listing` RPC |
-| One open Exit listing per workspace | Exit | `create_connection_listing` RPC |
-| Closing a Round auto-converts iSAFE/SAFE/CN to ordinary; cap table updates atomically | Investment | `close_financing_round` RPC |
-| Accepting a connection inquiry mints a scoped `data_room_links` token | Exit + Partnership + Platform | `accept_connection_inquiry` RPC |
-
-## 6. The Five Hubs — Detail
-
-### 6.1 Startup Hub
-
-**Purpose.** The workspace itself — everything about being a KSA startup
-that isn't fundraising, trading, exiting, or hiring. The boring,
-non-negotiable infrastructure.
-
-**Primary user.** Founder + co-founders + early employees who need
-visibility into the workspace.
-
-**Features.**
-
-| Feature | Status | Route | Description |
-|---|---|---|---|
-| Dashboard | Shipped | `/dashboard` | Tiles: cap-table health, recent round, recent activity, Connections pulse. |
-| Company info & public profile | Shipped | `/company` | Editable workspace identity (name, one-liner, sector, stage, city). Toggle to publish on `/explore`. |
-| Members & roles | Shipped | `/members` | Add/remove workspace members. Roles: owner, admin, viewer. Invite by email with signed token. |
-| Governance | Shipped | `/governance` | Board meetings (agenda, minutes), resolutions (templated). |
-| Compliance | Shipped | `/compliance` | KSA-specific obligations: ZATCA, GAZT, MOC. Due-date tracker with reminders. |
-| Document Vault | Shipped | `/vault` | Tiered document storage (intro / standard / diligence). Signed share-link tokens; no workspace grant needed. |
-| Traction | Shipped | `/traction` | MRR, customers, runway. Private by default; toggle to publish on `/explore`. |
-| Audit | Shipped | `/audit` | Append-only ledger of every regulated state change. Tamper-proof at DB level. |
-| Onboarding setup | Shipped | `/setup` | New-workspace flow. Reused for "+ New startup" from sidebar. |
-
-**Data model footprint.** `workspaces`, `workspace_members`,
-`board_meetings`, `board_resolutions`, `compliance_obligations`,
-`data_room_links`, `data_room_documents`, `traction_metrics`,
-`audit_events`.
-
-**v1.1 changes.** None. The Startup Hub kept the same routes when the
-sidebar restructured around top-level hubs.
-
-**Open items.** Permissions UI for non-owner roles (admin vs viewer
-distinctions are partial). Compliance reminders use email but not push.
-
-### 6.2 Investment Hub
-
-**Purpose.** End-to-end fundraising. From issuing the first iSAFE to
-closing a priced round and updating the cap table atomically.
-
-**Primary user.** Founder during a raise; investors get scoped read
-access via the data-room token mechanism.
-
-**Features.**
-
-| Feature | Status | Route | Description |
-|---|---|---|---|
-| Cap Table | Shipped | `/cap-table` | Shareholders, instruments (iSAFE green, SAFE, Convertible Note, Ordinary), per-class breakdown, fully-diluted view. |
-| ESOP | Shipped | `/esop` | Option pool size, grants per teammate, vesting schedules, vested-at-date math. |
-| Rounds | Shipped | `/rounds` (Open tab + Mine tab) | Round pipeline: draft → open → closed. Per-round investor pipeline, term sheets, signed-share-link diligence. Cross-workspace open-rounds browse (v1.1). |
-| Term Sheets | Shipped | `/term-sheets` | Templates per instrument type. Round-attached or standalone. |
-| Investor Updates | Shipped | `/investor-updates` | Templated update emails. Recipient lists per round. Resend integration. |
-| Valuation | Shipped | `/valuation` | Pre-money, post-money, instrument conversion preview. |
-| Dilution | Shipped | `/dilution` | Scenario modelling: "what if we raise X at Y pre-money." |
-| Waterfall | Shipped | `/waterfall` | Liquidation preference + participation math per instrument class. |
-| iSAFE/SAFE/CN auto-conversion on round close | Shipped | `close_financing_round` RPC | Atomic cap-table mutation. |
-
-**Data model footprint.** `instruments`, `shareholders`,
-`share_holdings`, `option_grants`, `option_pool_events`,
-`financing_rounds`, `round_investors`, `term_sheets`, `investor_updates`,
-`investor_update_recipients`, `valuation_runs`.
-
-**v1.1 changes.** `/rounds` got a Browse / Mine tab split. Browse queries
-`financing_rounds WHERE is_public=true AND status='open'` across all
-workspaces. Founders opt in per round.
-
-**Open items.**
-- **Publish flow UI for `financing_rounds.is_public`.** The flag exists
-  and the cross-workspace query works, but there is no UI to flip it
-  from inside the app — currently opt-in by SQL only. Without this,
-  fresh-workspace Browse tabs are empty. **P0 follow-up.**
-- Cross-investor messaging is intentionally absent (no on-platform DMs);
-  contact happens via investor-update email threads.
-
-### 6.3 Trading Hub
-
-**Purpose.** Secondary equity marketplace. An existing shareholder
-(employee with vested options, angel, ex-employee) can post part of
-their equity for sale. Built-in ROFR notifications to other existing
-shareholders.
-
-**Primary user.** Selling shareholder; buyer is typically another
-existing shareholder or a new investor identified off-platform.
-
-**Features.**
-
-| Feature | Status | Route | Description |
-|---|---|---|---|
-| My listings | Shipped | `/marketplace` (Mine tab) | Workspace-internal management view. Status: open, withdrawn, sold off-platform. |
-| Public secondary browse | Shipped (v1.1) | `/marketplace` (Browse tab, default) | Cross-workspace public listings where seller opted in (`is_public=true`). Co-located with exit listings (see Exit Hub). |
-| ROFR notifications | Shipped | Server side | On new listing, existing shareholders are notified by email and shown an Exercise / Decline action. |
-| Listing detail | Shipped | `/marketplace/[id]` | Public summary, ask price, shares offered, ROFR row per existing shareholder. |
-| Posted-ask model (no fund movement) | Shipped | DB constraint | The listing is a bulletin-board ask; closing happens off-platform with SPA + board consent + registry update. |
-| Bidirectional exit collision | Shipped (v0.2.0.0) | `create_share_listing` RPC | A workspace with an open Exit listing cannot post secondary shares — whole-company sale supersedes individual share sales. |
-
-**Data model footprint.** `share_listings`, `share_listing_rofr_events`.
-
-**v1.1 changes.**
-- Browse tab is now the default; "Mine" is opt-in via `?tab=mine`.
-- Browse co-locates secondaries with exits — buyers see "shareholders
-  selling part of their equity" and "companies open to whole-company
-  sale" in the same surface.
-
-**Open items.**
-- **Publish flow UI for `share_listings.is_public`.** Same gap as
-  Investment Hub — flag exists, no in-app toggle. **P0 follow-up.**
-- Match engine, anonymous tier, auction format, multi-shareholder bundle
-  listings — all explicit v2.
-
-### 6.4 Exit Hub
-
-**Purpose.** Whole-company exit listings. A founder lists their company
-for sale, acqui-hire, or merger. Inquirers (acquirers, strategic
-investors) send a structured inquiry; on accept they get contact details
-+ scoped data-room access.
-
-**Primary user.** Founder (Samir persona — actively exiting Probuy);
-inquirer is an acquirer or strategic principal.
-
-**Features.**
-
-| Feature | Status | Route | Description |
-|---|---|---|---|
-| Create exit listing | Shipped (v0.2.0.0) | `/connections/new?type=exit` | Required: `public_summary`. Structured: `ask_type` (Active sale / Open to offers / Acqui-hire / Merger), `ask_amount_sar` (optional), `sector`, `stage`. |
-| Browse exit listings | Shipped (v0.2.0.0); co-located with secondaries in `/marketplace` Browse (v1.1) | `/connections?filter=exit` and `/marketplace` | Cross-workspace browse. Magenta `#C73E9D` identity color. |
-| Exit listing detail | Shipped | `/connections/[id]` | Public summary, ask details, inquiry CTA for non-owners; owner sees inquiry rows + accept/decline/close actions. |
-| Inquiry handshake (one-step accept) | Shipped | `/connections/[id]` and `send_connection_inquiry` / `accept_connection_inquiry` RPCs | sent → accepted (contact reveal + data-room token) → closed. Bidirectional close after accept; owner-only close before. |
-| Acquisition (M&A) modelling | Shipped | `/acquisition` | Pre-listing modelling: how the cap table waterfalls under different acquisition prices. |
-| Email templates | Shipped | `lib/email/connections.ts` | inquiry-sent, inquiry-accepted-with-contact, inquiry-declined, listing-published. |
-| Collision rules | Shipped | RPCs | Open exit ↔ open share_listings (mutually exclusive); open exit ↔ open partnership (mutually exclusive); one open exit per workspace. |
-
-**Data model footprint.** `connection_listings` (with `listing_type='exit'`),
-`connection_inquiries`, `data_room_links` (token mint on accept).
-
-**v1.1 changes.** Co-located with Trading Hub on `/marketplace` Browse.
-The /connections page remains canonical for exit listing detail and the
-inquiry flow; `/marketplace` Browse links into it.
-
-**Open items.**
-- **Sharia advisor consult extension (Turky).** Original consult covered
-  the secondary marketplace; whole-company exits are a new transaction
-  type. **BLOCKING for public launch.**
-- **CMA broker-dealer go/no-go (Mahmoud).** Whole-company sale ask may
-  require CMA framing clarity. **BLOCKING for exit listing type.**
-- **Samir confirmation.** Public named listing for Probuy. **BLOCKING.**
-- Anonymous / blind listings — explicit v2.
-- DocuSign-style real NDA at data-room access — v2.
-
-### 6.5 Partnership Hub
-
-**Purpose.** Founder partnership matchmaking. Co-founders, advisors,
-senior hires, and business partners — discoverable across workspaces.
-
-**Primary user.** Founder (Saif persona — actively seeking partners);
-inquirer is a founder, operator, advisor, or senior candidate.
-
-**Features.**
-
-| Feature | Status | Route | Description |
-|---|---|---|---|
-| Create partnership listing | Shipped (v0.2.0.0) | `/connections/new?type=partnership` | Required: `public_summary`. Structured: `seeking_type` (Co-founder / Advisor / Senior hire / Business partner), `skills[]` (max 10), `equity_expectations` (free text ≤200 chars), `commitment_type` (Full-time / Part-time / Advisory / Flexible). |
-| Browse partnership listings | Shipped (v0.2.0.0) | `/connections?filter=partnership` | Cross-workspace browse. Lavender `#8A6FE8` identity color. |
-| **Talents** filter (v1.1) | Shipped (v1.1) | `/connections?seeking=senior_hire` | Sidebar entry; filtered partnership browse for `type_data->>'seeking_type' = 'senior_hire'`. |
-| **Advisors** filter (v1.1) | Shipped (v1.1) | `/connections?seeking=advisor` | Sidebar entry; filtered partnership browse for advisor. |
-| Inquiry handshake | Shipped | Same as Exit Hub | Identical flow — one schema, one RPC family. |
-| Email templates | Shipped | Same as Exit Hub | Same four templates work for both listing types. |
-
-**Data model footprint.** `connection_listings` (with
-`listing_type='partnership'`), `connection_inquiries`.
-
-**v1.1 changes.** New top-level Talents and Advisors sidebar entries
-deep-link into role-scoped partnership filters via the `seeking` query
-param (also accepts a `role` alias the sidebar uses).
-
-**Open items.**
-- **Promote `seeking_type` to a first-class column on
-  `connection_listings`.** Currently filtered via JSONB
-  (`type_data->>'seeking_type'`); fine at v1.1 scale but should be a
-  column with an index if Talents/Advisors becomes a hot path.
-- **Sharia consult — partnership-specific concerns.** Equity expectations
-  in partnership listings need explicit clearance. **Same blocker as
-  Exit Hub.**
-- Algorithmic matching, advisory-marketplace pricing, co-founder
-  sub-marketplace separate from partnership — v2.
-
-## 7. Platform Layer
-
-The cross-cutting infrastructure every hub relies on.
-
-### 7.1 Authentication and Identity
-
-- **Sign-in / Sign-up.** Email + password via Supabase auth. Split-layout
-  pages (v1.1): dark marketing pane on the leading edge with the
-  "Elevating Capital Flow in MENA" headline; auth card on the trailing
-  edge with Create Account / Sign In tabs and visual-only social buttons
-  (Google / LinkedIn / Apple — stubs until OAuth providers are wired).
-- **Magic link / session recovery.** Magic-link signin keys exist; not
-  wired to a UI surface.
-
-### 7.2 Internationalisation (EN/AR)
-
-- **28 i18n namespaces** registered in `lib/i18n/I18nProvider.tsx`
-  (one per major surface plus shared `common` and `nav`).
-- **react-i18next** with synchronous lazy-init so SSR + first paint
-  always have a provider; a MutationObserver on `<html lang>` swaps the
-  language post-paint when the user toggles.
-- **RTL.** Logical properties throughout (`start`/`end`, `ps-`/`pe-`,
-  `text-start`); Cairo font for Arabic, Inter for Latin; bilingual aria
-  labels on language toggles.
-
-### 7.3 Multi-workspace
-
-- A user can own multiple workspaces (founders running two startups) or
-  be a member of others (advisors, employees).
-- **Active workspace** stored in the `vp_active_workspace` cookie;
-  resolved on the server via `getActiveWorkspace()` with RLS-aware
-  fallback to earliest-created accessible workspace.
-- **Sidebar (v1.1).** "My Startup" expands to list every workspace the
-  user owns or is a member of. The active workspace auto-expands inline
-  to show the per-workspace nav (cap table, ESOP, governance, etc.);
-  others collapse to a single switch-to row.
-
-### 7.4 Messages — inquiry inbox (v1.1)
-
-- **`/messages`** is a read-only inbox over `connection_inquiries`. Lists
-  every inquiry where one of the user's workspaces is on either side.
-- Filters: direction (incoming/outgoing) and status (sent/accepted/
-  declined/closed).
-- Rows link to `/connections/[id]` for the act-on-inquiry surface (the
-  inbox is the routing layer, not a second action layer).
-- **No on-platform DMs.** Contact reveal is via email post-accept.
-
-### 7.5 Discovery — `/explore`
-
-- Cross-workspace public discovery page. Four sections:
-  1. **Companies open to exit** (exit listings)
-  2. **Founders, advisors, talent** (partnership listings)
-  3. **Shareholders selling equity** (public secondary listings)
-  4. **KSA & MENA startups** (published public profiles)
-- Guests (unauthenticated) see the companies grid; signed-in users see
-  every section.
-
-### 7.6 Data Room (token-based scoped access)
-
-- `data_room_links` rows store signed tokens with TTL (default 14d, max
-  90d) and an access tier (intro / standard / diligence).
-- On connection-inquiry accept: mint a token, email the inquirer, no
-  workspace membership grant.
-- Tokens are revocable (`is_active=false`); blast radius capped by TTL.
-- PG17-compatible URL-safe base64 token generation (fixed in v0.2.0.0).
-
-### 7.7 Audit trail
-
-- `audit_events` append-only; immutability trigger blocks UPDATE/DELETE
-  on covered entity types.
-- Covers: `cap_table_mutation`, `share_listing`, `share_listing_rofr`,
-  `connection_listing`, `connection_inquiry`, `data_room_link`,
-  `governance_event`.
-
-### 7.8 Settings and Profile (v1.1)
-
-- **`/settings`** — account chrome: email (readonly), language + theme
-  toggles, "+ new startup" link, sign-out.
-- **`/profile`** — user identity: avatar (gradient initials), email,
-  owned vs joined workspace stats, per-workspace role rows, user ID
-  panel for support.
-
-### 7.9 App shell (v1.1)
-
-- **Sidebar.** Narrow leading rail with icon + label entries:
-  Explore · Marketplace · My Startup (expandable) · Round · Messages ·
-  Talents · Advisors · Settings · My profile · user pill at bottom.
-- **Header.** Sticky translucent bar: hamburger / workspace switcher
-  (left), centered global search with ⌘K hint (right of leading group),
-  language toggle / theme toggle / notifications popover / avatar
-  dropdown (trailing edge).
-- **Theme.** `data-theme="dark"|"light"` on `<html>`; tokens defined per
-  mode in `globals.css`. Marketing pane on auth pages is locked to dark
-  for hero contrast.
-
-### 7.10 Compliance and regulatory framing
-
-- **Sharia.** Reviewed surface-by-surface with Turky. iSAFE green is
-  permanent. Connections Hub (exits + partnerships) needs the consult
-  extension before public launch.
-- **CMA.** Bulletin-board / no-fund-movement framing keeps the platform
-  outside broker-dealer scope. Mahmoud's go/no-go required before exit
-  listings go live publicly.
-- **ZATCA.** Tax handling for off-platform closes is the seller's
-  responsibility; we surface capital-gains tax language in the
-  marketplace "how closing works" panel.
-
-## 8. Release Plan (Hub-by-Hub Sequencing)
-
-The product is released as five hubs. Today, all five are shipped at
-v1.1 in some form, but discoverability gaps remain.
-
-### 8.1 Status Today (2026-05-17)
-
-```
-v0.1.0   Startup Hub + Investment Hub + Trading Hub (workspace-internal)
-v0.2.0.0 + Exit Hub + Partnership Hub (Connections Hub launch)
-v1.1     + Sidebar restructure: hubs as top-level entries
-         + /messages inbox (Platform)
-         + /settings + /profile (Platform)
-         + Marketplace Browse (Trading × Exit co-location)
-         + Rounds Browse (Investment cross-workspace)
-         + Talents + Advisors (Partnership role filters)
-         + Split-layout auth (Platform)
-v1.2     + close_financing_round RPC (atomic apply, audit trail)
-         + is_public toggle for financing_rounds (Investment publish flow)
-         + is_public toggle for share_listings + ROFR gate (Trading publish flow)
-         + account_notifications table + 4 triggers + bell wiring (Platform)
-         + full-text search (tsvector + GIN + RPC + ⌘K dropdown)
-         + investor_update_recipients + per-recipient open tracking + resend-to-unopened
-         + transfer-agent cap-table sync on secondary sale
-         + acquisition_models + compute_acquisition_model RPC (Exit modelling)
-         + seeking_type promoted to first-class indexed column
-         + UX hardening: sidebar persistence + workspace switcher reliability
-         + Profile completeness (user_profiles: display_name, bio, avatar, location)
-         + Settings depth (password + email change real; 2FA + sessions scaffolded;
-           date format + timezone; notification prefs; plan/billing surface;
-           KSA PDPL data export + account deletion request)
-         + Shared UI: word-safe truncation, gradient WorkspaceMark on cards
-         + Dilution validation (warn ≥30%, block >50% on publish)
-         + Thread view at /messages/[inquiryId] + reply compose
-         + Context-aware eyebrow/subtitle per /connections?seeking= variant
-         + Equity-terms gating (request-to-view on partnership listings)
-```
-
-### 8.2 Near-term (next 4–6 weeks)
-
-The v1.1 P0/P1/P2 backlog is **fully cleared**. See §13 for what shipped.
-What's left is a small set of external blockers + a few v1.3-candidate
-follow-ups.
-
-**Still BLOCKING — Exit Hub external blockers.** Three calls (Samir,
-Turky, Mahmoud). Until cleared, exit listings remain "soft-launched" —
-sidebar entry visible, but no founder outreach. See §10.
-
-**v1.3 candidates (next prompt cycle):**
-
-- **Real 2FA + active sessions** in `/settings`. v1.2 ships the cards as
-  "Coming soon" scaffolds. Wiring requires Supabase MFA enrollment +
-  session-list endpoints.
-- **Plan & billing — paid tier.** v1.2 ships a marketing-only "Contact
-  us to upgrade" card. Wiring requires a chosen billing rail (Stripe vs.
-  HyperPay vs. invoice-only).
-- **Notification-preference enforcement.** v1.2 persists per-type
-  email/in-app toggles to `user_notification_preferences`; the email
-  delivery path in `lib/email/*` still sends regardless. Enforcement is
-  a single read per send.
-- **DB-level equity-terms split.** v1.2 gates equity terms on partnership
-  listings at the UI layer; the JSONB column itself is still cross-
-  workspace-readable. Splitting `type_data` into `type_data_public` and
-  `type_data_private` columns closes the actual data-level loophole.
-- **Account-deletion fulfilment.** v1.2 ships the request-only pattern
-  (INSERT into `account_deletion_requests`). The 30-day cron job that
-  actually deletes the workspace + user data is not wired.
-- **OAuth providers** (Google / LinkedIn / Apple) — buttons exist
-  visually since v1.1, still not wired.
-
-### 8.3 v2 candidates (deferred)
-
-Listed in order of probable v2 priority. None of these are committed.
-
-1. **Publish flow UI** (P0 above) is technically v1.2.
-2. **Algorithmic matching** for Partnership Hub.
-3. **Anonymous / blind listings tier** for Exit Hub (only after
-   Samir's named-listing data settles).
-4. **In-thread messaging on `/messages`** (currently routing-only).
-5. **DocuSign-style real NDA gate** at the diligence tier.
-6. **Co-founder sub-marketplace** separate from the partnership listing
-   type (only if Saif's data shows co-founder hunts dominate).
-7. **Advisory marketplace with pricing.**
-8. **Readiness assessment scoring** for exit listings.
-9. **Events / demo days.**
-10. **Sector / proximity filters on browse** (requires
-    `workspace.sector` model expansion).
-11. **Multi-shareholder bundle listings** in Trading Hub.
-12. **OAuth providers** (Google / LinkedIn / Apple) — buttons exist
-    visually, no provider wired.
-
-### 8.4 Kill criteria per hub
-
-| Hub | If by Day 30 post-launch… | Then… |
-|---|---|---|
-| Exit | No exit listings beyond Samir despite direct outreach | Premise 1 wrong — pause exit listing type. |
-| Partnership | No partnership listings beyond Saif despite direct outreach | Premise 1 wrong — pause partnership listing type. |
-| Trading | <5 public secondary listings | Browse-tab co-location with Exit is masking the gap — re-evaluate the publish flow UX. |
-| Investment cross-workspace | <5 public rounds | Founders don't want public rounds — surface remains workspace-internal. |
-
-The Startup Hub has no kill criteria — it is the substrate the other
-hubs depend on.
-
-## 9. Out of Scope (Explicit)
-
-Items the product team should stop receiving requests for, until/unless
-the v2 list activates:
-
-- **On-platform fund movement.** No custody, no settlement, no payments.
-  Closing happens off-platform with lawyers + registry. This is a Sharia
-  and CMA choice, not a feature gap.
+## 2. Product Vision & Objective
+
+### 2.1 Background & Summary
+
+VenturePath is the **Sharia-compliant operating system for KSA founders**, covering the full lifecycle: cap table, fundraising, secondary equity trading, whole-company exits, and founder partnerships (co-founders, advisors, senior hires, business partners) — in one bilingual (EN/AR + RTL) platform.
+
+The product is organised into **five hubs** + a **platform layer**. Each hub is independently usable and shippable. No fund movement on platform; every transaction closes off-platform under existing KSA legal frameworks (Sharia + CMA aligned).
+
+**Core problems solved:**
+1. **Cap-table chaos** — founders manage equity in Excel. No Sharia-compliant tooling exists; US tools like Carta don't model iSAFE.
+2. **Fundraising fragmentation** — round-running spread across Excel / email / Drive / WhatsApp. No structured pipeline, no auto-conversion of iSAFE/SAFE/CN on close.
+3. **Trapped equity** — existing shareholders wanting to sell part of their stake have no bulletin board with built-in ROFR.
+4. **Broken founder marketplaces** — exit-seekers and partnership-seekers currently live in LinkedIn DMs, Telegram groups, or paid brokers.
+
+**Why VenturePath wins:**
+- **iSAFE wedge** — Sharia-compliant convertible instrument built for KSA market reality. Permanent green identity in the design system.
+- **KSA-first** — SAR-native, ZATCA-aware, Hijri-friendly, Cairo + Inter typography, full RTL.
+- **Verified-data moat** — every cross-workspace listing is anchored to a real cap table on platform. AngelList has anonymous profiles; we have cap-table receipts.
+- **Off-platform closing** — no fund custody, no settlement risk; aligned with CMA broker-dealer reality and Sharia jurisprudence.
+
+### 2.2 Business Goals
+
+1. **G1 — Seller-side activation in KSA founder market.** Validate that two named founders (Samir for exits, Saif for partnerships) close real transactions on VenturePath within 90 days of v0.3.0.0 ship. *(Premise 1 from the founder's office-hours doc.)*
+2. **G2 — Cross-workspace flywheel.** Get to 5+ public secondary listings and 5+ public open rounds within 30 days of v0.3.0.0 — the threshold where Browse tabs become useful rather than empty.
+3. **G3 — Sharia and CMA clearance.** Close out the Turky (Sharia advisor) consult extension and the Mahmoud (CMA contact) go/no-go for whole-company exit listings before the public Exit Hub launch.
+4. **G4 — Bilingual parity.** No English-only surface ships to production. Every new feature lands with both EN and AR i18n.
+5. **G5 — Zero-fund-movement compliance posture.** Maintain the bulletin-board model. Reject any feature proposal that puts the platform in custody / settlement / payments scope.
+
+### 2.3 Success Metrics (KPIs)
+
+| KPI | Target | Measurement |
+| :--- | :--- | :--- |
+| **K1 — Workspaces with at least 1 published listing/round** | 5+ within 30 days of v0.3.0.0 | `share_listings.is_public=true` ∪ `financing_rounds.is_public=true` ∪ `connection_listings.status='open'` |
+| **K2 — Connection-inquiry handshakes (sent → accepted)** | First handshake within 7 days; 5+ within 30 days | `connection_inquiries.status='accepted'` count |
+| **K3 — Real off-platform close** | First closed deal (exit OR partnership OR secondary) attested by founder by day 90 | Manual attestation + `mark_share_listing_sold_off_platform` cap-table sync |
+| **K4 — Daily active workspaces** | Establish baseline; target 30%+ DAU growth MoM over Q3 | Distinct workspace IDs with at least one server action / page view per day |
+| **K5 — Investor-update open rate** | ≥40% per send by v1.3 | `investor_update_recipients.opened_at IS NOT NULL` / total recipients |
+| **K6 — Notification feed unread→read latency** | Median <12h once a user signs in | `account_notifications.is_read` flip timestamp |
+| **K7 — Bilingual usage** | ≥20% of sessions in Arabic by v1.3 | `<html lang="ar">` sessions / total |
+
+**Kill criteria** (per hub) — if true at day 30 post-launch, deprecate the hub or the surface:
+
+| Hub | If by Day 30… | Then |
+| :--- | :--- | :--- |
+| Exit | No exit listings beyond Samir despite direct outreach | Premise 1 wrong — pause exit listing type |
+| Partnership | No partnership listings beyond Saif despite direct outreach | Premise 1 wrong — pause partnership listing type |
+| Trading | <5 public secondary listings | Re-evaluate publish-flow UX |
+| Investment cross-workspace | <5 public open rounds | Founders don't want public rounds — keep workspace-internal only |
+
+The Startup Hub has no kill criteria — it is the substrate the other hubs depend on.
+
+---
+
+## 3. User Personas & Target Audience
+
+| Persona | Description | Primary hub(s) | Wedge action |
+| :--- | :--- | :--- | :--- |
+| **P1 — Founder, pre-seed/seed** | KSA founder running their first proper raise. | Startup, Investment | Set up cap table, run an iSAFE round, send investor updates. |
+| **P2 — Founder, late-stage** | Has investors, runway concerns, or exit interest. | Investment, Exit, Trading | Model dilution / waterfall; list for exit; let early shareholders post secondary asks. |
+| **P3 — Founder, partnership-seeking** *(Saif)* | Actively looking for co-founder / advisor / senior hire / business partner. | Partnership | List partnership opportunity; respond to inquiries. |
+| **P4 — Founder, exit-seeking** *(Samir / Probuy)* | Wants to sell the company. | Exit | List for exit; grant data-room access on inquiry accept. |
+| **P5 — Operator** (senior hire, advisor candidate) | Senior individual contributor or advisor open to joining a KSA startup. | Partnership | Browse partnership listings; send inquiry; accept equity grant. |
+| **P6 — Existing shareholder** (employee, angel) | Owns equity, wants partial liquidity. | Trading | Post secondary ask; respond to ROFR notifications. |
+| **P7 — Acquirer / strategic** | Wants to buy a KSA company or do an acqui-hire. | Exit | Browse exit listings; send inquiry; access scoped data room. |
+| **P8 — Investor** (VC, angel, family office) | Browses for opportunities + tracks portfolio. | Investment, Trading, Exit | Browse open rounds, secondary listings, exit listings; assess via verified data. |
+| **P9 — System Administrator** | Internal ops (founder + future support hires). | Platform | Manage workspace integrity; respond to compliance flags. |
+
+**Validation status:** P3 (Saif) and P4 (Samir) are validated by direct unprompted follow-up. P5, P7, P8 are inferred from market structure and not pre-validated with named individuals — relying on seller-side personas (P3, P4) being correct first.
+
+---
+
+## 4. Feature Scope & Requirements
+
+### 4.1 Scope Classification
+
+#### In-Scope (Shipped — v0.3.0.0)
+
+**Startup Hub** — workspace identity + governance + compliance + ops:
+- Dashboard (`/dashboard`) with KPI tiles and Connections pulse.
+- Company info + public profile (`/company`) with toggle to publish.
+- Workspace members + roles (`/members`, owner / admin / viewer enum).
+- Governance (`/governance`) — board meetings + resolutions.
+- KSA compliance timeline (`/compliance`) — ZATCA, GAZT, MOC obligations.
+- Document Vault (`/vault`) — tiered access (intro / standard / diligence) via signed tokens.
+- Traction (`/traction`) — MRR, customers, runway with publish toggles per metric.
+- Audit trail (`/audit`) — tamper-proof append-only event log.
+- User profile (`/profile`, `/profile/edit`) — display name, bio, avatar, LinkedIn, location.
+
+**Investment Hub** — fundraising end-to-end:
+- Cap table (`/cap-table`) — iSAFE, SAFE, Convertible Note, Ordinary instruments.
+- ESOP (`/esop`) — pool size, grants, vesting schedules.
+- Financing rounds (`/rounds`) with Open (cross-workspace) and Mine tabs.
+- `is_public` toggle (REQ-INV-02) — round-creation wizard + management view.
+- Atomic `close_financing_round` RPC (REQ-INV-01) — auto-converts iSAFE/SAFE/CN to ordinary in one transaction.
+- Term sheets (`/term-sheets`) — templates per instrument.
+- Investor updates (`/investor-updates`) with per-recipient open tracking (REQ-INV-03) + re-send to unopened.
+- Valuation (`/valuation`), Dilution modeller (`/dilution`) with ≥30% warn + >50% block, Waterfall (`/waterfall`), M&A modeller (`/acquisition` — REQ-EXIT-01).
+
+**Trading Hub** — secondary equity:
+- Browse (cross-workspace public listings + exit listings co-located) and Mine tabs at `/marketplace`.
+- `is_public` toggle (REQ-TRADE-01) with ROFR-window gate.
+- Transfer-agent cap-table sync (REQ-TRADE-02) — buyer details on mark-sold auto-update cap table.
+- ROFR notifications (`rofr_notifications` table) — existing shareholders notified per listing.
+
+**Exit Hub** — whole-company exits:
+- Exit listing creation (`/connections/new?type=exit`) + management.
+- Cross-workspace browse co-located on `/marketplace` Browse + `/connections?filter=exit`.
+- M&A modelling (`compute_acquisition_model` RPC) with 5-scenario cap per workspace.
+- Inquiry handshake (one-step accept → contact reveal + signed data-room token).
+
+**Partnership Hub** — human-capital matchmaking:
+- Partnership listing creation + management with structured fields (seeking_type, skills, equity_expectations, commitment_type).
+- Talents (`/connections?seeking=senior_hire`) and Advisors (`/connections?seeking=advisor`) deep-link filters.
+- `seeking_type` first-class indexed column (REQ-PART-01).
+- Context-aware eyebrow + subtitle per seeking variant (audit item #12).
+- Equity-terms gating (audit item #10) — request-to-view flow on partnership listings.
+- Co-founder and business-partner variants via the same `seeking_type` column.
+
+**Platform Layer**:
+- Bilingual EN/AR + full RTL (28 i18n namespaces, react-i18next).
+- Multi-workspace switching with localStorage-persisted sidebar state.
+- `/messages` inquiry inbox + `/messages/[inquiryId]` reply-capable thread view.
+- `/explore` cross-workspace discovery (companies + exits + partnerships + secondaries).
+- Data room signed-token mechanism (TTL default 14d, max 90d).
+- `account_notifications` aggregation + bell wiring (REQ-PLAT-01) — 4 triggers across inquiry / ROFR / update view.
+- Full-text search (REQ-PLAT-02) — tsvector + GIN + ⌘K dropdown.
+- `/settings` — real password + email change; date format + timezone; per-type notification preferences; KSA PDPL data export; account-deletion request (30-day pattern); plan/billing surface; "Coming soon" scaffolds for 2FA + active sessions.
+- Tamper-proof audit trail (`audit_events`) — immutability trigger over 9 entity types.
+- Split-layout auth pages (`/sign-in`, `/sign-up`).
+
+#### Out-of-Scope (v1.3 candidates — deliberately deferred)
+
+- **Real 2FA enrollment + active session management.** v0.3.0.0 ships UI scaffolds; Supabase MFA wiring deferred.
+- **Plan & billing — paid tier.** v0.3.0.0 ships a marketing card; no Stripe / HyperPay / invoicing rail.
+- **Notification-preference enforcement in email delivery.** Preferences persist; email sender doesn't read them yet.
+- **DB-level equity-terms split.** UI gates `equity_expectations`; JSONB column is still cross-workspace-readable. Splitting into `type_data_public` / `type_data_private` closes the loophole.
+- **Account-deletion fulfilment cron.** Request-only pattern shipped; no scheduled job deletes data after 30 days.
+- **OAuth providers** (Google / LinkedIn / Apple) — buttons visible since v1.1, none wired.
+- **Search across investor_updates / term_sheets / audit_events.** v0.3.0.0 covers workspaces + connection_listings + financing_rounds.
+- **Notification trigger on inquiry-message reply.** Thread view ships without a notification when a reply lands.
+
+#### Out-of-Scope (v2 — explicit non-goals)
+
+- **On-platform fund movement.** No custody / settlement / payments. *Sharia + CMA choice, not a feature gap.*
 - **Anonymous listings (Exit or Partnership).** v1 named-only.
-- **NDA tier / click-through NDA gate at data-room access.** Token TTL
-  + revocable `is_active` is the v1 model.
-- **Two-step inquiry accept.** Owner accept = contact reveal.
-- **Monetisation** (listing fees, paywalls, "see who viewed your
-  listing", referral revenue). Pre-revenue by design until v2 traction
-  data justifies a model.
-- **On-platform DMs / chat / threaded messaging.** Email is the channel
-  post-accept.
-- **Sector / proximity filters on browse.** Requires `workspace.sector`
-  data-model expansion.
-- **Multi-user listings.** A listing is owned by one workspace; co-
-  founders surface via membership on that workspace.
-- **Co-founder sub-marketplace separate from Partnership Hub.**
+- **DocuSign-style real NDA gate** at data-room access.
+- **Algorithmic matching** for Partnership Hub (browse + filter is the wedge).
+- **Co-founder sub-marketplace** separate from Partnership Hub.
 - **Advisory marketplace pricing model.**
-- **Readiness assessment scoring.**
+- **Readiness assessment scoring** for exit listings.
 - **Events / demo days.**
+- **Sector / proximity filters on browse.** Requires `workspace.sector` model expansion.
+- **Multi-shareholder bundle listings** in Trading Hub.
+- **Listing-fee monetisation** ("see who viewed your listing", paywalls). Pre-revenue by design.
 
-## 10. Dependencies and External Blockers
+### 4.2 Functional Requirements & User Stories
+
+User stories ordered by hub, then by priority. Priorities: **P1** = MVP for v0.3.0.0 (all shipped); **P2** = high-value v1.3; **P3** = v2 candidates.
+
+#### Startup Hub
+
+| ID | As a... | I want to... | So that... | Status | Priority |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **US-S01** | Founder (P1) | Create a workspace with company info, sector, founding year, one-liner | I can have a single source of truth for my startup's identity | Shipped v0.1.0 | P1 |
+| **US-S02** | Founder (P1) | Invite team members and assign owner / admin / viewer roles | I can give my CFO access to cap table without giving them workspace deletion power | Shipped v0.1.0 | P1 |
+| **US-S03** | Founder (P1) | Track ZATCA / GAZT / MOC compliance obligations with due dates | I never miss a filing | Shipped v0.1.0 | P1 |
+| **US-S04** | Founder (P1) | Schedule board meetings and store resolution templates | I have a paper trail aligned with KSA company law | Shipped v0.1.0 | P1 |
+| **US-S05** | Founder (P1) | Upload documents to a vault with intro / standard / diligence access tiers | I can share documents externally without granting workspace membership | Shipped v0.1.0 | P1 |
+| **US-S06** | Founder (P1) | Record monthly traction metrics (MRR, customers, runway) | I have a structured history for investor updates | Shipped v0.1.0 | P1 |
+| **US-S07** | Founder (P1) | See an immutable audit trail of every regulated state change | I can defend a regulator inquiry without scrambling | Shipped v0.1.0 | P1 |
+| **US-S08** | User (any persona) | Have a real profile with display name, bio, avatar, LinkedIn, location | Other VenturePath users see me as a person, not an email | Shipped v0.3.0.0 | P1 |
+| **US-S09** | Founder (P1) | Publish or unpublish my company profile from `/explore` | I control my market visibility | Shipped v0.1.0 | P1 |
+
+#### Investment Hub
+
+| ID | As a... | I want to... | So that... | Status | Priority |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **US-I01** | Founder (P1) | Add shareholders with iSAFE / SAFE / Convertible Note / Ordinary instruments | My cap table reflects every commitment | Shipped v0.1.0 | P1 |
+| **US-I02** | Founder (P1) | Issue ESOP grants with vesting schedules | I can compensate employees with equity Sharia-compliantly | Shipped v0.1.0 | P1 |
+| **US-I03** | Founder (P1) | Open a financing round with target raise + pre-money | Investors have a structured pipeline to land in | Shipped v0.1.0 | P1 |
+| **US-I04** | Founder (P1) | Track investor pipeline per round (prospect / contacted / in_discussion / term_sheet / passed / invested) | I can manage 30 investors without losing context | Shipped v0.1.0 | P1 |
+| **US-I05** | Founder (P1) | Generate term sheets per investor + track sent / signed / declined status | Round close auto-promotes signed term sheets | Shipped v0.1.0 | P1 |
+| **US-I06** | Founder (P1) | Close a round and have iSAFE / SAFE / CN holders auto-convert to ordinary in one atomic transaction | Mid-flight failure cannot leave my cap table half-converted | Shipped v0.3.0.0 (REQ-INV-01) | P1 |
+| **US-I07** | Founder (P1) | Make my round discoverable to other VenturePath investors with a one-click toggle | Cross-workspace investors can find me without me having to email them | Shipped v0.3.0.0 (REQ-INV-02) | P1 |
+| **US-I08** | Founder (P1) | Be warned (≥30%) or blocked (>50%) when implied single-round dilution looks like a typo | I don't publicly broadcast 60% dilution because I forgot a zero on pre-money | Shipped v0.3.0.0 | P1 |
+| **US-I09** | Investor (P8) | Browse open rounds across every VenturePath workspace that opted in | I find KSA deals I'd never see otherwise | Shipped v1.1 / v0.3.0.0 (exclude-own) | P1 |
+| **US-I10** | Founder (P1) | Send an investor update via Resend with per-recipient open tracking | I know who's reading and can re-send only to the unopened | Shipped v0.3.0.0 (REQ-INV-03) | P1 |
+| **US-I11** | Founder (P1) | Model dilution scenarios before publishing a round | I don't get surprised by the post-money cap table | Shipped v0.1.0 | P1 |
+| **US-I12** | Founder (P2) | Model liquidation waterfalls per instrument class | I know what each investor actually gets at exit | Shipped v0.1.0 | P1 |
+| **US-I13** | Founder (P2) | Save and compare M&A scenarios with per-shareholder payouts | I can negotiate from a position of knowing the math | Shipped v0.3.0.0 (REQ-EXIT-01) | P1 |
+
+#### Trading Hub
+
+| ID | As a... | I want to... | So that... | Status | Priority |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **US-T01** | Existing shareholder (P6) | Post a secondary ask with shares + ask price + optional notes | I have a posted-ask bulletin board instead of WhatsApp negotiation | Shipped v0.1.0 | P1 |
+| **US-T02** | Existing shareholder (P6) | Trigger ROFR notifications to other shareholders automatically | I don't bypass their right of first refusal | Shipped v0.1.0 | P1 |
+| **US-T03** | Existing shareholder (P6) | Make my listing visible to all VenturePath members with one click | Buyers across workspaces can find me | Shipped v0.3.0.0 (REQ-TRADE-01) | P1 |
+| **US-T04** | Existing shareholder (P6) | Be prevented from making a listing public while an ROFR window is still open | The ROFR mechanism stays meaningful | Shipped v0.3.0.0 | P1 |
+| **US-T05** | Founder (P1) | Mark a listing sold off-platform with optional buyer details | My cap table updates automatically — buyer appears, seller's count drops | Shipped v0.3.0.0 (REQ-TRADE-02) | P1 |
+| **US-T06** | Buyer (P8) | Browse public secondary listings + exit listings co-located | I have one place to find KSA equity opportunities | Shipped v1.1 / v0.3.0.0 (exclude-own) | P1 |
+| **US-T07** | Existing shareholder (P6) | Withdraw a listing if the deal falls through | The browse view stays accurate | Shipped v0.1.0 | P1 |
+
+#### Exit Hub
+
+| ID | As a... | I want to... | So that... | Status | Priority |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **US-E01** | Founder, exit-seeking (P4) | List my company for exit with structured ask details (sale / open-to-offers / acqui-hire / merger) | Acquirers find me without me hiring a broker | Shipped v0.2.0.0 | P1 |
+| **US-E02** | Founder, exit-seeking (P4) | Have inquirers see my listing across every VenturePath workspace | Maximum buyer pool | Shipped v0.2.0.0 / v1.1 | P1 |
+| **US-E03** | Acquirer (P7) | Send a structured inquiry on an exit listing | The seller can accept/decline without bouncing to email | Shipped v0.2.0.0 | P1 |
+| **US-E04** | Acquirer (P7) | Receive a signed data-room token on inquiry accept | I can do scoped due diligence without joining the seller's workspace | Shipped v0.2.0.0 | P1 |
+| **US-E05** | Founder, exit-seeking (P4) | Be blocked from having both an exit listing and open secondary listings simultaneously | The market gets one clear signal about my workspace's intent | Shipped v0.2.0.0 | P1 |
+| **US-E06** | Founder, exit-seeking (P4) | Save M&A modelled scenarios and optionally attach one to my exit listing | Inquirers see my modelled outcome at the asking price | Shipped v0.3.0.0 (REQ-EXIT-01) | P1 |
+| **US-E07** | Founder (P1, P4) | Withdraw an exit listing without consequence | I can reverse course if my situation changes | Shipped v0.2.0.0 | P1 |
+
+#### Partnership Hub
+
+| ID | As a... | I want to... | So that... | Status | Priority |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **US-P01** | Founder, partnership-seeking (P3) | List a partnership opportunity with structured fields (seeking_type, skills, equity_expectations, commitment_type) | Candidates self-filter by fit | Shipped v0.2.0.0 | P1 |
+| **US-P02** | Founder, partnership-seeking (P3) | Have my listing discoverable cross-workspace | Talent / advisors find me without me cold-DMing on LinkedIn | Shipped v0.2.0.0 | P1 |
+| **US-P03** | Founder, partnership-seeking (P3) | Be blocked from having a partnership listing AND an exit listing simultaneously | Market doesn't get confused about my intent | Shipped v0.2.0.0 | P1 |
+| **US-P04** | Operator (P5) | Browse partnership listings filtered by senior_hire / advisor / co_founder / business_partner | I see only listings that match my role | Shipped v1.1 (filter) / v0.3.0.0 (indexed column) | P1 |
+| **US-P05** | Founder, partnership-seeking (P3) | Have my equity_expectations field gated behind "request to view" | My negotiating terms aren't broadcast to every signed-in user | Shipped v0.3.0.0 (UI gate; v1.3 DB split) | P1 |
+| **US-P06** | Operator (P5) | Click "Request equity terms" and have it fire the standard inquiry flow | I don't have to learn a new mechanism per field | Shipped v0.3.0.0 | P1 |
+| **US-P07** | Operator (P5) | See a partnership listing page with eyebrow / subtitle specific to my role (Talents / Advisors / Co-founders / Business partners) | The product talks to my use case | Shipped v0.3.0.0 | P1 |
+| **US-P08** | Operator (P5) | Send an inquiry on a partnership listing | The founder can accept and start a conversation | Shipped v0.2.0.0 | P1 |
+
+#### Platform Layer
+
+| ID | As a... | I want to... | So that... | Status | Priority |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **US-X01** | Any user | Use the product in either English or Arabic with full RTL | KSA-first means Arabic-first, not Arabic-bolt-on | Shipped v0.2.0.0 / hardened v1.1 | P1 |
+| **US-X02** | Any user | Own multiple workspaces and switch between them in the sidebar | Founders running two startups don't manage two accounts | Shipped v1.1 / hardened v0.3.0.0 | P1 |
+| **US-X03** | Any user | Have my sidebar group expansion state persist across navigations | I'm not re-expanding the Equity group on every page change | Shipped v0.3.0.0 | P1 |
+| **US-X04** | Any user | See a notification bell badge when something I care about happens | I don't have to refresh listing pages or inbox routes | Shipped v0.3.0.0 (REQ-PLAT-01) | P1 |
+| **US-X05** | Any user | Hit ⌘K and search for a company / listing / round | Power users get instant navigation | Shipped v0.3.0.0 (REQ-PLAT-02) | P1 |
+| **US-X06** | Any user | Read inquiry threads and reply in-product instead of bouncing to email | Conversations stay in context | Shipped v0.3.0.0 | P1 |
+| **US-X07** | Any user | Change my password and email from settings | Security hygiene without an admin ticket | Shipped v0.3.0.0 | P1 |
+| **US-X08** | Any user (KSA PDPL) | Download all my data as JSON on demand | I exercise my right to access | Shipped v0.3.0.0 | P1 |
+| **US-X09** | Any user (KSA PDPL) | Request account deletion (30-day window) | I exercise my right to erasure | Shipped v0.3.0.0 (request); fulfilment v1.3 | P1 |
+| **US-X10** | Any user in KSA | Have my dates render as DD/MM/YYYY by default | The product respects my locale | Shipped v0.3.0.0 | P1 |
+| **US-X11** | Any user | Mute specific notification categories per channel (email / in-app) | I'm not nagged on categories I don't care about | Shipped v0.3.0.0 (preferences); enforcement v1.3 | P1 |
+| **US-X12** | Any user | Enroll 2FA and view active sessions across devices | My account is hardened | Scaffolded v0.3.0.0; **v1.3 P0** | P2 |
+| **US-X13** | Any user | Sign in with Google / LinkedIn / Apple OAuth | Lower friction on signup | UI present v1.1; **v1.3 P2** | P2 |
+| **US-X14** | Founder (P1) | Upgrade to a paid plan and pay via Stripe / HyperPay / invoice | I can use advanced analytics + priority support | Surface present v0.3.0.0; **v1.3 P1** | P2 |
+
+---
+
+## 5. User Experience & Design
+
+- **Design system:** Kinetic Sovereign (papyrus + teal gradient + glass refraction). Full spec in `DESIGN.md`. iSAFE green identity is permanent; magenta exits + lavender partnerships in `§3.6`.
+- **Typography:** Inter (Latin) + Cairo (Arabic).
+- **RTL:** Logical properties throughout (`start` / `end`, `ps-*` / `pe-*`). No `left` / `right` physical properties in new code.
+- **Theme:** `data-theme="light|dark"` on `<html>`. Pre-paint bootstrap script avoids flash. Auth marketing pane is locked to dark independent of theme.
+- **Shell:** Sticky translucent header (hamburger + workspace switcher · centered ⌘K search · language + theme + notifications + avatar). Narrow icon-rail sidebar with `My Startup` expandable into per-workspace nav. User pill at sidebar bottom with FREE tier badge.
+- **Card feeds:** Gradient `WorkspaceMark` per card on rounds / marketplace / connections / messages. Word-safe truncation via `lib/text/truncate.ts`.
+- **Mockups:** No standalone Figma file — design lives in code per `DESIGN.md` (component spec as source of truth).
+- **Flow diagrams:** State-machine diagrams for the inquiry handshake and round-close flow in `docs/prd-connections-hub.md` §7 and `docs/prd-venturepath-deep-dive.md` §13.1 respectively.
+
+---
+
+## 6. Non-Functional Requirements
+
+### 6.1 Performance & Scalability
+
+- **Page load:** Server-rendered routes target <2.0s on KSA 4G. Next.js dynamic routes with selective `force-dynamic` for cross-workspace queries; partial indexes on the hot paths (`share_listings_public_open_idx`, `financing_rounds`/`is_public`, `connection_listings_seeking_type_idx`, `connection_listings_browse_idx`).
+- **Search latency:** ⌘K dropdown targets <300ms p95 from keystroke to render (debounce 300ms; tsvector + GIN indexes; LIMIT 20).
+- **Cap-table mutation atomicity:** Round close runs as a single Postgres transaction via the `close_financing_round` RPC. No partial state.
+- **Concurrency:** All write-path RPCs use `FOR UPDATE` row locks to prevent races (round close, listing accept, ROFR response, mark-sold).
+- **Scale envelope:** Tested workloads up to ~5k workspaces, ~50k cap-table rows, ~10k listings. v1.3 target: 100k workspaces. JSONB scan fallbacks (e.g. `type_data` filters) are flagged for column promotion as they show up in usage data — `seeking_type` was promoted in v0.3.0.0 for this reason.
+
+### 6.2 Security & Compliance
+
+- **Encryption:** TLS 1.3 in transit (Vercel + Supabase managed). Encryption at rest via Supabase Postgres + Storage defaults.
+- **Authentication:** Supabase Auth with email + password. v0.3.0.0 ships real password / email change. **v1.3 P0:** TOTP-based 2FA + active session list.
+- **Authorization:** Postgres RLS on every table. `SECURITY DEFINER` RPCs check `auth.uid()` explicitly before bypassing RLS for write paths. `user_can_access_workspace(ws_id)` helper centralises the membership check.
+- **Audit trail:** `audit_events` is append-only via RLS (no UPDATE / DELETE policies). Marketplace + Connections + Financing-round + cap-table-mutation entity types are additionally protected by an immutability trigger (`audit_events_block_marketplace_mutation`).
+- **PDPL compliance (KSA Personal Data Protection Law):**
+  - Right to access — `Download my data` (JSON dump of 10 data sources).
+  - Right to erasure — `account_deletion_requests` table with 30-day-copy pattern. **v1.3 P0:** fulfilment cron job.
+  - Lawful basis — explicit consent at signup; cross-workspace visibility is opt-in per row.
+- **Sharia compliance:**
+  - iSAFE is the primary instrument; identified by permanent green. New instruments require Turky (Sharia advisor) sign-off.
+  - No interest-bearing instruments by default; convertible note discount handling deferred to v2.
+  - Connections Hub (Exits + Partnerships) requires consult extension from Turky before public launch. **BLOCKING**.
+- **CMA compliance:**
+  - Bulletin-board model: no fund custody, no settlement, no payments. Closing happens off-platform.
+  - Whole-company exit listings require go/no-go from Mahmoud (CMA contact). **BLOCKING**.
+  - Capital-gains tax (ZATCA) handling is the seller's responsibility; surfaced in marketplace "how closing works" panel.
+- **Equity-terms confidentiality:**
+  - v0.3.0.0 ships UI-level gating of `equity_expectations` on partnership listings (only owner + accepted-inquiry inquirer see).
+  - **v1.3 P1:** DB-level column split (`type_data_public` / `type_data_private`) closes the data-level loophole.
+
+### 6.3 Supported Platforms
+
+- **Web:** Latest 2 versions of Chrome, Safari, Edge, Firefox. Mobile Safari iOS 16+. Chrome Android 13+.
+- **Languages:** English + Arabic, both first-class with full RTL on every surface.
+- **Currencies:** SAR-native throughout. v1.3 considers multi-currency display.
+- **Timezones:** User-selectable in Settings (13 common values + UTC). Defaults to Asia/Riyadh.
+- **Native apps:** Out of scope. Web is the only client.
+
+### 6.4 Accessibility
+
+- WCAG 2.1 AA target on every shipped surface.
+- Keyboard navigation on ⌘K combobox, notifications popover, sidebar expansion, and form controls.
+- ARIA landmarks + labels on header / sidebar / main content.
+- Color tokens audited for ≥4.5:1 contrast against papyrus background.
+
+---
+
+## 7. Assumptions, Risks & Dependencies
+
+### 7.1 Assumptions
+
+- **A1:** KSA founders are using modern browsers on reasonable hardware. No IE11 support, no <1024px-wide desktop optimisation.
+- **A2:** Sharia advisor (Turky) can clear new transaction types (exits, partnerships) within a normal scoping-call timeline. The original consult covered the secondary share marketplace only.
+- **A3:** CMA bulletin-board interpretation remains stable. The platform stays out of broker-dealer scope as long as no fund movement happens on platform.
+- **A4:** Samir (Probuy founder) will accept a named public exit listing. The design doc justified named-only on the grounds that anonymisation is impossible.
+- **A5:** The verified-data moat is real — investors and acquirers will prefer cap-table-anchored listings over anonymous AngelList / Acquire.com profiles.
+- **A6:** Bilingual EN/AR is a competitive advantage, not just a feature. KSA founders default to mixed English-Arabic communication; product surfaces must support both.
+
+### 7.2 Risks
+
+| Risk | Likelihood | Impact | Mitigation |
+| :--- | :--- | :--- | :--- |
+| **R1 — Samir says no to public named exit listing** | Medium | Pauses exit listing type | Partnership listings ship independently; anonymous tier goes on v2 roadmap if Samir's signal generalises |
+| **R2 — Turky / Mahmoud surprises (Sharia or CMA flag)** | Medium | Delays Exit Hub public launch | Both consults are scoping calls, not full audits. Frame: "we extend the bulletin-board pattern; same off-platform-closing model." |
+| **R3 — Cold-start (<5 listings by day 30)** | Medium | Premise 1 disproved | Founder manually seeds 8-10 listings from existing network before public launch |
+| **R4 — Resend email delivery fails on accept** | Low | Acceptance state visible in UI but inquirer doesn't get contact email | Server action surfaces `emailWarning` to owner; owner copies contact details manually |
+| **R5 — Equity-terms UI gate bypassed by direct JSONB query** | Low (v0.3.0.0); Closed (v1.3) | Sensitive negotiating terms leaked | UI gate buys time; v1.3 P1 ships the DB-level column split |
+| **R6 — Account-deletion request without fulfilment cron** | Medium | KSA PDPL Article 32 (right to erasure) gap | Request pattern shipped; v1.3 P0 wires the 30-day scheduled job |
+| **R7 — Notification preferences ignored by email delivery** | Medium | User-trust gap; muted categories still spam | Preferences shipped; v1.3 P0 wires enforcement in `lib/email/*` |
+| **R8 — Two parallel inquiry accepts** | Very Low | Race condition | `FOR UPDATE` lock in `accept_connection_inquiry` RPC; second caller gets "already accepted" |
+| **R9 — Data-room token forwarded by inquirer** | Low | Third party gets scoped access | TTL (default 14d, max 90d) + revocable `is_active`; same risk profile as the existing share-link mechanism |
+| **R10 — Sharia ruling shifts on iSAFE structure** | Very Low | Wedge instrument invalidated | iSAFE is reviewed; deviating from Turky's scope requires re-consult |
+
+### 7.3 Dependencies
 
 | Dependency | Type | Current state | Blocks |
-|---|---|---|---|
-| **Supabase** (Postgres 17, Auth, RLS, Edge Functions, Resend integration) | Infra | Stable. Project `ezfvurrngphgwppnskus`. | Everything. |
-| **Vercel** | Infra | Stable. Production branch: `claude/activate-bypass-permissions-0sjk1`. Live at https://venture-path.vercel.app/ | Everything. |
-| **Resend** | Email delivery | Wired. `RESEND_API_KEY` configured. | Inquiry handshake emails, investor updates, ROFR notifications, compliance reminders. |
-| **Turky** (Sharia advisor) | Regulatory | Consult extension required for Exit + Partnership Hubs. | Public launch of Exit Hub; nice-to-have for Partnership Hub. |
-| **Mahmoud** (CMA contact) | Regulatory | Go/no-go required for Exit Hub. | Public launch of Exit Hub. |
-| **Samir** (Probuy founder) | Persona | Confirm acceptance of public named exit listing. | Exit Hub seed. |
-| **Saif** | Persona | Continuous follow-up on partnership listings. | Partnership Hub seed. |
-
-## 11. Glossary
-
-| Term | Definition |
-|---|---|
-| **iSAFE** | VenturePath's Sharia-compliant convertible instrument. Permanent green identity in the design system (`DESIGN.md` §3.6). |
-| **Workspace** | The unit of equity ownership. One workspace = one company = one cap table. |
-| **Public profile** | A workspace with `public_profile_published=true` and a `slug` — discoverable on `/explore`. |
-| **Exit listing** | A `connection_listings` row with `listing_type='exit'`. Whole-company sale, acqui-hire, or merger. |
-| **Partnership listing** | A `connection_listings` row with `listing_type='partnership'`. Co-founder / advisor / senior hire / business partner. |
-| **Secondary listing** | A `share_listings` row. An existing shareholder posting part of their equity for sale. |
-| **Open round** | A `financing_rounds` row with `status='open'` and `is_public=true`. Discoverable on `/rounds` Browse and `/explore`. |
-| **ROFR** | Right of first refusal. On a new secondary listing, existing shareholders are notified and can exercise or decline before the listing opens to others. |
-| **Data room token** | A signed time-limited link granting scoped read access to a workspace's vault, without granting workspace membership. |
-| **Off-platform closing** | Every transaction (round close, secondary sale, exit sale) is executed off-platform via lawyers + registry. VenturePath provides the structured-data layer and the contact reveal; it never holds funds. |
-| **Inquiry** | A `connection_inquiries` row. Structured "I'm interested in this listing" message with one-step owner accept. |
-
-## 12. Open Questions for the Product Team
-
-1. **Talents vs Advisors split.** Should we promote `partnership_role`
-   to a first-class column now (P2 on §8.2) or wait for usage data? The
-   current JSONB filter works at scale ~10k listings.
-2. **Marketplace + Exit co-location.** v1.1 puts both on `/marketplace`
-   Browse. Should the Exit Hub get its own top-level sidebar entry
-   instead (`/exits`)? Trade-off: co-location reduces tab-switching for
-   buyers; separation makes hub-level positioning cleaner for founders.
-3. **Messages future.** Read-only routing surface vs full in-thread
-   messaging. v1 + v1.1 went read-only deliberately (off-platform
-   contact via email is the principle). Should v2 reverse this?
-4. **Compliance scope.** Today we track ZATCA, GAZT, MOC obligations.
-   Should we add Hijri-calendar-aware obligations (Zakat dates)?
-5. **Investor view.** A logged-in investor today sees the same UI as a
-   founder. Should Investment Hub get an investor-specific landing
-   that aggregates "rounds I've invested in" across workspaces?
+| :--- | :--- | :--- | :--- |
+| **Supabase** (Postgres 17, Auth, RLS, Edge Functions) | Infra | Stable. Project `ezfvurrngphgwppnskus`. | Everything |
+| **Vercel** | Infra | Stable. Production branch `claude/activate-bypass-permissions-0sjk1`. Live at https://venture-path.vercel.app/ | Everything |
+| **Resend** | Email delivery | Wired. `RESEND_API_KEY` configured. | Inquiry handshake emails, investor updates, ROFR notifications, compliance reminders |
+| **Turky** (Sharia advisor) | Regulatory | Consult extension required for Exit + Partnership Hubs | Public launch of Exit Hub; nice-to-have for Partnership Hub |
+| **Mahmoud** (CMA contact) | Regulatory | Go/no-go required for Exit Hub | Public launch of Exit Hub |
+| **Samir** (Probuy founder) | Persona | Confirm acceptance of public named exit listing | Exit Hub seed |
+| **Saif** | Persona | Continuous follow-up on partnership listings | Partnership Hub seed |
+| **Stripe / HyperPay** | Billing (future) | Not engaged. Decision blocked by KSA payment-rail choice. | Paid-plan launch (v1.3 P1) |
+| **OAuth providers** (Google / LinkedIn / Apple) | Auth (future) | App registration not started | v1.3 P2 OAuth wiring |
 
 ---
 
-## 13. v1.2 — Cross-workspace Activation + UX Hardening (2026-05-17)
-
-v1.2 is two passes stacked: an **activation pass** that closes the
-end-to-end loops that v1.1 left half-wired (publish flows, notification
-aggregation, search, M&A modeller persistence, transfer-agent), and a
-**UX hardening pass** that walked the 20 items from a third-party UX/QA
-audit through 6 commit batches.
-
-Each subsection lists **Features delivered**, **Requirements satisfied**,
-and **User stories**. Requirement IDs use the same `REQ-<hub>-<n>` scheme
-as the original prompt brief.
-
-### 13.1 Investment Hub — atomic round-close
-
-**Features delivered:**
-- `close_financing_round(p_round_id, p_pre_money, p_fd_shares,
-  p_actual_raise, p_close_date, p_promotions JSONB, p_conversions
-  JSONB)` SQL RPC.
-- Migration `20260517120000_close_financing_round_rpc.sql`. Promotes
-  signed term-sheet investors to ordinary shareholders, converts
-  iSAFE/SAFE/CN holders to ordinary using a TS-supplied conversion plan
-  (math stays in `lib/cap-table/isafe-math.ts` for Sharia review), marks
-  originals as `conversion_status='converted'`, closes the round atomically
-  in one transaction.
-- `financing_round` added to the `audit_events.entity_type` CHECK and the
-  marketplace immutability trigger. Per-conversion audit rows
-  (`entity_type='shareholder'`) stay mutable; the round-close audit row
-  (`entity_type='financing_round'`) is tamper-proof.
-- 15-case pgTAP suite at `supabase/tests/close_financing_round.sql`;
-  equivalent BEGIN/ROLLBACK harness verified 15/15 against live DB.
-- `app/(app)/rounds/actions.ts:closeRound` refactored from N+M
-  sequential Supabase calls to a phase-1-compute / phase-2-apply
-  pattern. The TS phase still owns the math.
-
-**Requirements satisfied:** PRD invariant §5.4 row 4 ("Closing a Round
-auto-converts iSAFE/SAFE/CN to ordinary shares; cap table updates
-atomically"). v1.1 satisfied the math but not the atomicity. v1.2
-closes the gap.
-
-**User stories:**
-- *As a founder closing a round*, I want the cap-table update to either
-  fully succeed or fully fail, so that a mid-flight network failure can't
-  leave half my investors as ordinary and half as iSAFE.
-- *As an auditor reviewing a regulated event*, I want the round-close
-  audit row to be immutable so that nobody can rewrite history after a
-  dispute.
-
-### 13.2 Investment Hub — is_public toggle for financing rounds (REQ-INV-02)
-
-**Features delivered:**
-- Toggle on the round-creation wizard (last field) — "Make this round
-  discoverable to other investors on VenturePath".
-- Toggle on the round-management view (`/rounds/[id]`) — pre-populated
-  from current state, fires `setRoundVisibility` immediately on change,
-  optimistic with rollback.
-- Audit shape upgraded from `entity_type='workspace'` to
-  `'financing_round'` with payload `{ from: bool, to: bool }`.
-- `/rounds` Browse empty-state CTA — if the user has a private open
-  round in their workspace, show "You have an open round. Make it
-  discoverable →" linking to that round.
-- EN + AR i18n keys (`visibility.toggle.*`, `browse.empty.*_v2`,
-  `browse.empty.cta_with_round`).
-
-**Requirements satisfied:**
-- REQ-INV-02 (v1.1 P0): close the discoverability gap on financing
-  rounds. The `is_public` column existed since `20260515180000`; v1.2
-  finally exposed it in the UI.
-- §4 product principle #5 (opt-in cross-workspace visibility) — the
-  toggle is the opt-in.
-
-**User stories:**
-- *As a founder mid-raise*, I want to flip my round to "discoverable"
-  with one click so other VenturePath investors can find me.
-- *As an investor browsing /rounds*, I want to see open rounds across
-  every founder who opted in, not just my own workspace's rounds.
-- *As a founder with a private round in draft*, I want a one-click path
-  from the empty Browse tab back to my own round settings so I can
-  publish it.
-
-### 13.3 Trading Hub — is_public toggle for share listings (REQ-TRADE-01)
-
-**Features delivered:**
-- Toggle on the share-listing creation form — "Make this listing visible
-  to all VenturePath members".
-- Toggle on the listing-management view (`/marketplace/[id]`) with a
-  **ROFR gate**: if any `rofr_notifications` row for this listing has
-  `response IS NULL AND window_expires_at > now()`, the toggle is
-  disabled with a tooltip: "ROFR window closes on {date}. You can make
-  this listing public after that."
-- `setListingVisibility(listingId, isPublic)` server action enforces
-  the ROFR gate server-side too (defense in depth).
-- Audit row uses `entity_type='share_listing'` with the same
-  `{from, to}` payload pattern.
-- `/marketplace` Browse empty-state CTA — same pattern as Rounds.
-
-**Requirements satisfied:**
-- REQ-TRADE-01: close the discoverability gap on share listings.
-- PRD §6.3 invariant: ROFR window must clear before a listing can go
-  public — otherwise the ROFR right is bypassed.
-
-**User stories:**
-- *As an existing shareholder*, I want to control whether my listing is
-  visible only to other workspace owners or to every signed-in user.
-- *As a shareholder with an active ROFR window*, I want the toggle to
-  refuse "public" until my co-shareholders have had their chance to
-  exercise — otherwise the ROFR mechanism is theatre.
-- *As a buyer*, I want the `/marketplace` Browse tab to show real
-  listings, not just workspace-internal ones.
-
-### 13.4 Platform — account_notifications + bell wiring (REQ-PLAT-01)
-
-**Features delivered:**
-- `account_notifications` table (migration `20260518000000`) with
-  `type` CHECK enum across 7 categories: `inquiry_received`,
-  `inquiry_accepted`, `inquiry_declined`, `rofr_notified`,
-  `investor_update_opened`, `compliance_overdue`,
-  `round_visibility_changed`.
-- Own-rows-only RLS (SELECT + UPDATE). Writes are trigger-only via
-  `SECURITY DEFINER`.
-- Four SQL triggers populate notifications from existing tables:
-  `connection_inquiries` (sent + accepted + declined),
-  `rofr_notifications` (insert), `investor_update_views` (insert).
-- `GET /api/notifications` returns `{ unread_count, notifications }`
-  (last 20, newest first); `PATCH /api/notifications {action:'read_all'}`
-  marks all unread.
-- Header bell (`app/(app)/components/notifications-button.tsx`)
-  rewritten from a visual stub to a fully wired component: 60s poll,
-  unread badge, per-type SVG icon, relative time, "Mark all as read",
-  empty state, click-through to `notification.url`.
-- i18n title override: bell prefers `nav.notifications.title.<type>`
-  i18n keys over the DB-stored English fallback, so Arabic UI shows
-  Arabic titles.
-- 7-case BEGIN/ROLLBACK smoke harness verified 7/7 against live DB +
-  pgTAP suite at `supabase/tests/account_notifications.sql`.
-
-**Requirements satisfied:**
-- REQ-PLAT-01: aggregate trigger events into a user-facing feed.
-
-**User stories:**
-- *As a listing owner*, I want a bell badge when someone inquires on my
-  exit/partnership listing so I don't have to refresh the listing detail
-  page.
-- *As an inquirer*, I want to know the moment my inquiry is accepted or
-  declined.
-- *As a shareholder receiving a ROFR notification*, I want it surfaced
-  in the bell as well as the email so I don't miss the window.
-- *As a founder running an investor update*, I want a notification when
-  an investor opens it.
-
-### 13.5 Platform — full-text search (REQ-PLAT-02)
-
-**Features delivered:**
-- Migration `20260519000000_full_text_search.sql` adds STORED
-  `tsvector` columns on `workspaces`, `connection_listings`, and
-  `financing_rounds`, with three GIN indexes.
-- Each tsvector mixes English + simple analyzers — the simple analyzer
-  provides minimal Arabic content coverage without installing a
-  language-specific stemmer.
-- `search_platform(p_query TEXT) RETURNS JSON` RPC: UNION ALL across the
-  three sources, ranked by `ts_rank`, limited to 20 results.
-- `GET /api/search?q=…` 400 if `q < 2` chars, calls the RPC, 401 if
-  unauthenticated.
-- `app/(app)/components/search-bar.tsx` rewritten from a static stub
-  to a client combobox: 300ms debounce, spinner, grouped results
-  (Companies / Listings / Rounds), inline stroke-SVG icons, keyboard
-  navigation, ⌘K global shortcut, ARIA-combobox attributes.
-- 5/5 BEGIN/ROLLBACK smoke cases (falafel → workspace; payments cto →
-  partnership listing; sukna → financing round; 1-char → empty array;
-  unmatched → empty array).
-
-**Requirements satisfied:**
-- REQ-PLAT-02: wire the ⌘K command palette in the header to a real
-  search backend.
-
-**User stories:**
-- *As a user looking for a specific company*, I want to type its name
-  and hit Enter to navigate there, instead of scrolling /explore.
-- *As an investor browsing for KSA payments fintechs*, I want a search
-  query that spans listing summaries, not just workspace names.
-- *As a power user*, I want a ⌘K shortcut so I never have to click into
-  the search box.
-
-### 13.6 Investment Hub — investor-update recipient tracking (REQ-INV-03)
-
-**Features delivered:**
-- Migration `20260519100000_investor_update_recipients.sql` adds the
-  table with `email`, `name`, `sent_at`, `opened_at`,
-  `resend_message_id`; unique on `(update_id, email)` so re-sends upsert.
-- RLS: workspace-member SELECT via `user_can_access_workspace(iu.workspace_id)`.
-- `publishInvestorUpdate` server action refactored from a batch send
-  to per-recipient sends so each email gets a unique `?r=<encoded-email>`
-  URL and a captured `resend_message_id`. Rows are upserted after the
-  Resend API call.
-- `record_investor_update_view` RPC gains a `p_email TEXT DEFAULT NULL`
-  parameter; when the view URL carries `?r=`, the recipient's
-  `opened_at` is stamped (NULL-guarded so re-opens don't overwrite).
-- Existing `investor_update_views` table is **kept** for anonymous view
-  count.
-- `RecipientsSection` client component on `/investor-updates/[id]`
-  shows a table (Name / Email / Sent / Opened / Status badge) with a
-  "Re-send to unopened" button enabled only when at least one recipient
-  has `opened_at IS NULL`.
-- `resendToUnopenedRecipients` server action drives the re-send.
-
-**Requirements satisfied:**
-- REQ-INV-03: per-person open-rate tracking; re-send capability.
-
-**User stories:**
-- *As a founder sending an update to 30 investors*, I want to see who
-  opened it and re-send only to the ones who didn't, instead of nagging
-  the whole list.
-- *As an investor receiving the same update twice*, I want the second
-  send to update the existing recipient row, not create a duplicate.
-
-### 13.7 Trading Hub — transfer-agent cap-table sync (REQ-TRADE-02)
-
-**Features delivered:**
-- Migration `20260519200000_transfer_agent_cap_table_sync.sql` replaces
-  `mark_share_listing_sold_off_platform` with an overloaded version:
-  `(p_listing_id, p_buyer_name?, p_buyer_email?, p_sale_price_sar?)`.
-- When buyer details are provided, the RPC atomically: decrements the
-  seller's `instrument_data->>'shares'`, soft-deletes the seller row if
-  shares hit zero, inserts a new buyer shareholder row with
-  `acquired_via='secondary_sale'` and a back-reference to the listing,
-  writes a `cap_table_mutation` audit row (`entity_type='shareholder'`).
-- Backward-compatible: if buyer fields are blank, the listing flips to
-  `sold_off_platform` with no cap-table change (the v1 behavior).
-- UI form in `app/(app)/marketplace/[id]/listing-actions.tsx` adds
-  three optional inputs + a confirmation step: "This will update your
-  cap table and cannot be undone."
-- 6/6 BEGIN/ROLLBACK smoke cases (no-buyer no-op, partial sell-down,
-  full sell-down soft-deletes seller, non-owner rejected, already-sold
-  rejected, under-shared seller rejected).
-
-**Requirements satisfied:**
-- REQ-TRADE-02: secondary sale must keep the cap table in sync,
-  otherwise the "verified-data moat" claim breaks the moment a sale
-  closes off-platform.
-
-**User stories:**
-- *As a founder approving a secondary sale*, I want the cap table to
-  update automatically when I mark the listing sold, so the buyer
-  appears as a shareholder and the seller's share count drops.
-- *As a buyer*, I want to appear on the cap table with a price-per-share
-  derived from the actual sale price, not the seller's original
-  purchase price.
-
-### 13.8 Exit Hub — M&A modelling RPC (REQ-EXIT-01)
-
-**Features delivered:**
-- Two new tables: `acquisition_models` and `acquisition_model_results`
-  (migration `20260519300000`). RLS: workspace-member full access on
-  models; SELECT on results.
-- `compute_acquisition_model(p_workspace_id, p_acquisition_price_sar,
-  p_debt_sar, p_label, p_connection_listing_id) RETURNS JSON` RPC.
-  Computes per-shareholder payouts using a fully-diluted pro-rata model
-  (1× non-participating preference is documented as a v1.3 candidate).
-- 5-model-per-workspace cap (enforced inside the RPC); raises with a
-  clear "archive a model" message when exceeded.
-- `archive_acquisition_model(p_model_id)` soft-deletes a model to free
-  up a slot.
-- `/acquisition` page rewritten: lists saved scenarios as cards,
-  "+ New scenario" form (label + price + debt + optional exit-listing
-  attach), results table (Shareholder / Shares / Payout / Multiple)
-  sorted by payout DESC.
-- 4/4 BEGIN/ROLLBACK smoke cases + 14 pgTAP assertions at
-  `supabase/tests/acquisition_models.sql`.
-
-**Requirements satisfied:**
-- REQ-EXIT-01: persist M&A scenarios server-side; replace client-only
-  math; surface saved scenarios across sessions.
-
-**User stories:**
-- *As a founder considering an exit*, I want to model multiple
-  acquisition prices and save the scenarios, not redo the math every
-  time I open the page.
-- *As a founder with an open exit listing*, I want to attach an M&A
-  model to that listing so future inquirers can see the seller's
-  modelled outcome at the asking price.
-
-### 13.9 Partnership Hub — seeking_type column promotion (REQ-PART-01)
-
-**Features delivered:**
-- Migration `20260519400000_seeking_type_column.sql` adds a first-class
-  `seeking_type TEXT` column with a CHECK constraint, backfills it from
-  `type_data->>'seeking_type'` for existing partnership listings,
-  creates a partial index `(seeking_type, status, listed_at DESC) WHERE
-  deleted_at IS NULL AND listing_type = 'partnership' AND seeking_type
-  IS NOT NULL`.
-- `create_connection_listing` RPC extracts and validates `seeking_type`
-  on insert for partnership listings.
-- `/connections` browse query swapped from `eq("type_data->>seeking_type", ...)`
-  (sequential JSONB scan) to `eq("seeking_type", ...)` (indexed).
-- Backward-compatible: `type_data` JSONB still carries the field; no
-  consumer code needs to migrate.
-
-**Requirements satisfied:**
-- REQ-PART-01 (v1.1 §8.2 P2): index the Talents/Advisors filter path.
-
-**User stories:**
-- *As the platform*, I want the Talents and Advisors filters to scale
-  past JSONB sequential scans as listings grow.
-- *As a developer*, I want the column promotion to be transparent so I
-  don't have to dual-read JSONB + column.
-
-### 13.10 UX hardening — Batch A (sidebar + profile) [audit items #1, #8, #9, #15, #20]
-
-**Features delivered:**
-- **Workspace switcher reliability** — `switchWorkspace` server action
-  now accepts an optional `redirectTo: string`; the sidebar passes
-  `usePathname()` so the user lands back on the same logical page after
-  switching, not `/dashboard`. Click guard prevents double-fires while a
-  transition is pending.
-- **Sidebar expansion persistence** — `MyStartups` and `NestedNavGroups`
-  expansion state is mirrored to `localStorage` keyed
-  `venturepath-sidebar-expanded`; reads on mount, writes on toggle. SSR
-  initial state is `{}` (all collapsed) to avoid hydration mismatch.
-- **`user_profiles` table** (migration `20260520000000`) — keyed by
-  `user_id`, columns: `display_name`, `bio` (≤500 chars), `avatar_url`,
-  `linkedin_url`, `location`. RLS: own SELECT + UPSERT; cross-workspace
-  read by any authenticated user (v2 will surface this on /explore).
-- **Profile page** reads the new table, shows display_name + avatar +
-  bio + tier badge + member-since.
-- **`/profile/edit`** — edit form with bio counter, avatar URL paste
-  (no file upload yet), LinkedIn URL, location.
-- **"View →" buttons** on /profile and /settings workspace lists now use
-  `switchWorkspaceAndGo(workspaceId, '/company')` instead of a plain
-  link, so the user lands on the right workspace's company info.
-- Profile page's CSS width bug (max-w-3xl not applied) fixed.
-
-**Requirements satisfied:**
-- Audit items #1 (workspace switcher), #8 (profile CSS bug), #9 (profile
-  completeness), #15 (per-workspace View routing), #20 (sidebar state
-  persistence).
-
-**User stories:**
-- *As a user with multiple workspaces*, I want to switch from Workspace
-  A to Workspace B without losing my place on `/rounds` or `/cap-table`.
-- *As a user with the Equity sub-group expanded*, I want it to stay
-  expanded when I navigate.
-- *As an operator visiting another founder's profile*, I want to see
-  their name and LinkedIn — not just an email and a UUID.
-- *As a user with two workspaces*, I want "View →" next to Workspace B
-  on /profile to actually take me to Workspace B's company page, not
-  Workspace A's.
-
-### 13.11 UX hardening — Batch B (settings depth) [audit items #5, #6, #13, #18, #19]
-
-**Features delivered:**
-- **Real password change** via `supabase.auth.updateUser({password})`.
-- **Real email change** via `supabase.auth.updateUser({email})` — sends
-  verification email, surface shows "verification sent" state.
-- **2FA + active sessions** — shipped as "Coming soon" scaffolds with
-  clear placeholder copy. Wiring is a v1.3 P0.
-- **Data export** — full JSON dump of 10 data sources keyed by user_id
-  + owned workspaces. Real download via `application/json` blob.
-- **Account deletion request** — `account_deletion_requests` table
-  (INSERT + SELECT-only RLS, no UPDATE/DELETE policy). 30-day-copy
-  pattern: "Your account will be deleted within 30 days of this
-  request." The 30-day cron is a v1.3 P0.
-- **Date format + timezone preferences** — persisted to `user_profiles`.
-  3 date formats (ISO / US / EU); 13 common timezones via dropdown.
-  Helper at `lib/date/format.ts` reads the preference. 8 vitest tests.
-- **Notification preferences** — new `user_notification_preferences`
-  table with composite PK `(user_id, notification_type)` and email +
-  in-app toggles per type. Row-level UPSERT on toggle. Enforcement in
-  email delivery is documented as v1.3.
-- **Plan & billing surface** — FREE-tier card with feature list +
-  "Contact us to upgrade" CTA (mailto). No real billing rail yet.
-- **Privacy & data section** — KSA PDPL language + "Download my data" +
-  "Delete my account" CTAs.
-
-**Requirements satisfied:**
-- Audit items #5 (security depth), #6 (PDPL data export + deletion),
-  #13 (date + timezone preferences), #18 (plan/billing surface),
-  #19 (notification preferences).
-
-**User stories:**
-- *As a user concerned about KSA PDPL*, I want to download all my data
-  in a structured format on demand.
-- *As a user leaving the product*, I want a deletion request flow that
-  doesn't immediately destroy data so I have a 30-day window to change
-  my mind.
-- *As a user in KSA*, I want dates rendered as `17/05/2026` (DD/MM/YYYY)
-  not `5/17/2026` (US), with a one-click preference.
-- *As a user receiving 5 emails a day*, I want to mute specific
-  notification categories without unsubscribing entirely.
-
-### 13.12 UX hardening — Batch C (shared UI hygiene) [audit items #2, #16, #17]
-
-**Features delivered:**
-- **Word-safe truncation helper** at `lib/text/truncate.ts`:
-  `truncateWords(input, maxChars)` returns the longest word-bounded
-  prefix with an ellipsis; falls back to hard-cut + ellipsis if the
-  first word exceeds the window. 9 vitest tests.
-- Applied at message-snippet, listing-summary, and audit-row
-  description render sites — replaces both CSS `line-clamp` clipping
-  and ad-hoc `.slice(0, N)`.
-- **Gradient WorkspaceMark** at
-  `app/(app)/components/workspace-mark.tsx` — shared
-  `from-(--color-gradient-start) to-(--color-gradient-end)` square
-  rendered as the workspace's first initial. Wired on rounds browse
-  cards, marketplace browse cards (secondaries + exits), connections
-  browse cards, and messages inbox rows.
-- **Audit-timestamp verification** — the audit's "all 12 events same
-  timestamp" finding was investigated and confirmed to be a demo-seed
-  artifact, not a product bug. A positive-control INSERT got its own
-  `created_at`. The `DEFAULT NOW()` is correct.
-
-**Requirements satisfied:**
-- Audit items #2 (verified, no fix needed), #16 (card avatars),
-  #17 (truncation).
-
-**User stories:**
-- *As a reader*, I want long card snippets to truncate at word
-  boundaries, not in the middle of "disc[overy]".
-- *As a reader scanning a feed of workspaces*, I want a visual mark per
-  card (initials gradient) so I can pattern-match faster than reading
-  every workspace name.
-
-### 13.13 UX hardening — Batch D (rounds + marketplace) [audit items #3, #11, #14]
-
-**Features delivered:**
-- **Dilution validation** — new `lib/cap-table/implied-dilution.ts`:
-  `impliedDilutionPct(target_raise, pre_money)` + `dilutionVerdict()`
-  classifier returning `ok | warn (≥30%) | block (>50%)`. 17 vitest
-  tests.
-- Warn banner on the round-creation form when verdict ≥ `warn`.
-- Block banner + submit-button disabled when verdict = `block`.
-- `setRoundVisibility` server action additionally refuses
-  `is_public=true` when verdict is `block` (defense in depth).
-- Same warn-only banner on `/dilution` for what-if modelling.
-- **Exclude-own from cross-workspace discovery** — `/rounds`,
-  `/marketplace`, and `/connections` Browse tabs filter out the user's
-  own workspaces via `.not("workspace_id", "in", "(…)")`. Discovery
-  feeds no longer surface the user's own listings/rounds back at them.
-- **Filter pill counts** — every tab and filter chip across
-  `/rounds`, `/marketplace`, `/connections` shows a tabular-nums count
-  badge. Parallel count queries via `Promise.all`.
-
-**Requirements satisfied:**
-- Audit items #3 (dilution validation), #11 (exclude own from
-  discovery), #14 (counts everywhere).
-
-**User stories:**
-- *As a founder publishing a round*, I want a warning when the implied
-  single-round dilution is >30%, and a hard block when >50%. These are
-  almost always typos (off-by-10× pre-money).
-- *As a user on /rounds*, I want the "Open rounds" tab to show OTHER
-  companies' rounds, not my own — the whole point of the tab is
-  discovery.
-- *As a user scanning filter chips*, I want to know each chip's
-  count before clicking, so I can choose where to invest attention.
-
-### 13.14 UX hardening — Batch E (messages + connections) [audit items #4, #7, #12]
-
-**Features delivered:**
-- **`connection_inquiry_messages` table** (migration `20260520300000`).
-  Either-party read RLS scoped to the inquiry; insert restricted to
-  non-closed inquiries.
-- **Thread view** at `/messages/[inquiryId]` (NEW route). Header shows
-  inquiry status + counterparty + listing context; message bubbles
-  styled per sender; reply textarea at bottom (max 2000 chars, with
-  counter). Disabled on closed/declined inquiries with a hint.
-- **`sendInquiryMessage(inquiryId, body)` server action**.
-- **`/messages` inbox row** now links to `/messages/[id]` (thread)
-  instead of `/connections/[listingId]` (listing detail). A secondary
-  "View listing →" link inside each row preserves the listing-action
-  path. /connections/[id] gains a "View thread →" link next to each
-  inquiry. Action surface and conversation surface are now
-  complementary, not competing.
-- **Context-aware copy** on `/connections?seeking=…`. Eyebrow is no
-  longer the generic "INVESTMENT" — it switches to "Talents",
-  "Advisors", "Co-founders", or "Business partners" depending on
-  `seeking`. Subtitle swaps to a variant-specific line.
-- New i18n keys: `messages.thread.*`, `connections.header.eyebrow.*`,
-  `connections.header.subtitle.*` in EN + AR.
-
-**Requirements satisfied:**
-- Audit items #4 (data-model separation — addressed by adding a real
-  thread surface at a distinct URL space, NOT by regressing the
-  v1.1 design where /connections/[id] is the canonical action surface),
-  #7 (reply/compose), #12 (context-aware seeking-variant copy).
-
-**User stories:**
-- *As an inquirer who got an acceptance*, I want to reply in-product to
-  ask follow-up questions, instead of bouncing to email.
-- *As a listing owner browsing my inbox*, I want to read full message
-  threads in /messages, not jump to /connections/[id] every time.
-- *As a user clicking the "Talents" sidebar item*, I want the page
-  header to say "Talents" — not the generic "Connections" or worse,
-  "Investment".
-
-### 13.15 UX hardening — Batch F (equity-terms gating) [audit item #10]
-
-**Features delivered:**
-- **EquityGate card** at `app/(app)/connections/[id]/equity-gate.tsx`
-  — lock-icon card replacing the inline equity-expectations text on
-  partnership listing details when the viewer is not authorised.
-- **Authorisation rule:** `canSeeEquityTerms = isOwner ||
-  (myInquiry?.status === 'accepted')`. Owner always sees it; viewers
-  see it only after the listing owner has accepted their inquiry.
-- **Pending state:** "Your inquiry is pending — terms will reveal once
-  accepted."
-- **Action:** "Request equity terms" button fires the existing
-  `send_connection_inquiry` RPC.
-- UI-only gate; the underlying `type_data` JSONB column is still
-  cross-workspace-readable at the DB level. Splitting into
-  `type_data_public` + `type_data_private` columns is a v1.3
-  candidate (see §8.2).
-- `gating_hint` paragraph added to the partnership listing creation
-  form so listers understand that equity terms are gated by default.
-
-**Requirements satisfied:**
-- Audit item #10 (compensation/equity terms publicly leaked).
-
-**User stories:**
-- *As a founder posting an advisor listing*, I want my "0.25-0.5%
-  advisor equity, 2y vest" line gated behind "request to view" so it's
-  not broadcast to every signed-in user.
-- *As an inquirer*, I want a one-tap "Request equity terms" button that
-  uses the same inquiry mechanism as anything else on the listing.
-
-### 13.16 Test coverage
-
-The v1.2 batch shipped 34 new vitest tests (8 date-format, 9 truncate,
-17 dilution) bringing the baseline from 123 → 157 passing. Test counts
-verified at every commit; no regressions.
-
-DB-side test coverage is split between pgTAP files (for the
-canonical `supabase test db` workflow, not yet wired against the live
-project) and BEGIN/ROLLBACK smoke harnesses run via the Supabase MCP
-during each prompt. Live-DB pass counts:
-
-- close_financing_round: 15/15
-- account_notifications: 7/7
-- full_text_search: 5/5
-- transfer_agent_cap_table_sync: 6/6
-- acquisition_models: 4/4
-- seeking_type promotion: backfill count parity verified (6/6 partnership
-  rows backfilled)
-- inquiry_messages: 3/3 (RLS read both-parties, write closed-inquiry
-  rejection, cross-party write rejection)
-
-### 13.17 What did NOT ship in v1.2 (intentionally deferred)
-
-- **Real 2FA enrolment + active session list** — UI scaffolds in
-  /settings, no Supabase MFA wiring. v1.3 P0.
-- **Notification-preference enforcement in email** — table exists, send
-  path doesn't read it yet. v1.3 P0.
-- **DB-level equity-terms column split** — gating is UI-only; the
-  `type_data` JSONB column is still cross-workspace-readable. Splitting
-  closes the actual data-level leak. v1.3 P1.
-- **Account-deletion fulfilment cron** — request-only pattern shipped;
-  no scheduled job actually deletes data after 30 days. v1.3 P0.
-- **Search across investor updates, term sheets, and audit events** —
-  v1.2 covers workspaces + connection_listings + financing_rounds. The
-  other tables can be added with one `setweight` block each. v1.3 P2.
-- **Sender-side notification trigger on inquiry-message insert** — the
-  thread view ships without a notification when a reply arrives. v1.3 P1.
-- **Audit-events expansion for the new entity types** — `account_deletion_request`,
-  `acquisition_model`, `connection_inquiry_message` are not in the
-  CHECK constraint yet. v1.3 cleanup.
-- **OAuth providers** (Google / LinkedIn / Apple) — buttons visible
-  since v1.1, no provider wired. v1.3 P2.
-
-These deferrals are flagged in `TODOS.md` and the commits' descriptions.
+## 8. Release & Rollout Plan
+
+### 8.1 Release Ledger
+
+```
+v0.1.0   (2026-05-15) Initial prototype: cap table, ESOP, governance, valuation,
+                       vault, traction, investor updates, secondary share
+                       marketplace (Approach A bulletin board).
+
+v0.2.0.0 (2026-05-16) Connections Hub launch: Exit Hub + Partnership Hub. 22-case
+                       pgTAP suite. Connection inquiry handshake with one-step
+                       accept + scoped data-room signed token. Bidirectional exit
+                       ↔ share_listing collision rule.
+
+v1.1     (2026-05-16) Surface restructure: hubs surfaced as top-level sidebar
+                       entries. /messages routing inbox. /settings + /profile.
+                       Marketplace Browse (Trading × Exit co-location). Rounds
+                       Browse (Investment cross-workspace). Talents + Advisors
+                       seeking filters. Split-layout auth pages.
+
+v0.3.0.0 (2026-05-17) Cross-workspace activation + UX hardening:
+                       + close_financing_round RPC (atomic apply)
+                       + is_public toggle (rounds + share listings + ROFR gate)
+                       + account_notifications table + 4 triggers + bell wiring
+                       + Full-text search (tsvector + GIN + RPC + ⌘K dropdown)
+                       + investor_update_recipients + per-recipient open tracking
+                       + Transfer-agent cap-table sync on secondary sale
+                       + acquisition_models + compute_acquisition_model RPC
+                       + seeking_type promoted to first-class indexed column
+                       + UX hardening (6 batches, 20 audit items): sidebar
+                         reliability + persistence, profile completeness,
+                         settings depth, shared UI hygiene, dilution validation,
+                         threaded messaging, equity-terms gating
+```
+
+### 8.2 v1.3 Backlog (target 2026-Q3)
+
+**P0:**
+- Real 2FA + active session management
+- Notification-preference enforcement in email delivery
+- Account-deletion fulfilment cron (30-day scheduled job)
+
+**P1:**
+- DB-level equity-terms split (`type_data_public` / `type_data_private`)
+- Stripe / HyperPay billing rail + paid plan launch
+- Sender-side notification trigger on inquiry-message reply
+
+**P2:**
+- OAuth providers (Google / LinkedIn / Apple) wired
+- Search expansion to investor_updates / term_sheets / audit_events
+- Hijri-calendar-aware compliance obligations (Zakat dates)
+- Investor-specific landing aggregating "rounds I've invested in" cross-workspace
+
+### 8.3 Rollout Strategy
+
+**Pre-launch (v0.3.0.0 — current):**
+- Production-live at https://venture-path.vercel.app/.
+- Soft-launched: sidebar entries visible, no founder outreach yet on Exit Hub.
+
+**Soft launch (post v1.3 P0 close-out):**
+- Resolve Turky + Mahmoud + Samir blockers.
+- Manually seed 8-10 listings from founder's existing network.
+- Open to 50-100 founders in the founder's known KSA network. No public announcement.
+- Watch Day-7 / Day-30 metrics (K1, K2, K3) and inquiry handshake completion rate.
+
+**Public launch:**
+- Announcement on founder's channels.
+- Open `/connections`, `/marketplace`, `/rounds` Browse tabs to every signed-in user.
+- Monitor Day-30 / Day-90 success criteria against the kill criteria in §2.3.
+
+**Kill switch:**
+- Per hub: deprecate the sidebar entry via feature flag (`sidebar.tsx`), withdraw all listings via the `withdraw_*` RPCs.
+- Whole platform: rollback the production branch to v0.2.0.0.
+
+### 8.4 Communication
+
+- **Release notes:** `CHANGELOG.md` + a per-release sell-test summary in the PR body.
+- **User-facing changelog:** None yet. v1.3 candidate.
+- **Status page:** None yet. Vercel monitors uptime; manual notification via founder's channels on incidents.
+
+---
+
+## 9. Glossary
+
+| Term | Definition |
+| :--- | :--- |
+| **iSAFE** | VenturePath's Sharia-compliant convertible instrument. Permanent green identity (`DESIGN.md` §3.6). |
+| **Workspace** | The unit of equity ownership. One workspace = one company = one cap table. |
+| **Public profile** | A workspace with `public_profile_published=true` and a slug — discoverable on `/explore`. |
+| **Exit listing** | A `connection_listings` row with `listing_type='exit'`. Whole-company sale / acqui-hire / merger. |
+| **Partnership listing** | A `connection_listings` row with `listing_type='partnership'`. Co-founder / advisor / senior hire / business partner. |
+| **Secondary listing** | A `share_listings` row. An existing shareholder posting part of their equity for sale. |
+| **Open round** | A `financing_rounds` row with `status='open'` and `is_public=true`. Discoverable on `/rounds` Browse + `/explore`. |
+| **ROFR** | Right of first refusal. Existing shareholders are notified on a new secondary listing and can exercise / decline. |
+| **Data room token** | A signed time-limited link granting scoped read access to a workspace's vault, without granting workspace membership. |
+| **Off-platform closing** | Every transaction is executed off-platform via lawyers + registry. VenturePath provides structured data + contact reveal; never holds funds. |
+| **Inquiry** | A `connection_inquiries` row. Structured "I'm interested" message with one-step owner accept. |
+| **PDPL** | KSA Personal Data Protection Law. |
+| **ZATCA** | Zakat, Tax, and Customs Authority. |
+| **GOSI** | General Organization for Social Insurance. |
+| **MOC** | Ministry of Commerce. |
+| **SAMA** | Saudi Central Bank. |
+| **CMA** | Capital Market Authority. |
+
+---
+
+## 10. Appendix — Companion Documents
+
+- **`docs/prd-venturepath-deep-dive.md`** — Hub-by-hub architecture (§6 each hub: purpose, primary user, feature table, data model, status); platform layer detail; v1.2 cross-workspace activation + UX hardening delta (§13.1-§13.17 — features delivered, requirements satisfied, user stories per shipped item).
+- **`docs/prd-connections-hub.md`** — Exit + Partnership Hubs deep-dive: schema (§5.1), inquiry handshake state machine (§5.2), collision rules (§5.3), cross-workspace RLS (§5.4), audit trail (§5.5), 12 design decisions (§6), architecture diagram (§7), failure modes (§8), test coverage (§9), v1.1 surface restructure (§18), v1.2 updates (§19).
+- **`DESIGN.md`** — Kinetic Sovereign design system.
+- **`CHANGELOG.md`** — versioned release history with the sell-test rubric applied per entry.
+- **`TODOS.md`** — open work + external blockers + closed-item log.
+- **`AGENTS.md`** — agent configuration for Claude Code + skills used in development.
