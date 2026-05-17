@@ -15,6 +15,8 @@ cap-table data.
   - `docs/prd-venturepath.md` — formal PRD: document control, vision, KPIs,
     personas, user stories (US-S*/US-I*/US-T*/US-E*/US-P*/US-X* with priority),
     NFRs, risks, dependencies, release plan.
+  - `docs/user-stories.md` — every PRD user story expanded with Gherkin-style
+    Given/When/Then acceptance criteria + file anchors per story.
   - `docs/prd-venturepath-deep-dive.md` — hub-by-hub architecture + v1.2
     cross-workspace activation delta (features / requirements / user stories
     per shipped item).
