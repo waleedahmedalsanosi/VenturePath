@@ -57,8 +57,8 @@ export default async function ConnectionsPage({
   if (filter === "partnership") query = query.eq("listing_type", "partnership");
   if (filter === "mine") query = query.eq("workspace_id", workspace.id);
   if (seeking) {
-    // JSONB filter: type_data->>'seeking_type' = $seeking.
-    query = query.eq("type_data->>seeking_type", seeking);
+    // REQ-PART-01: use the indexed first-class column instead of JSONB path.
+    query = query.eq("seeking_type", seeking);
   }
 
   const { data: rows } = await query;

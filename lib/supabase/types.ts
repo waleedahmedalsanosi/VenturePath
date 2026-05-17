@@ -1404,6 +1404,7 @@ export type Database = {
           status: "open" | "withdrawn";
           public_summary: string;
           type_data: Json;
+          seeking_type: "co_founder" | "advisor" | "senior_hire" | "business_partner" | null;
           notes: string | null;
           listed_at: string;
           closed_at: string | null;
@@ -1420,6 +1421,7 @@ export type Database = {
           status?: "open" | "withdrawn";
           public_summary: string;
           type_data?: Json;
+          seeking_type?: "co_founder" | "advisor" | "senior_hire" | "business_partner" | null;
           notes?: string | null;
           listed_at?: string;
           closed_at?: string | null;
