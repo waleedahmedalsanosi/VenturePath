@@ -6,6 +6,7 @@ import { useT } from "@/lib/i18n/useT";
 
 import { InquiryActions, WithdrawButton } from "./inquiry-actions";
 import { InquiryCta, type InquiryView } from "./inquiry-cta";
+import { EquityGate } from "./equity-gate";
 
 export type DetailListing = {
   id: string;
@@ -77,7 +78,13 @@ function Cell({ label, value }: { label: string; value: string }) {
   );
 }
 
-function renderTypeDetails(listing: DetailListing, t: (k: string, o?: Record<string, unknown>) => string) {
+function renderTypeDetails(
+  listing: DetailListing,
+  t: (k: string, o?: Record<string, unknown>) => string,
+  canSeeEquityTerms: boolean,
+  listingId: string,
+  myInquiry: InquiryView | null,
+) {
   if (!listing.type_data) return null;
   const td = listing.type_data;
 
@@ -102,6 +109,7 @@ function renderTypeDetails(listing: DetailListing, t: (k: string, o?: Record<str
   }
 
   const skills = Array.isArray(td.skills) ? (td.skills as string[]) : [];
+  const ownerCompanyName = listing.workspaces?.name ?? t("card.unknown_company");
   return (
     <div className="space-y-4 text-body-sm">
       <dl className="grid grid-cols-2 gap-4">
@@ -136,12 +144,20 @@ function renderTypeDetails(listing: DetailListing, t: (k: string, o?: Record<str
         </div>
       )}
       {td.equity_expectations ? (
-        <div>
-          <p className="text-label-md uppercase text-(--color-on-surface-variant) mb-1">
-            {t("type_data.label.equity_expectations")}
-          </p>
-          <p>{String(td.equity_expectations)}</p>
-        </div>
+        canSeeEquityTerms ? (
+          <div>
+            <p className="text-label-md uppercase text-(--color-on-surface-variant) mb-1">
+              {t("type_data.label.equity_expectations")}
+            </p>
+            <p>{String(td.equity_expectations)}</p>
+          </div>
+        ) : (
+          <EquityGate
+            listingId={listingId}
+            ownerCompanyName={ownerCompanyName}
+            inquiry={myInquiry}
+          />
+        )
       ) : null}
     </div>
   );
@@ -152,11 +168,13 @@ export function ConnectionDetailView({
   isOwner,
   myInquiry,
   receivedInquiries,
+  canSeeEquityTerms,
 }: {
   listing: DetailListing;
   isOwner: boolean;
   myInquiry: InquiryView | null;
   receivedInquiries: ReceivedInquiry[];
+  canSeeEquityTerms: boolean;
 }) {
   const t = useT("connections");
   const companyName = listing.workspaces?.name ?? t("card.unknown_company");
@@ -200,7 +218,7 @@ export function ConnectionDetailView({
         <h2 className="text-label-md uppercase text-(--color-on-surface-variant)">
           {t("detail.details")}
         </h2>
-        {renderTypeDetails(listing, t)}
+        {renderTypeDetails(listing, t, canSeeEquityTerms, listing.id, myInquiry)}
       </section>
 
       {!isOwner && listing.status === "open" && (

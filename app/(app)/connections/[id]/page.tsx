@@ -94,12 +94,19 @@ export default async function ConnectionDetailPage({
     receivedInquiries = (rows ?? []) as unknown as ReceivedInquiry[];
   }
 
+  // Compute equity visibility:
+  // - Owner always sees their own terms.
+  // - Non-owner sees terms only when they have an accepted inquiry.
+  const canSeeEquityTerms =
+    isOwner || (myInquiry !== null && myInquiry.status === "accepted");
+
   return (
     <ConnectionDetailView
       listing={listing}
       isOwner={isOwner}
       myInquiry={myInquiry}
       receivedInquiries={receivedInquiries}
+      canSeeEquityTerms={canSeeEquityTerms}
     />
   );
 }

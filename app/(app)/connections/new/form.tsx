@@ -199,6 +199,9 @@ export function NewListingForm({
               placeholder={t("new.partnership.equity.placeholder")}
               className="w-full rounded-lg bg-(--color-surface-container-high) px-3 py-2 ghost-border focus:outline-none focus:ring-2 focus:ring-(--color-primary)"
             />
+            <p className="text-body-sm text-(--color-primary) opacity-80">
+              {t("new.partnership.equity.gating_hint")}
+            </p>
           </Field>
         </fieldset>
       )}

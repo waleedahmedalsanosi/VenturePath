@@ -153,5 +153,11 @@
   "type_data.label.seeking": "Seeking",
   "type_data.label.commitment": "Commitment",
   "type_data.label.skills": "Skills",
-  "type_data.label.equity_expectations": "Equity expectations"
+  "type_data.label.equity_expectations": "Equity expectations",
+  "detail.equity.gated_title": "Equity terms",
+  "detail.equity.gated_body": "Request to view — terms reveal once {{company}} accepts your inquiry.",
+  "detail.equity.gated_button": "Request equity terms",
+  "detail.equity.gated_pending": "Pending — terms will reveal once your inquiry is accepted.",
+  "card.equity_gated": "Equity terms — request to view",
+  "new.partnership.equity.gating_hint": "Public summary is visible to all members. Equity terms here are hidden until you accept an inquiry."
 }

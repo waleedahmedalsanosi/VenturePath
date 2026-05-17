@@ -153,5 +153,11 @@
   "type_data.label.seeking": "البحث عن",
   "type_data.label.commitment": "الالتزام",
   "type_data.label.skills": "المهارات",
-  "type_data.label.equity_expectations": "توقعات الأسهم"
+  "type_data.label.equity_expectations": "توقعات الأسهم",
+  "detail.equity.gated_title": "شروط الأسهم",
+  "detail.equity.gated_body": "اطلب الاطلاع — تُكشف الشروط فور قبول {{company}} استفسارك.",
+  "detail.equity.gated_button": "طلب الاطلاع على شروط الأسهم",
+  "detail.equity.gated_pending": "قيد الانتظار — ستُكشف الشروط فور قبول استفسارك.",
+  "card.equity_gated": "شروط الأسهم — اطلب للاطلاع",
+  "new.partnership.equity.gating_hint": "الملخص العلني مرئي لجميع الأعضاء. شروط الأسهم هنا مخفية حتى تقبل استفساراً."
 }
