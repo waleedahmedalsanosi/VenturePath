@@ -1,1 +1,18 @@
-{}
+{
+  "recipients": {
+    "heading": "Recipients",
+    "col": {
+      "name": "Name",
+      "email": "Email",
+      "sent_at": "Sent",
+      "opened_at": "Opened"
+    },
+    "status": {
+      "opened": "Opened",
+      "not_opened": "Not opened"
+    },
+    "resend_unopened": "Re-send to unopened",
+    "resend_unopened_pending": "Sending…",
+    "empty": "No recipients yet. Send this update to populate the list."
+  }
+}

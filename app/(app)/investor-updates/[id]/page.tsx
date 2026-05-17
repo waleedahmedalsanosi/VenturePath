@@ -7,6 +7,7 @@ import { getActiveWorkspace } from "@/lib/workspace/active";
 
 import { UpdateActions } from "./update-actions-bar";
 import { PrintButton } from "@/components/print-button";
+import { RecipientsSection } from "./recipients-section";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -75,6 +76,12 @@ export default async function InvestorUpdateViewPage({ params }: PageProps) {
     .eq("update_id", id)
     .order("viewed_at", { ascending: false })
     .limit(50);
+
+  const { data: recipients } = await supabase
+    .from("investor_update_recipients")
+    .select("id, email, name, sent_at, opened_at")
+    .eq("update_id", id)
+    .order("created_at", { ascending: true });
 
   // Build the public share URL
   const hdrs = await headers();
@@ -227,6 +234,20 @@ export default async function InvestorUpdateViewPage({ params }: PageProps) {
             </table>
           </div>
         </section>
+      )}
+
+      {/* Recipients — only shown for published updates */}
+      {update.status === "published" && (
+        <RecipientsSection
+          updateId={id}
+          recipients={(recipients ?? []).map((r) => ({
+            id: r.id,
+            email: r.email,
+            name: r.name,
+            sent_at: r.sent_at,
+            opened_at: r.opened_at,
+          }))}
+        />
       )}
     </main>
   );

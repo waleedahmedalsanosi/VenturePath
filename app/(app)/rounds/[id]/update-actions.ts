@@ -151,7 +151,7 @@ export async function publishInvestorUpdate(updateId: string): Promise<ActionRes
       .eq("id", update.round_id)
       .maybeSingle();
 
-    await sendInvestorUpdateEmails({
+    const sendResult = await sendInvestorUpdateEmails({
       to: recipients,
       companyName: workspace.name,
       roundName: round?.name ?? "Round",
@@ -162,10 +162,95 @@ export async function publishInvestorUpdate(updateId: string): Promise<ActionRes
       runwayMonths: update.runway_months != null ? Number(update.runway_months) : null,
       publicUrl,
     });
+
+    // Persist per-recipient rows. Upsert so re-publishes update sent_at instead of erroring.
+    if (sendResult.recipients.length > 0) {
+      const rows = sendResult.recipients.map((r) => ({
+        update_id: updateId,
+        email: r.email,
+        sent_at: new Date().toISOString(),
+        resend_message_id: r.resendMessageId,
+      }));
+      await supabase
+        .from("investor_update_recipients")
+        .upsert(rows, { onConflict: "update_id,email" });
+    }
   }
 
   revalidatePath(`/investor-updates/${updateId}`);
   revalidatePath(`/rounds/${update.round_id}`);
+  return { ok: true };
+}
+
+export async function resendToUnopenedRecipients(updateId: string): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const workspace = await getActiveWorkspace();
+  if (!workspace) return { ok: false, error: "No workspace." };
+
+  // Fetch the update (must belong to this workspace)
+  const { data: update } = await supabase
+    .from("investor_updates")
+    .select("round_id, subject, body, highlights, mrr_sar, runway_months, token, status")
+    .eq("id", updateId)
+    .eq("workspace_id", workspace.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!update) return { ok: false, error: "Update not found." };
+  if (update.status !== "published") return { ok: false, error: "Update is not published." };
+
+  // Fetch unopened recipients
+  const { data: unopened } = await supabase
+    .from("investor_update_recipients")
+    .select("email, name")
+    .eq("update_id", updateId)
+    .is("opened_at", null);
+
+  if (!unopened || unopened.length === 0) return { ok: true };
+
+  const hdrs = await headers();
+  const host = hdrs.get("host") ?? "venturepath.co";
+  const proto = host.startsWith("localhost") ? "http" : "https";
+  const publicUrl = `${proto}://${host}/updates/${update.token}`;
+
+  const { data: round } = await supabase
+    .from("financing_rounds")
+    .select("name")
+    .eq("id", update.round_id)
+    .maybeSingle();
+
+  const sendResult = await sendInvestorUpdateEmails({
+    to: unopened.map((r) => r.email),
+    companyName: workspace.name,
+    roundName: round?.name ?? "Round",
+    subject: update.subject,
+    body: update.body,
+    highlights: (update.highlights ?? []) as string[],
+    mrrSar: update.mrr_sar != null ? Number(update.mrr_sar) : null,
+    runwayMonths: update.runway_months != null ? Number(update.runway_months) : null,
+    publicUrl,
+  });
+
+  if (sendResult.error && sendResult.recipients.length === 0) {
+    return { ok: false, error: sendResult.error };
+  }
+
+  // Upsert sent_at for each re-sent recipient
+  if (sendResult.recipients.length > 0) {
+    const rows = sendResult.recipients.map((r) => ({
+      update_id: updateId,
+      email: r.email,
+      sent_at: new Date().toISOString(),
+      resend_message_id: r.resendMessageId,
+    }));
+    await supabase
+      .from("investor_update_recipients")
+      .upsert(rows, { onConflict: "update_id,email" });
+  }
+
+  revalidatePath(`/investor-updates/${updateId}`);
   return { ok: true };
 }
 

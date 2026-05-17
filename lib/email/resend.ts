@@ -15,7 +15,13 @@ export interface InvestorUpdateEmailPayload {
   highlights: string[];
   mrrSar: number | null;
   runwayMonths: number | null;
+  /** Base public URL — each recipient gets `${publicUrl}?r=<encoded-email>` appended */
   publicUrl: string;
+}
+
+export interface RecipientSendResult {
+  email: string;
+  resendMessageId: string | null;
 }
 
 function buildHtml(p: InvestorUpdateEmailPayload): string {
@@ -200,35 +206,38 @@ export async function sendListingNotificationEmails(
 
 export async function sendInvestorUpdateEmails(
   payload: InvestorUpdateEmailPayload,
-): Promise<{ sent: number; error?: string }> {
+): Promise<{ sent: number; recipients: RecipientSendResult[]; error?: string }> {
   if (!resend) {
     console.warn("[resend] RESEND_API_KEY not set — skipping email send");
-    return { sent: 0, error: "Email not configured (RESEND_API_KEY missing)" };
+    return { sent: 0, recipients: [], error: "Email not configured (RESEND_API_KEY missing)" };
   }
-  if (payload.to.length === 0) return { sent: 0 };
+  if (payload.to.length === 0) return { sent: 0, recipients: [] };
 
-  const html = buildHtml(payload);
+  const emailSubject = `${payload.companyName}: ${payload.subject}`;
+  const results: RecipientSendResult[] = [];
 
-  // Resend allows up to 50 recipients per call; batch if needed.
-  const batches: string[][] = [];
-  for (let i = 0; i < payload.to.length; i += 50) {
-    batches.push(payload.to.slice(i, i + 50));
-  }
-
-  let sent = 0;
-  for (const batch of batches) {
-    const { error } = await resend.emails.send({
+  // Send individually so we capture a per-recipient resend_message_id.
+  // Resend free tier allows one recipient per call; paid allows batching.
+  // Per-recipient send also lets us embed a unique tracking URL per email.
+  for (const email of payload.to) {
+    const recipientUrl = `${payload.publicUrl}?r=${encodeURIComponent(email)}`;
+    const html = buildHtml({ ...payload, publicUrl: recipientUrl });
+    const { data, error } = await resend.emails.send({
       from: FROM,
-      to: batch,
-      subject: `${payload.companyName}: ${payload.subject}`,
+      to: [email],
+      subject: emailSubject,
       html,
     });
     if (error) {
       console.error("[resend] send error:", error);
-      return { sent, error: (error as { message?: string }).message ?? "Send failed" };
+      return {
+        sent: results.length,
+        recipients: results,
+        error: (error as { message?: string }).message ?? "Send failed",
+      };
     }
-    sent += batch.length;
+    results.push({ email, resendMessageId: data?.id ?? null });
   }
 
-  return { sent };
+  return { sent: results.length, recipients: results };
 }

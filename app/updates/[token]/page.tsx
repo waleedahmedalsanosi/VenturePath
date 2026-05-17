@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 
 interface PageProps {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ r?: string }>;
 }
 
 const TOKEN_RE = /^[0-9a-f]{32}$/i;
@@ -27,8 +28,9 @@ function fmtDate(s: string | null | undefined): string {
   });
 }
 
-export default async function PublicInvestorUpdatePage({ params }: PageProps) {
+export default async function PublicInvestorUpdatePage({ params, searchParams }: PageProps) {
   const { token } = await params;
+  const { r: recipientEmail } = await searchParams;
 
   // Validate token shape to avoid unnecessary DB calls
   if (!TOKEN_RE.test(token)) notFound();
@@ -57,12 +59,15 @@ export default async function PublicInvestorUpdatePage({ params }: PageProps) {
     ? await supabase.from("workspaces").select("name").eq("id", round.workspace_id).maybeSingle()
     : { data: null };
 
-  // Record view (fire & forget — failure is non-fatal)
+  // Record view (fire & forget — failure is non-fatal).
+  // If a recipient email is present via ?r= param, also stamp opened_at on their row.
   const hdrs = await headers();
   const userAgent = hdrs.get("user-agent");
-  void supabase.rpc("record_investor_update_view", {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  void (supabase.rpc as any)("record_investor_update_view", {
     p_token: token,
     p_user_agent: userAgent,
+    p_email: recipientEmail ?? null,
   });
 
   const highlights = (update.highlights ?? []) as string[];

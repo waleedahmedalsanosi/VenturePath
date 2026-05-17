@@ -1026,6 +1026,47 @@ export type Database = {
         };
         Relationships: [];
       };
+      investor_update_recipients: {
+        Row: {
+          id: string;
+          update_id: string;
+          email: string;
+          name: string | null;
+          sent_at: string | null;
+          opened_at: string | null;
+          resend_message_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          update_id: string;
+          email: string;
+          name?: string | null;
+          sent_at?: string | null;
+          opened_at?: string | null;
+          resend_message_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          update_id?: string;
+          email?: string;
+          name?: string | null;
+          sent_at?: string | null;
+          opened_at?: string | null;
+          resend_message_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "investor_update_recipients_update_id_fkey";
+            columns: ["update_id"];
+            isOneToOne: false;
+            referencedRelation: "investor_updates";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       closing_items: {
         Row: {
           id: string;
@@ -1419,7 +1460,7 @@ export type Database = {
         Returns: void;
       };
       record_investor_update_view: {
-        Args: { p_token: string; p_user_agent?: string | null };
+        Args: { p_token: string; p_user_agent?: string | null; p_email?: string | null };
         Returns: void;
       };
       create_share_listing: {
@@ -1590,6 +1631,10 @@ export interface SearchResult {
   url: string;
   rank: number;
 }
+
+// ── Convenience aliases ───────────────────────────────────────────────────────
+export type InvestorUpdateRecipient =
+  Database["public"]["Tables"]["investor_update_recipients"]["Row"];
 
 export const Constants = {
   public: {
