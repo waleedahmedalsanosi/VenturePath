@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+import { WorkspaceMark } from "@/app/(app)/components/workspace-mark";
+import { truncateWords } from "@/lib/text/truncate";
 import { useT } from "@/lib/i18n/useT";
 
 export type Listing = {
@@ -128,6 +130,7 @@ export function ConnectionsBrowse({
               >
                 <div className="space-y-2">
                   <div className="flex items-center gap-3 flex-wrap">
+                    <WorkspaceMark name={l.workspaces?.name ?? null} />
                     <p className="text-body-lg font-semibold truncate">
                       {l.workspaces?.name ?? t("card.unknown_company")}
                     </p>
@@ -137,7 +140,7 @@ export function ConnectionsBrowse({
                     />
                   </div>
                   <p className="text-body-md text-(--color-on-surface-variant) line-clamp-2">
-                    {l.public_summary}
+                    {truncateWords(l.public_summary, 160)}
                   </p>
                   <div className="flex items-center gap-3 text-body-sm text-(--color-on-surface-variant)">
                     <span className="tabular-nums">{summarizeTypeData(l)}</span>

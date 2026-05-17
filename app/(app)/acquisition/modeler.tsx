@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 
 import { Dec } from "@/lib/cap-table/decimal";
 import { runWaterfall, type WaterfallHolder } from "@/lib/cap-table/waterfall";
+import { truncateWords } from "@/lib/text/truncate";
 
 import { computeAcquisitionModel, archiveAcquisitionModel } from "./actions";
 import type { SavedModel } from "./page";
@@ -410,7 +411,7 @@ export function AcquisitionModeler({
                       <option value="">None</option>
                       {openExitListings.map((l) => (
                         <option key={l.id} value={l.id}>
-                          {l.label.length > 50 ? l.label.slice(0, 50) + "…" : l.label}
+                          {truncateWords(l.label, 51)}
                         </option>
                       ))}
                     </select>

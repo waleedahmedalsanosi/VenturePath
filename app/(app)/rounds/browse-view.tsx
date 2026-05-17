@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { WorkspaceMark } from "@/app/(app)/components/workspace-mark";
 import { useT } from "@/lib/i18n/useT";
 
 export interface BrowseRoundRow {
@@ -108,6 +109,7 @@ export function RoundsBrowse({
                   "
                 >
                   <div className="flex items-start justify-between gap-4">
+                    <WorkspaceMark name={r.workspace_name} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-body-lg font-semibold truncate">

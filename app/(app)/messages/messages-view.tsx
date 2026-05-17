@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+import { WorkspaceMark } from "@/app/(app)/components/workspace-mark";
+import { truncateWords } from "@/lib/text/truncate";
 import { useT } from "@/lib/i18n/useT";
 
 export interface InquiryRow {
@@ -88,6 +90,7 @@ export function MessagesView({
                 "
               >
                 <div className="flex items-start justify-between gap-4">
+                  <WorkspaceMark name={r.counterparty ?? null} />
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span
@@ -109,7 +112,7 @@ export function MessagesView({
                       {r.counterparty ?? t("unknown_counterparty")}
                     </p>
                     <p className="text-body-sm text-(--color-on-surface-variant) line-clamp-2">
-                      {r.message ?? r.listingSummary}
+                      {truncateWords(r.message ?? r.listingSummary, 160)}
                     </p>
                   </div>
                   <span className="text-body-sm text-(--color-on-surface-variant) tabular-nums whitespace-nowrap">

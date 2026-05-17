@@ -20,6 +20,8 @@ const ENTITY_COLORS: Record<string, string> = {
   compliance_obligation: "bg-(--color-warning)/15 text-(--color-warning)",
 };
 
+// TODO(batch-C+1): migrate to lib/date/format.ts → formatDate() with user prefs
+// (date_format + timezone from user_profiles). See lib/date/format.ts for the migration path.
 function fmtDateTime(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
     year: "numeric",
