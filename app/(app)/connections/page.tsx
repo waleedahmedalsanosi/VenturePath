@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import { getActiveWorkspace } from "@/lib/workspace/active";
+import { getActiveWorkspace, listAccessibleWorkspaces } from "@/lib/workspace/active";
 
 import { ConnectionsBrowse, type Listing } from "./browse";
 
@@ -46,6 +46,12 @@ export default async function ConnectionsPage({
 
   const supabase = await createClient();
 
+  // Fetch the user's own workspace IDs to exclude from the cross-workspace discovery feed.
+  // "mine" filter shows only own listings, so exclusion only applies to all/exit/partnership.
+  const myWorkspaces = await listAccessibleWorkspaces();
+  const myWorkspaceIds = myWorkspaces.map((w) => w.id);
+
+  // Main listing query for the selected filter.
   let query = supabase
     .from("connection_listings")
     .select("id, workspace_id, listing_type, status, public_summary, type_data, listed_at, workspaces(name)")
@@ -55,16 +61,57 @@ export default async function ConnectionsPage({
 
   if (filter === "exit") query = query.eq("listing_type", "exit");
   if (filter === "partnership") query = query.eq("listing_type", "partnership");
-  if (filter === "mine") query = query.eq("workspace_id", workspace.id);
+  if (filter === "mine") {
+    query = query.eq("workspace_id", workspace.id);
+  } else if (myWorkspaceIds.length > 0) {
+    // Exclude own workspaces from cross-workspace discovery.
+    query = query.not("workspace_id", "in", `(${myWorkspaceIds.join(",")})`);
+  }
   if (seeking) {
     // REQ-PART-01: use the indexed first-class column instead of JSONB path.
     query = query.eq("seeking_type", seeking);
   }
 
-  const { data: rows } = await query;
-  const listings = (rows ?? []) as unknown as Listing[];
+  // Parallel count queries for the 4 filter chip badges.
+  // "all", "exit", "partnership" exclude own workspaces; "mine" scopes to own workspace.
+  const buildCountQuery = (listingType: "exit" | "partnership" | null, ownOnly: boolean) => {
+    let q = supabase
+      .from("connection_listings")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "open")
+      .is("deleted_at", null);
+    if (listingType) q = q.eq("listing_type", listingType);
+    if (ownOnly) {
+      q = q.eq("workspace_id", workspace.id);
+    } else if (myWorkspaceIds.length > 0) {
+      q = q.not("workspace_id", "in", `(${myWorkspaceIds.join(",")})`);
+    }
+    return q;
+  };
 
-  return <ConnectionsBrowse filter={filter} seeking={seeking} listings={listings} />;
+  const [
+    { data: rows },
+    { count: allCount },
+    { count: exitCount },
+    { count: partnershipCount },
+    { count: mineCount },
+  ] = await Promise.all([
+    query,
+    buildCountQuery(null, false),
+    buildCountQuery("exit", false),
+    buildCountQuery("partnership", false),
+    buildCountQuery(null, true),
+  ]);
+
+  const listings = (rows ?? []) as unknown as Listing[];
+  const chipCounts = {
+    all: allCount ?? 0,
+    exit: exitCount ?? 0,
+    partnership: partnershipCount ?? 0,
+    mine: mineCount ?? 0,
+  };
+
+  return <ConnectionsBrowse filter={filter} seeking={seeking} listings={listings} chipCounts={chipCounts} />;
 }
 
 function mapRoleToSeeking(role: string | undefined): string | undefined {

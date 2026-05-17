@@ -2,6 +2,12 @@
 
 import { useState, useTransition } from "react";
 
+import {
+  dilutionVerdict,
+  impliedDilutionPct,
+} from "@/lib/cap-table/implied-dilution";
+import { useT } from "@/lib/i18n/useT";
+
 import { createRound } from "../actions";
 
 const INSTRUMENT_OPTIONS = [
@@ -12,10 +18,19 @@ const INSTRUMENT_OPTIONS = [
 ];
 
 export function NewRoundForm() {
+  const t = useT("rounds");
   const [instrument, setInstrument] = useState("isafe");
   const [isPublic, setIsPublic] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [preMoney, setPreMoney] = useState("");
+  const [targetRaise, setTargetRaise] = useState("");
+
+  const dilutionPct = impliedDilutionPct(
+    parseFloat(preMoney),
+    parseFloat(targetRaise),
+  );
+  const verdict = dilutionVerdict(dilutionPct);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -86,6 +101,8 @@ export function NewRoundForm() {
           min="0"
           step="1"
           placeholder="e.g. 5000000"
+          value={preMoney}
+          onChange={(e) => setPreMoney(e.target.value)}
           className="w-full rounded-lg bg-(--color-surface-container-high) px-4 py-2.5 text-body-md ghost-border focus:outline-none focus:ring-2 focus:ring-(--color-primary)/40"
         />
         <p className="text-body-sm text-(--color-on-surface-variant)">
@@ -105,8 +122,22 @@ export function NewRoundForm() {
           min="0"
           step="1"
           placeholder="e.g. 2000000"
+          value={targetRaise}
+          onChange={(e) => setTargetRaise(e.target.value)}
           className="w-full rounded-lg bg-(--color-surface-container-high) px-4 py-2.5 text-body-md ghost-border focus:outline-none focus:ring-2 focus:ring-(--color-primary)/40"
         />
+
+        {/* Dilution preview banner */}
+        {verdict === "warn" && dilutionPct !== null && (
+          <p className="mt-2 rounded-md bg-(--color-warning)/10 px-3 py-2 text-body-sm text-(--color-warning)">
+            {t("new.dilution_warn", { pct: dilutionPct.toFixed(1) })}
+          </p>
+        )}
+        {verdict === "block" && dilutionPct !== null && (
+          <p className="mt-2 rounded-md bg-(--color-error)/10 px-3 py-2 text-body-sm text-(--color-error)">
+            {t("new.dilution_block", { pct: dilutionPct.toFixed(1) })}
+          </p>
+        )}
       </div>
 
       {/* Lead investor */}
@@ -184,7 +215,7 @@ export function NewRoundForm() {
       <div className="flex gap-3 pt-2">
         <button
           type="submit"
-          disabled={isPending}
+          disabled={isPending || verdict === "block"}
           className="rounded-lg bg-(--color-primary)/15 px-5 py-2.5 text-label-lg text-(--color-primary) hover:bg-(--color-primary)/25 transition-colors disabled:opacity-50"
         >
           {isPending ? "Creating…" : "Create round"}

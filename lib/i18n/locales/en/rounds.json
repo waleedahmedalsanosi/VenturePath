@@ -65,6 +65,8 @@
   "new.field.target": "Target raise (SAR)",
   "new.field.lead": "Lead investor (optional)",
   "new.field.close_date": "Expected close date",
+  "new.dilution_warn": "This round implies {{pct}}% dilution. Most rounds dilute existing holders 10–25%.",
+  "new.dilution_block": "This round implies {{pct}}% dilution (> 50%), which is implausibly high. Double-check your pre-money valuation before proceeding.",
   "new.submit": "Create round",
   "new.submitting": "Creating…",
   "tabs.aria_label": "Rounds view",

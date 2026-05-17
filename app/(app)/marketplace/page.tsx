@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import { getActiveWorkspace } from "@/lib/workspace/active";
+import { getActiveWorkspace, listAccessibleWorkspaces } from "@/lib/workspace/active";
 
 import { MarketplaceList, type ListingRow } from "./list-view";
 import { MarketplaceBrowse, type BrowseRow } from "./browse-view";
@@ -24,56 +24,102 @@ export default async function MarketplacePage({
 
   const supabase = await createClient();
 
-  if (tab === "mine") {
-    const { data: listings } = await supabase
-      .from("share_listings")
-      .select(
-        "id, shareholder_id, shares_offered, ask_price_sar, notes, status, listed_at, expires_at, closed_at, shareholders(name)",
-      )
-      .eq("workspace_id", workspace.id)
-      .is("deleted_at", null)
-      .order("listed_at", { ascending: false });
+  // Fetch the user's own workspace IDs to exclude from the discovery feed.
+  const myWorkspaces = await listAccessibleWorkspaces();
+  const myWorkspaceIds = myWorkspaces.map((w) => w.id);
 
+  if (tab === "mine") {
+    const [{ data: listings }, browseSecondariesCount, browseExitsCount] = await Promise.all([
+      supabase
+        .from("share_listings")
+        .select(
+          "id, shareholder_id, shares_offered, ask_price_sar, notes, status, listed_at, expires_at, closed_at, shareholders(name)",
+        )
+        .eq("workspace_id", workspace.id)
+        .is("deleted_at", null)
+        .order("listed_at", { ascending: false }),
+      // Count cross-workspace public secondary listings (excluding own) for badge.
+      (() => {
+        let q = supabase
+          .from("share_listings")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "open")
+          .eq("is_public", true)
+          .is("deleted_at", null);
+        if (myWorkspaceIds.length > 0)
+          q = q.not("workspace_id", "in", `(${myWorkspaceIds.join(",")})`);
+        return q;
+      })(),
+      // Count cross-workspace exit listings (excluding own) for badge.
+      (() => {
+        let q = supabase
+          .from("connection_listings")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "open")
+          .eq("listing_type", "exit")
+          .is("deleted_at", null);
+        if (myWorkspaceIds.length > 0)
+          q = q.not("workspace_id", "in", `(${myWorkspaceIds.join(",")})`);
+        return q;
+      })(),
+    ]);
+
+    const browseCount = (browseSecondariesCount.count ?? 0) + (browseExitsCount.count ?? 0);
     const rows = (listings ?? []) as unknown as ListingRow[];
     return (
       <>
-        <MarketplaceTabs active={tab} />
+        <MarketplaceTabs active={tab} browseCount={browseCount} mineCount={rows.length} />
         <MarketplaceList rows={rows} />
       </>
     );
   }
 
-  // Browse tab: cross-workspace public secondary listings + exit listings.
-  const [{ data: secondaryRows }, { data: exitRows }, { data: privateListingRow }] = await Promise.all([
-    supabase
-      .from("share_listings")
-      .select(
-        "id, shares_offered, ask_price_sar, listed_at, workspace_id, workspaces(name, slug), shareholders(name)",
-      )
-      .eq("status", "open")
-      .eq("is_public", true)
-      .is("deleted_at", null)
-      .order("listed_at", { ascending: false })
-      .limit(50),
-    supabase
-      .from("connection_listings")
-      .select("id, public_summary, type_data, listed_at, workspace_id, workspaces(name, slug)")
-      .eq("status", "open")
-      .eq("listing_type", "exit")
-      .is("deleted_at", null)
-      .order("listed_at", { ascending: false })
-      .limit(50),
-    // Contextual CTA: check if the current user has an open private listing in their workspace.
-    supabase
-      .from("share_listings")
-      .select("id")
-      .eq("workspace_id", workspace.id)
-      .eq("status", "open")
-      .eq("is_public", false)
-      .is("deleted_at", null)
-      .limit(1)
-      .maybeSingle(),
-  ]);
+  // Browse tab: cross-workspace public secondary listings + exit listings, excluding own workspaces.
+  let secondaryQuery = supabase
+    .from("share_listings")
+    .select(
+      "id, shares_offered, ask_price_sar, listed_at, workspace_id, workspaces(name, slug), shareholders(name)",
+    )
+    .eq("status", "open")
+    .eq("is_public", true)
+    .is("deleted_at", null)
+    .order("listed_at", { ascending: false })
+    .limit(50);
+  if (myWorkspaceIds.length > 0)
+    secondaryQuery = secondaryQuery.not("workspace_id", "in", `(${myWorkspaceIds.join(",")})`);
+
+  let exitQuery = supabase
+    .from("connection_listings")
+    .select("id, public_summary, type_data, listed_at, workspace_id, workspaces(name, slug)")
+    .eq("status", "open")
+    .eq("listing_type", "exit")
+    .is("deleted_at", null)
+    .order("listed_at", { ascending: false })
+    .limit(50);
+  if (myWorkspaceIds.length > 0)
+    exitQuery = exitQuery.not("workspace_id", "in", `(${myWorkspaceIds.join(",")})`);
+
+  const [{ data: secondaryRows }, { data: exitRows }, { data: privateListingRow }, { count: mineCount }] =
+    await Promise.all([
+      secondaryQuery,
+      exitQuery,
+      // Contextual CTA: check if the current user has an open private listing in their workspace.
+      supabase
+        .from("share_listings")
+        .select("id")
+        .eq("workspace_id", workspace.id)
+        .eq("status", "open")
+        .eq("is_public", false)
+        .is("deleted_at", null)
+        .limit(1)
+        .maybeSingle(),
+      // Mine count for the tab badge.
+      supabase
+        .from("share_listings")
+        .select("id", { count: "exact", head: true })
+        .eq("workspace_id", workspace.id)
+        .is("deleted_at", null),
+    ]);
   const privateListingId = privateListingRow?.id ?? null;
 
   const secondaries: BrowseRow[] = ((secondaryRows ?? []) as unknown as Array<{
@@ -115,9 +161,10 @@ export default async function MarketplacePage({
     summary: r.public_summary,
   }));
 
+  const browseCount = secondaries.length + exits.length;
   return (
     <>
-      <MarketplaceTabs active={tab} />
+      <MarketplaceTabs active={tab} browseCount={browseCount} mineCount={mineCount ?? 0} />
       <MarketplaceBrowse secondaries={secondaries} exits={exits} privateListingId={privateListingId} />
     </>
   );

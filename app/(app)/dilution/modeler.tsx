@@ -8,6 +8,10 @@ import {
   type DilutionInput,
   type DilutionOutcome,
 } from "@/lib/cap-table/dilution";
+import {
+  dilutionVerdict,
+  impliedDilutionPct,
+} from "@/lib/cap-table/implied-dilution";
 
 export type ExistingHolder =
   | {
@@ -86,6 +90,17 @@ export function Modeler({ existing }: { existing: ExistingHolder[] }) {
     }
   }, [existing, preMoney, includeNew, newName, newInvestment, newCap]);
 
+  // Warn-only banner: implied single-round dilution based on pre-money + new investment.
+  const dilutionWarnPct = useMemo<number | null>(() => {
+    if (!includeNew) return null;
+    const pre = parseFloat(preMoney);
+    const raise = parseFloat(newInvestment);
+    const pct = impliedDilutionPct(pre, raise);
+    return dilutionVerdict(pct) === "warn" || dilutionVerdict(pct) === "block"
+      ? pct
+      : null;
+  }, [preMoney, newInvestment, includeNew]);
+
   const hasOrdinary = existing.some((h) => h.kind === "ordinary");
 
   if (!hasOrdinary) {
@@ -133,43 +148,50 @@ export function Modeler({ existing }: { existing: ExistingHolder[] }) {
         </label>
 
         {includeNew && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <label className="block">
-              <span className="text-label-md uppercase text-(--color-on-surface-variant)">
-                Investor name
-              </span>
-              <input
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                type="text"
-                className={inputClass}
-              />
-            </label>
-            <label className="block">
-              <span className="text-label-md uppercase text-(--color-on-surface-variant)">
-                Investment (SAR)
-              </span>
-              <input
-                value={newInvestment}
-                onChange={(e) => setNewInvestment(e.target.value)}
-                type="text"
-                inputMode="decimal"
-                className={inputClass}
-              />
-            </label>
-            <label className="block">
-              <span className="text-label-md uppercase text-(--color-on-surface-variant)">
-                Valuation cap (SAR)
-              </span>
-              <input
-                value={newCap}
-                onChange={(e) => setNewCap(e.target.value)}
-                type="text"
-                inputMode="decimal"
-                className={inputClass}
-              />
-            </label>
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <label className="block">
+                <span className="text-label-md uppercase text-(--color-on-surface-variant)">
+                  Investor name
+                </span>
+                <input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  type="text"
+                  className={inputClass}
+                />
+              </label>
+              <label className="block">
+                <span className="text-label-md uppercase text-(--color-on-surface-variant)">
+                  Investment (SAR)
+                </span>
+                <input
+                  value={newInvestment}
+                  onChange={(e) => setNewInvestment(e.target.value)}
+                  type="text"
+                  inputMode="decimal"
+                  className={inputClass}
+                />
+              </label>
+              <label className="block">
+                <span className="text-label-md uppercase text-(--color-on-surface-variant)">
+                  Valuation cap (SAR)
+                </span>
+                <input
+                  value={newCap}
+                  onChange={(e) => setNewCap(e.target.value)}
+                  type="text"
+                  inputMode="decimal"
+                  className={inputClass}
+                />
+              </label>
+            </div>
+            {dilutionWarnPct !== null && (
+              <p className="rounded-md bg-(--color-warning)/10 px-3 py-2 text-body-sm text-(--color-warning)">
+                This investment implies {dilutionWarnPct.toFixed(1)}% single-round dilution. Most rounds dilute existing holders 10–25%.
+              </p>
+            )}
+          </>
         )}
       </section>
 

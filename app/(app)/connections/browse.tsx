@@ -46,10 +46,12 @@ export function ConnectionsBrowse({
   filter,
   seeking,
   listings,
+  chipCounts,
 }: {
   filter: FilterType;
   seeking?: string | null;
   listings: Listing[];
+  chipCounts?: { all: number; exit: number; partnership: number; mine: number };
 }) {
   const t = useT("connections");
 
@@ -98,7 +100,7 @@ export function ConnectionsBrowse({
         )}
       </header>
 
-      <FilterChips active={filter} />
+      <FilterChips active={filter} counts={chipCounts} />
 
       <div className="flex items-center justify-between">
         <h2 className="text-label-md uppercase text-(--color-on-surface-variant)">
@@ -159,7 +161,13 @@ export function ConnectionsBrowse({
   );
 }
 
-function FilterChips({ active }: { active: FilterType }) {
+function FilterChips({
+  active,
+  counts,
+}: {
+  active: FilterType;
+  counts?: { all: number; exit: number; partnership: number; mine: number };
+}) {
   const t = useT("connections");
   const filters: { value: FilterType; labelKey: string }[] = [
     { value: "all", labelKey: "filter.all" },
@@ -171,11 +179,12 @@ function FilterChips({ active }: { active: FilterType }) {
     <nav className="flex gap-2 flex-wrap" aria-label={t("filter.aria_label")}>
       {filters.map((f) => {
         const isActive = active === f.value;
+        const count = counts?.[f.value];
         return (
           <Link
             key={f.value}
             href={f.value === "all" ? "/connections" : `/connections?filter=${f.value}`}
-            className={`rounded-full px-3 py-1 text-label-sm transition-colors ${
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-label-sm transition-colors ${
               isActive
                 ? "bg-(--color-primary) text-(--color-on-primary)"
                 : "ghost-border hover:bg-(--color-surface-container-high)"
@@ -183,6 +192,9 @@ function FilterChips({ active }: { active: FilterType }) {
             aria-current={isActive ? "page" : undefined}
           >
             {t(f.labelKey)}
+            {count !== undefined && (
+              <span className="text-label-sm opacity-70 tabular-nums">{count}</span>
+            )}
           </Link>
         );
       })}

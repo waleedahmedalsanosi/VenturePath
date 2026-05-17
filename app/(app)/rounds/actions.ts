@@ -6,6 +6,10 @@ import { z } from "zod";
 
 import { logAudit } from "@/lib/audit/log";
 import { Dec } from "@/lib/cap-table/decimal";
+import {
+  dilutionVerdict,
+  impliedDilutionPct,
+} from "@/lib/cap-table/implied-dilution";
 import { computeConversionShares } from "@/lib/cap-table/isafe-math";
 import { convertSafe } from "@/lib/rounds/conversion";
 import { createClient } from "@/lib/supabase/server";
@@ -471,11 +475,29 @@ export async function setRoundVisibility(
 
   const { data: round } = await supabase
     .from("financing_rounds")
-    .select("name, status, workspace_id, is_public")
+    .select("name, status, workspace_id, is_public, pre_money_valuation_sar, target_raise_sar")
     .eq("id", roundId)
     .is("deleted_at", null)
     .maybeSingle();
   if (!round) return { ok: false, error: "Round not found." };
+
+  // Gate: block publishing when implied dilution > 50%.
+  if (isPublic) {
+    const preMoney = round.pre_money_valuation_sar
+      ? parseFloat(String(round.pre_money_valuation_sar))
+      : NaN;
+    const raise = round.target_raise_sar
+      ? parseFloat(String(round.target_raise_sar))
+      : NaN;
+    const pct = impliedDilutionPct(preMoney, raise);
+    if (dilutionVerdict(pct) === "block") {
+      return {
+        ok: false,
+        error:
+          "Dilution is implausibly high; double-check pre-money before publishing.",
+      };
+    }
+  }
 
   const previousIsPublic: boolean = round.is_public ?? false;
 

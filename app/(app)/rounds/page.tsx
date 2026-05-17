@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { createClient } from "@/lib/supabase/server";
-import { getActiveWorkspace } from "@/lib/workspace/active";
+import { getActiveWorkspace, listAccessibleWorkspaces } from "@/lib/workspace/active";
 
 import { RoundsList } from "./rounds-list";
 import { RoundsBrowse, type BrowseRoundRow } from "./browse-view";
@@ -25,19 +25,37 @@ export default async function RoundsPage({
 
   const supabase = await createClient();
 
+  // Fetch the user's own workspace IDs to exclude from the discovery feed.
+  const myWorkspaces = await listAccessibleWorkspaces();
+  const myWorkspaceIds = myWorkspaces.map((w) => w.id);
+
   if (tab === "mine") {
-    const { data: rounds } = await supabase
-      .from("financing_rounds")
-      .select(
-        "id, name, instrument_type, pre_money_valuation_sar, target_raise_sar, close_date, status, is_public, lead_investor",
-      )
-      .eq("workspace_id", workspace.id)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false });
+    const [{ data: rounds }, { count: openCount }] = await Promise.all([
+      supabase
+        .from("financing_rounds")
+        .select(
+          "id, name, instrument_type, pre_money_valuation_sar, target_raise_sar, close_date, status, is_public, lead_investor",
+        )
+        .eq("workspace_id", workspace.id)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false }),
+      // Count cross-workspace public open rounds (excluding own) for the "Open rounds" tab badge.
+      (() => {
+        let q = supabase
+          .from("financing_rounds")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "open")
+          .eq("is_public", true)
+          .is("deleted_at", null);
+        if (myWorkspaceIds.length > 0)
+          q = q.not("workspace_id", "in", `(${myWorkspaceIds.join(",")})`);
+        return q;
+      })(),
+    ]);
 
     return (
       <main className="mx-auto max-w-5xl px-6 py-10 space-y-8">
-        <RoundsTabs active={tab} />
+        <RoundsTabs active={tab} mineCount={rounds?.length ?? 0} openCount={openCount ?? 0} />
         <header>
           <p className="text-label-md uppercase text-(--color-on-surface-variant)">
             Fundraising
@@ -69,8 +87,8 @@ export default async function RoundsPage({
     );
   }
 
-  // Open rounds tab: cross-workspace public open rounds.
-  const { data: openRows } = await supabase
+  // Open rounds tab: cross-workspace public open rounds, excluding own workspaces.
+  let openQuery = supabase
     .from("financing_rounds")
     .select(
       "id, name, instrument_type, pre_money_valuation_sar, target_raise_sar, close_date, lead_investor, created_at, workspace_id, workspaces(name, slug)",
@@ -80,17 +98,28 @@ export default async function RoundsPage({
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(50);
+  if (myWorkspaceIds.length > 0)
+    openQuery = openQuery.not("workspace_id", "in", `(${myWorkspaceIds.join(",")})`);
 
-  // Contextual CTA: check if the current user has an open private round in their workspace.
-  const { data: privateRoundRow } = await supabase
-    .from("financing_rounds")
-    .select("id")
-    .eq("workspace_id", workspace.id)
-    .eq("status", "open")
-    .eq("is_public", false)
-    .is("deleted_at", null)
-    .limit(1)
-    .maybeSingle();
+  // Mine count: workspace's own rounds (any status, not deleted).
+  const [{ data: openRows }, { count: mineCount }, { data: privateRoundRow }] = await Promise.all([
+    openQuery,
+    supabase
+      .from("financing_rounds")
+      .select("id", { count: "exact", head: true })
+      .eq("workspace_id", workspace.id)
+      .is("deleted_at", null),
+    // Contextual CTA: check if the current user has an open private round in their workspace.
+    supabase
+      .from("financing_rounds")
+      .select("id")
+      .eq("workspace_id", workspace.id)
+      .eq("status", "open")
+      .eq("is_public", false)
+      .is("deleted_at", null)
+      .limit(1)
+      .maybeSingle(),
+  ]);
   const privateRoundId = privateRoundRow?.id ?? null;
 
   const open: BrowseRoundRow[] = ((openRows ?? []) as unknown as Array<{
@@ -121,7 +150,7 @@ export default async function RoundsPage({
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10 space-y-8">
-      <RoundsTabs active={tab} />
+      <RoundsTabs active={tab} openCount={open.length} mineCount={mineCount ?? 0} />
       <RoundsBrowse rows={open} privateRoundId={privateRoundId} />
     </main>
   );
