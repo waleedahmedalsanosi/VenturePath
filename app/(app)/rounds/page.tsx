@@ -81,6 +81,18 @@ export default async function RoundsPage({
     .order("created_at", { ascending: false })
     .limit(50);
 
+  // Contextual CTA: check if the current user has an open private round in their workspace.
+  const { data: privateRoundRow } = await supabase
+    .from("financing_rounds")
+    .select("id")
+    .eq("workspace_id", workspace.id)
+    .eq("status", "open")
+    .eq("is_public", false)
+    .is("deleted_at", null)
+    .limit(1)
+    .maybeSingle();
+  const privateRoundId = privateRoundRow?.id ?? null;
+
   const open: BrowseRoundRow[] = ((openRows ?? []) as unknown as Array<{
     id: string;
     name: string;
@@ -110,7 +122,7 @@ export default async function RoundsPage({
   return (
     <main className="mx-auto max-w-5xl px-6 py-10 space-y-8">
       <RoundsTabs active={tab} />
-      <RoundsBrowse rows={open} />
+      <RoundsBrowse rows={open} privateRoundId={privateRoundId} />
     </main>
   );
 }

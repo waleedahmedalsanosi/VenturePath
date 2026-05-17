@@ -40,7 +40,13 @@ const INSTRUMENT_TONE: Record<string, string> = {
   ordinary: "bg-(--color-surface-container-high) text-(--color-on-surface)",
 };
 
-export function RoundsBrowse({ rows }: { rows: BrowseRoundRow[] }) {
+export function RoundsBrowse({
+  rows,
+  privateRoundId,
+}: {
+  rows: BrowseRoundRow[];
+  privateRoundId?: string | null;
+}) {
   const t = useT("rounds");
   return (
     <>
@@ -70,10 +76,18 @@ export function RoundsBrowse({ rows }: { rows: BrowseRoundRow[] }) {
 
       {rows.length === 0 ? (
         <div className="rounded-xl ghost-border p-10 text-center space-y-2">
-          <p className="text-body-lg font-semibold">{t("browse.empty.title")}</p>
+          <p className="text-body-lg font-semibold">{t("browse.empty.title_v2")}</p>
           <p className="text-body-sm text-(--color-on-surface-variant) max-w-md mx-auto">
-            {t("browse.empty.body")}
+            {t("browse.empty.body_v2")}
           </p>
+          {privateRoundId && (
+            <Link
+              href={`/rounds/${privateRoundId}`}
+              className="inline-block mt-3 rounded-lg ghost-border px-4 py-2 text-label-sm hover:bg-(--color-surface-container-high) transition-colors"
+            >
+              {t("browse.empty.cta_with_round")}
+            </Link>
+          )}
         </div>
       ) : (
         <ul className="space-y-3">

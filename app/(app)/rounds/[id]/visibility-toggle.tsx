@@ -43,13 +43,11 @@ export function VisibilityToggle({
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
           <h3 className="text-label-lg font-medium">
-            Show on public profile
+            Make this round discoverable to other investors on VenturePath
           </h3>
           <p className="text-body-sm text-(--color-on-surface-variant) max-w-md">
-            When on, this round appears on your public Explore page. Only
-            announcement-safe fields are shown — name, instrument, status,
-            close date, lead investor, and actual raise (when closed).
-            Valuation and target are always private.
+            Your round will appear in the Browse tab. Round details and
+            documents are still protected.
           </p>
         </div>
         <button

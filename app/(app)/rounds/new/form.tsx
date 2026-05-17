@@ -13,6 +13,7 @@ const INSTRUMENT_OPTIONS = [
 
 export function NewRoundForm() {
   const [instrument, setInstrument] = useState("isafe");
+  const [isPublic, setIsPublic] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -134,6 +135,45 @@ export function NewRoundForm() {
           className="w-full rounded-lg bg-(--color-surface-container-high) px-4 py-2.5 text-body-md ghost-border focus:outline-none focus:ring-2 focus:ring-(--color-primary)/40"
         />
       </div>
+
+      {/* Discoverability toggle */}
+      <div className="rounded-xl bg-(--color-surface-container-low) p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-label-lg font-medium">
+              Make this round discoverable to other investors on VenturePath
+            </p>
+            <p className="text-body-sm text-(--color-on-surface-variant) max-w-md">
+              Your round will appear in the Browse tab. Round details and
+              documents are still protected.
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isPublic}
+            onClick={() => setIsPublic((v) => !v)}
+            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+              isPublic
+                ? "bg-(--color-primary)/60"
+                : "bg-(--color-surface-bright)"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-(--color-on-surface) transition-transform ${
+                isPublic ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </button>
+        </div>
+        {isPublic && (
+          <p className="mt-3 rounded-md bg-(--color-warning)/10 px-3 py-2 text-body-sm text-(--color-warning)">
+            Drafts are never shown publicly. Open the round to publish it in the Browse tab.
+          </p>
+        )}
+      </div>
+      {/* Hidden field so FormData carries the boolean */}
+      <input type="hidden" name="is_public" value={isPublic ? "true" : "false"} />
 
       {error && (
         <p className="rounded-lg bg-(--color-error)/10 px-4 py-3 text-body-sm text-(--color-error)">

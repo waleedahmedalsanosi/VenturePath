@@ -37,6 +37,7 @@ const RoundSchema = z.object({
   target_raise_sar: OptionalPositiveDecimal,
   lead_investor: z.string().max(200).optional().or(z.literal("")),
   close_date: z.string().optional().or(z.literal("")),
+  is_public: z.coerce.boolean().optional(),
 });
 
 function sarFmt(n: string): string {
@@ -85,6 +86,7 @@ export async function createRound(formData: FormData): Promise<ActionResult> {
     target_raise_sar: formData.get("target_raise_sar") ?? "",
     lead_investor: formData.get("lead_investor") ?? "",
     close_date: formData.get("close_date") ?? "",
+    is_public: formData.get("is_public") === "true",
   });
   if (!parsed.success) {
     return {
@@ -129,6 +131,7 @@ export async function createRound(formData: FormData): Promise<ActionResult> {
       lead_investor: d.lead_investor || null,
       close_date: d.close_date || null,
       board_resolution_id: resolution.id,
+      is_public: d.is_public ?? false,
     })
     .select("id")
     .single();
@@ -468,11 +471,13 @@ export async function setRoundVisibility(
 
   const { data: round } = await supabase
     .from("financing_rounds")
-    .select("name, status, workspace_id")
+    .select("name, status, workspace_id, is_public")
     .eq("id", roundId)
     .is("deleted_at", null)
     .maybeSingle();
   if (!round) return { ok: false, error: "Round not found." };
+
+  const previousIsPublic: boolean = round.is_public ?? false;
 
   const { error } = await supabase
     .from("financing_rounds")
@@ -482,10 +487,11 @@ export async function setRoundVisibility(
 
   await logAudit({
     workspaceId: round.workspace_id,
-    entityType: "workspace",
+    entityType: "financing_round",
     entityId: roundId,
-    action: isPublic ? "round_publish" : "round_unpublish",
-    description: `${isPublic ? "Published" : "Unpublished"} round "${round.name}" on public profile`,
+    action: "visibility_changed",
+    description: `${isPublic ? "Made discoverable" : "Made private"}: round "${round.name}"`,
+    payload: { from: previousIsPublic, to: isPublic } as import("@/lib/supabase/types").Json,
   });
 
   revalidatePath(`/rounds/${roundId}`);
