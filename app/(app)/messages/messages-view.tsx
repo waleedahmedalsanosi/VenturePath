@@ -81,13 +81,16 @@ export function MessagesView({
       ) : (
         <ul className="space-y-3">
           {rows.map((r) => (
-            <li key={r.id}>
+            <li
+              key={r.id}
+              className="
+                relative rounded-xl ghost-border
+                hover:bg-(--color-surface-container-high) transition-colors
+              "
+            >
               <Link
-                href={`/connections/${r.listingId}`}
-                className="
-                  block rounded-xl ghost-border p-5
-                  hover:bg-(--color-surface-container-high) transition-colors
-                "
+                href={`/messages/${r.id}`}
+                className="block p-5"
               >
                 <div className="flex items-start justify-between gap-4">
                   <WorkspaceMark name={r.counterparty ?? null} />
@@ -119,6 +122,15 @@ export function MessagesView({
                     {new Date(r.sentAt).toLocaleDateString()}
                   </span>
                 </div>
+              </Link>
+              <Link
+                href={`/connections/${r.listingId}`}
+                className="
+                  absolute bottom-3 end-5 text-label-sm text-(--color-primary)
+                  hover:underline
+                "
+              >
+                {t("inbox.view_listing")} →
               </Link>
             </li>
           ))}

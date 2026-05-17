@@ -17,5 +17,17 @@
   "unknown_counterparty": "طرف غير معروف",
   "empty.title": "لا توجد رسائل بعد",
   "empty.body": "عندما يستفسر شخص عن إحدى قوائمك — أو ترسل استفساراً إلى مساحة عمل أخرى — سيظهر الخيط هنا.",
-  "empty.cta": "تصفّح قوائم الاتصالات"
+  "empty.cta": "تصفّح قوائم الاتصالات",
+  "inbox.view_listing": "عرض الإدراج",
+  "thread.title": "المحادثة",
+  "thread.back": "→ البريد الوارد",
+  "thread.view_listing": "→ عرض الإدراج",
+  "thread.status.closed_readonly": "هذا الخيط مغلق — الردود معطّلة.",
+  "thread.status.declined_readonly": "تم رفض هذا الاستفسار — الردود معطّلة.",
+  "thread.compose.placeholder": "اكتب رداً…",
+  "thread.compose.send": "إرسال",
+  "thread.compose.sending": "جارٍ الإرسال…",
+  "thread.compose.counter": "{{count}}/2000",
+  "thread.compose.error": "فشل الإرسال",
+  "thread.empty": "لا توجد رسائل بعد. كن أول من يرد."
 }

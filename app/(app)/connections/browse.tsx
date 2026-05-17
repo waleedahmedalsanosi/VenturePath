@@ -76,17 +76,32 @@ export function ConnectionsBrowse({
     ? (t(`type_data.seeking_map.${seeking}`) as unknown as string)
     : null;
 
+  // Context-aware eyebrow + subtitle per seeking variant (REQ Audit #12).
+  const eyebrowKey =
+    seeking === "senior_hire"
+      ? "header.eyebrow.talents"
+      : seeking === "advisor"
+        ? "header.eyebrow.advisors"
+        : seeking === "co_founder"
+          ? "header.eyebrow.co_founders"
+          : seeking === "business_partner"
+            ? "header.eyebrow.business_partners"
+            : "header.eyebrow.connections";
+  const subtitleKey = seeking
+    ? `header.subtitle.${seeking}`
+    : "header.subtitle.default";
+
   return (
     <main className="mx-auto max-w-5xl px-6 py-10 space-y-8">
       <header>
         <p className="text-label-md uppercase text-(--color-on-surface-variant)">
-          {t("eyebrow")}
+          {t(eyebrowKey)}
         </p>
         <h1 className="mt-1 text-display-sm font-semibold tracking-tight">
           {seekingLabel ?? t("title")}
         </h1>
         <p className="mt-2 text-body-md text-(--color-on-surface-variant)">
-          {t("subtitle")}
+          {t(subtitleKey)}
         </p>
         {seeking && (
           <div className="mt-3">

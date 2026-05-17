@@ -1471,6 +1471,34 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["connection_inquiries"]["Insert"]>;
         Relationships: [];
       };
+      connection_inquiry_messages: {
+        Row: {
+          id: string;
+          inquiry_id: string;
+          sender_user_id: string;
+          body: string;
+          created_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          inquiry_id: string;
+          sender_user_id: string;
+          body: string;
+          created_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["connection_inquiry_messages"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "connection_inquiry_messages_inquiry_id_fkey";
+            columns: ["inquiry_id"];
+            isOneToOne: false;
+            referencedRelation: "connection_inquiries";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       user_profiles: {
         Row: {
           user_id: string;

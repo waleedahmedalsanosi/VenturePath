@@ -259,7 +259,15 @@ export function ConnectionDetailView({
                       &ldquo;{r.message}&rdquo;
                     </p>
                   )}
-                  {r.status === "sent" && <InquiryActions inquiryId={r.id} />}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {r.status === "sent" && <InquiryActions inquiryId={r.id} />}
+                    <Link
+                      href={`/messages/${r.id}`}
+                      className="text-body-sm text-(--color-primary) hover:underline"
+                    >
+                      {t("inquiry.view_thread")}
+                    </Link>
+                  </div>
                 </li>
               ))}
             </ul>

@@ -17,5 +17,17 @@
   "unknown_counterparty": "Unknown party",
   "empty.title": "No messages yet",
   "empty.body": "When someone inquires about one of your listings — or you reach out to another workspace — the thread will show up here.",
-  "empty.cta": "Browse connection listings"
+  "empty.cta": "Browse connection listings",
+  "inbox.view_listing": "View listing",
+  "thread.title": "Thread",
+  "thread.back": "← Inbox",
+  "thread.view_listing": "View listing →",
+  "thread.status.closed_readonly": "This thread is closed — replies disabled.",
+  "thread.status.declined_readonly": "This inquiry was declined — replies disabled.",
+  "thread.compose.placeholder": "Write a reply…",
+  "thread.compose.send": "Send",
+  "thread.compose.sending": "Sending…",
+  "thread.compose.counter": "{{count}}/2000",
+  "thread.compose.error": "Failed to send",
+  "thread.empty": "No messages yet. Be the first to reply."
 }
