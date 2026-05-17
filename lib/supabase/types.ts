@@ -1471,6 +1471,39 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["connection_inquiries"]["Insert"]>;
         Relationships: [];
       };
+      user_profiles: {
+        Row: {
+          user_id: string;
+          display_name: string | null;
+          bio: string | null;
+          avatar_url: string | null;
+          linkedin_url: string | null;
+          location: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          display_name?: string | null;
+          bio?: string | null;
+          avatar_url?: string | null;
+          linkedin_url?: string | null;
+          location?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          display_name?: string | null;
+          bio?: string | null;
+          avatar_url?: string | null;
+          linkedin_url?: string | null;
+          location?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       account_notifications: {
         Row: {
           id: string;

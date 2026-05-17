@@ -6,7 +6,10 @@ import { redirect } from "next/navigation";
 import { ACTIVE_WORKSPACE_COOKIE } from "@/lib/workspace/active";
 import { createClient } from "@/lib/supabase/server";
 
-export async function switchWorkspace(workspaceId: string): Promise<void> {
+export async function switchWorkspace(
+  workspaceId: string,
+  redirectTo?: string,
+): Promise<void> {
   // RLS will gate the read; if the user can't access this workspace we
   // refuse to set the cookie.
   const supabase = await createClient();
@@ -26,7 +29,15 @@ export async function switchWorkspace(workspaceId: string): Promise<void> {
     path: "/",
   });
 
-  redirect("/");
+  // Validate redirectTo is a safe internal path (starts with "/" but not "//").
+  const safePath =
+    typeof redirectTo === "string" &&
+    redirectTo.startsWith("/") &&
+    !redirectTo.startsWith("//")
+      ? redirectTo
+      : "/dashboard";
+
+  redirect(safePath);
 }
 
 /**

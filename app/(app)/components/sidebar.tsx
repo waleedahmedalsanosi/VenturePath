@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 
 import { useT } from "@/lib/i18n/useT";
 
@@ -230,6 +230,8 @@ function initialsFromEmail(email: string): string {
   return (local[0] ?? "?").toUpperCase();
 }
 
+const SIDEBAR_EXPANDED_KEY = "venturepath-sidebar-expanded";
+
 function NestedNavGroups({
   pathname,
   t,
@@ -240,10 +242,45 @@ function NestedNavGroups({
   onLinkClick: () => void;
 }) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
+    // SSR-safe: start with active-group-open defaults; localStorage is merged post-mount.
     const initial: Record<string, boolean> = {};
     for (const g of NAV_GROUPS) initial[g.labelKey] = groupHasActive(pathname, g);
     return initial;
   });
+
+  // Post-mount: merge persisted expansion state from localStorage.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SIDEBAR_EXPANDED_KEY);
+      if (raw) {
+        const persisted = JSON.parse(raw) as Record<string, boolean>;
+        // localStorage is an external system; hydrating from it on mount is
+        // exactly the pattern useEffect is designed for. The set-state-in-effect
+        // lint rule is too aggressive here.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setExpanded((prev) => {
+          // Persisted state wins, but active-group is always forced open.
+          const merged: Record<string, boolean> = { ...prev, ...persisted };
+          const activeGroup = NAV_GROUPS.find((g) => groupHasActive(pathname, g));
+          if (activeGroup) merged[activeGroup.labelKey] = true;
+          return merged;
+        });
+      }
+    } catch {
+      // localStorage unavailable or corrupted — ignore.
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist to localStorage when expanded state changes.
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_EXPANDED_KEY, JSON.stringify(expanded));
+    } catch {
+      // ignore
+    }
+  }, [expanded]);
+
   // Re-open the group containing the active route when the pathname changes
   // via client-side navigation. Tracking lastPathname with a setState during
   // render is the React-recommended pattern for "state derived from a prop";
@@ -315,6 +352,8 @@ function NestedNavGroups({
   );
 }
 
+const SIDEBAR_MYSTARTUPS_OPEN_KEY = "venturepath-sidebar-mystartups-open";
+
 function MyStartups({
   workspaces,
   activeWorkspaceId,
@@ -332,7 +371,29 @@ function MyStartups({
   // nav is always expanded inline; other workspaces collapse to a single row
   // (click to switch to that workspace).
   const [open, setOpen] = useState(true);
-  const [pending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
+  // Track which workspace is currently being switched to, to guard against
+  // double-clicks and concurrent workspace switches.
+  const [pendingWorkspaceId, setPendingWorkspaceId] = useState<string | null>(null);
+
+  // Post-mount: restore open state from localStorage.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SIDEBAR_MYSTARTUPS_OPEN_KEY);
+      if (raw !== null) setOpen(raw === "true");
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // Persist open state to localStorage.
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_MYSTARTUPS_OPEN_KEY, String(open));
+    } catch {
+      // ignore
+    }
+  }, [open]);
 
   if (workspaces.length === 0) {
     return (
@@ -371,14 +432,18 @@ function MyStartups({
         <div className="overflow-hidden ps-2 space-y-2">
           {workspaces.map((w) => {
             const isActiveWs = w.id === activeWorkspaceId;
+            const isSwitchingToThis = pendingWorkspaceId === w.id;
+            const isDisabled = isActiveWs || pendingWorkspaceId !== null;
             return (
               <div key={w.id} className="space-y-1">
                 <button
                   type="button"
-                  disabled={pending || isActiveWs}
+                  disabled={isDisabled}
+                  aria-busy={isSwitchingToThis}
                   onClick={() => {
-                    if (isActiveWs) return;
-                    startTransition(() => switchWorkspace(w.id));
+                    if (isActiveWs || pendingWorkspaceId !== null) return;
+                    setPendingWorkspaceId(w.id);
+                    startTransition(() => switchWorkspace(w.id, pathname));
                   }}
                   aria-current={isActiveWs ? "true" : undefined}
                   aria-label={
@@ -388,7 +453,9 @@ function MyStartups({
                     w-full flex items-center gap-2 rounded-md px-2.5 py-1.5 text-body-sm transition-colors whitespace-nowrap
                     ${isActiveWs
                       ? "bg-(--color-primary)/10 text-(--color-on-surface) font-medium"
-                      : "text-(--color-on-surface-variant) hover:bg-(--color-surface-container-high) hover:text-(--color-on-surface) disabled:opacity-50"
+                      : isSwitchingToThis
+                        ? "text-(--color-on-surface-variant) opacity-60 cursor-progress"
+                        : "text-(--color-on-surface-variant) hover:bg-(--color-surface-container-high) hover:text-(--color-on-surface) disabled:opacity-50 disabled:cursor-not-allowed"
                     }
                   `}
                 >

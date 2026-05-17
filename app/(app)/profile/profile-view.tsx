@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useTransition } from "react";
 
 import { useT } from "@/lib/i18n/useT";
+import { switchWorkspaceAndGo } from "../components/workspace-actions";
 
 interface WorkspaceRow {
   id: string;
@@ -18,21 +20,43 @@ function initialsFromEmail(email: string): string {
   return (local[0] ?? "?").toUpperCase();
 }
 
+function initialsFromName(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0]![0]! + parts[1]![0]!).toUpperCase();
+  return (parts[0]?.slice(0, 2) ?? "?").toUpperCase();
+}
+
 export function ProfileView({
   email,
   createdAt,
   userId,
   workspaces,
+  displayName,
+  bio,
+  avatarUrl,
+  linkedinUrl,
+  location,
 }: {
   email: string;
   createdAt: string | null;
   userId: string;
   workspaces: WorkspaceRow[];
+  displayName?: string | null;
+  bio?: string | null;
+  avatarUrl?: string | null;
+  linkedinUrl?: string | null;
+  location?: string | null;
 }) {
   const t = useT("profile");
   const tNav = useT("nav");
-  const initials = initialsFromEmail(email);
+  const [pending, startTransition] = useTransition();
+
   const local = email.split("@")[0] ?? email;
+  const headerName = displayName?.trim() || local;
+  const initials = displayName
+    ? initialsFromName(displayName)
+    : initialsFromEmail(email);
+
   const memberSince = createdAt
     ? new Date(createdAt).toLocaleDateString(undefined, {
         year: "numeric",
@@ -43,29 +67,43 @@ export function ProfileView({
   const memberCount = workspaces.length - ownerCount;
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10 space-y-10">
+    <main className="w-full mx-auto max-w-3xl px-6 py-10 space-y-10">
       <header className="flex items-start gap-5">
-        <span
-          aria-hidden
-          className="
-            flex items-center justify-center w-20 h-20 rounded-2xl shrink-0
-            bg-gradient-to-br from-(--color-gradient-start) to-(--color-gradient-end)
-            text-[#0d1322] text-display-sm font-semibold
-          "
-        >
-          {initials}
-        </span>
+        {avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarUrl}
+            alt=""
+            className="w-20 h-20 rounded-2xl shrink-0 object-cover ghost-border"
+          />
+        ) : (
+          <span
+            aria-hidden
+            className="
+              flex items-center justify-center w-20 h-20 rounded-2xl shrink-0
+              bg-gradient-to-br from-(--color-gradient-start) to-(--color-gradient-end)
+              text-[#0d1322] text-display-sm font-semibold
+            "
+          >
+            {initials}
+          </span>
+        )}
         <div className="min-w-0 flex-1 pt-1">
           <p className="text-label-md uppercase text-(--color-on-surface-variant)">
             {t("eyebrow")}
           </p>
           <h1 className="mt-1 text-display-sm font-semibold tracking-tight truncate">
-            {local}
+            {headerName}
           </h1>
           <p className="mt-1 text-body-md text-(--color-on-surface-variant)">
             {email}
           </p>
-          <div className="mt-3 flex gap-2 flex-wrap">
+          {bio && (
+            <p className="mt-3 text-body-md text-(--color-on-surface) whitespace-pre-wrap">
+              {bio}
+            </p>
+          )}
+          <div className="mt-3 flex gap-2 flex-wrap items-center">
             <span className="
               rounded-md px-2 py-0.5 text-label-sm font-medium tracking-wider
               bg-(--color-primary-container)/40 text-(--color-primary)
@@ -77,7 +115,31 @@ export function ProfileView({
                 {t("member_since", { date: memberSince })}
               </span>
             )}
+            <Link
+              href="/profile/edit"
+              className="
+                ms-auto rounded-lg ghost-border px-3 py-1.5 text-label-sm
+                hover:bg-(--color-surface-container-high) transition-colors
+              "
+            >
+              {t("edit_profile")}
+            </Link>
           </div>
+          {(location || linkedinUrl) && (
+            <div className="mt-2 flex gap-3 flex-wrap text-body-sm text-(--color-on-surface-variant)">
+              {location && <span>{location}</span>}
+              {linkedinUrl && (
+                <a
+                  href={linkedinUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-(--color-primary) hover:underline"
+                >
+                  LinkedIn ↗
+                </a>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
@@ -129,15 +191,20 @@ export function ProfileView({
                       : t("section.workspaces.role.member")}
                   </p>
                 </div>
-                <Link
-                  href="/company"
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => {
+                    startTransition(() => switchWorkspaceAndGo(w.id, "/company"));
+                  }}
                   className="
                     rounded-md px-3 py-1.5 text-label-sm text-(--color-primary)
                     hover:bg-(--color-primary)/10 transition-colors shrink-0
+                    disabled:opacity-50 disabled:cursor-progress
                   "
                 >
                   {t("section.workspaces.view")}
-                </Link>
+                </button>
               </li>
             ))}
           </ul>
